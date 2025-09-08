@@ -1,0 +1,250 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    @apply bg-neutral-50 text-neutral-900 antialiased;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  }
+  
+  /* Tipografía elegante para lectura */
+  .reading-content {
+    @apply max-w-4xl mx-auto px-8 py-12;
+    font-family: 'Crimson Text', Georgia, serif;
+    line-height: 1.8;
+    font-size: 1.125rem;
+  }
+  
+  .reading-content h1 {
+    @apply text-4xl font-normal mb-8 text-primary-900;
+    font-family: 'Playfair Display', serif;
+    letter-spacing: -0.02em;
+  }
+  
+  .reading-content h2 {
+    @apply text-2xl font-normal mb-6 mt-12 text-primary-900;
+    font-family: 'Playfair Display', serif;
+    letter-spacing: -0.01em;
+  }
+  
+  .reading-content h3 {
+    @apply text-xl font-normal mb-4 mt-8 text-primary-800;
+    font-family: 'Playfair Display', serif;
+  }
+  
+  /* Párrafos numerados elegantes */
+  .paragraph {
+    @apply mb-6 relative;
+  }
+  
+  .paragraph-number {
+    @apply absolute -left-16 top-0 text-sm text-accent-600 font-medium;
+    width: 3rem;
+    text-align: right;
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+  }
+  
+  .paragraph-content {
+    @apply text-primary-800 leading-relaxed;
+    font-size: 1.125rem;
+  }
+  
+  /* Headers de secciones elegantes */
+  .section-header {
+    @apply border-l-4 border-accent-600 pl-6 mb-8 mt-12;
+  }
+  
+  .section-header h2 {
+    @apply text-2xl font-display font-semibold text-primary-800 mb-2;
+    font-family: 'Playfair Display', serif;
+  }
+  
+  /* Resaltado de búsqueda sutil */
+  .search-highlight {
+    @apply bg-accent-50 text-accent-700 px-1 rounded-sm;
+    font-weight: 600;
+    border-bottom: 2px solid #d4af37;
+    padding-bottom: 1px;
+  }
+}
+
+@layer components {
+  /* Botones elegantes y minimalistas */
+  .btn-primary {
+    @apply bg-primary-800 hover:bg-primary-900 text-white font-medium py-3 px-6 rounded-sm transition-all duration-200 border border-primary-800 hover:border-primary-900;
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+  }
+  
+  .btn-secondary {
+    @apply bg-white hover:bg-neutral-50 text-primary-700 font-medium py-3 px-6 rounded-sm transition-all duration-200 border border-neutral-300 hover:border-neutral-400;
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+  }
+  
+  .btn-outline {
+    @apply border border-primary-300 text-primary-700 hover:bg-primary-50 hover:border-primary-400 font-medium py-3 px-6 rounded-sm transition-all duration-200;
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+  }
+
+  /* Enlaces de navegación elegantes */
+  .nav-link {
+    @apply text-primary-600 hover:text-primary-800 transition-colors duration-200 font-medium;
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+  }
+
+  /* Buscador minimalista */
+  .search-container {
+    @apply relative w-full;
+  }
+  
+  .search-input {
+    @apply w-full px-4 py-3 border border-primary-200 rounded-sm focus:ring-2 focus:ring-accent-600 focus:border-accent-600 outline-none transition-all duration-200 bg-white;
+    font-family: 'Inter', sans-serif;
+    font-size: 1rem;
+  }
+  
+  .search-results {
+    @apply absolute top-full left-0 right-0 bg-white border border-primary-200 rounded-sm shadow-lg mt-1 max-h-96 overflow-y-auto z-50;
+  }
+  
+  .search-result-item {
+    @apply px-4 py-4 hover:bg-primary-50 border-b border-primary-100 last:border-b-0 transition-colors duration-200;
+  }
+
+  /* Índice de contenidos elegante */
+  .table-of-contents {
+    @apply text-sm;
+  }
+  
+  .table-of-contents a {
+    @apply block py-2 px-3 rounded-sm hover:bg-neutral-100 transition-colors duration-200 text-primary-700 hover:text-primary-900;
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
+  }
+  
+  .table-of-contents a.active {
+    @apply bg-primary-50 text-primary-900 font-medium;
+  }
+
+  /* Breadcrumbs minimalistas */
+  .breadcrumb {
+    @apply flex items-center text-primary-500 text-sm;
+    font-family: 'Inter', sans-serif;
+  }
+  
+  .breadcrumb a {
+    @apply hover:text-primary-700 transition-colors duration-200;
+  }
+
+  /* Formularios elegantes */
+  .form-input {
+    @apply w-full px-4 py-3 border border-neutral-300 rounded-sm focus:ring-1 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all duration-200 bg-white;
+    font-family: 'Inter', sans-serif;
+  }
+  
+  .form-label {
+    @apply block text-sm font-medium text-primary-800 mb-2;
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+  }
+  
+  .form-error {
+    @apply text-red-600 text-sm mt-1;
+    font-family: 'Inter', sans-serif;
+  }
+
+  /* Cards elegantes con sombras sutiles */
+  .card {
+    @apply bg-white rounded-sm shadow-elegant p-8 hover:shadow-elegant-lg transition-all duration-300 border border-neutral-100;
+  }
+
+  /* Loading spinner elegante */
+  .loading-spinner {
+    @apply animate-spin rounded-full h-6 w-6 border-2 border-primary-200 border-t-primary-600;
+  }
+
+  /* Estilos para el admin */
+  .admin-sidebar {
+    @apply bg-primary-900 text-white w-72 min-h-screen p-8;
+  }
+  
+  .admin-sidebar a {
+    @apply block py-3 px-4 rounded-sm hover:bg-primary-800 transition-colors duration-200 text-primary-100 hover:text-white;
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+  }
+  
+  .admin-content {
+    @apply flex-1 p-8 bg-neutral-50 min-h-screen;
+  }
+
+  /* Header elegante */
+  .header-elegant {
+    @apply bg-white border-b border-neutral-200 shadow-elegant;
+  }
+
+  /* Secciones con espaciado generoso */
+  .section-elegant {
+    @apply py-16 px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Contenedor principal */
+  .container-elegant {
+    @apply max-w-7xl mx-auto;
+  }
+
+  /* Tipografía de display */
+  .display-title {
+    @apply text-5xl font-normal text-primary-900 mb-6;
+    font-family: 'Playfair Display', serif;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+
+  .display-subtitle {
+    @apply text-xl text-primary-600 mb-8;
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
+    line-height: 1.6;
+  }
+
+  /* Grid elegante */
+  .grid-elegant {
+    @apply grid gap-8 md:gap-12;
+  }
+
+  /* Espaciado consistente */
+  .space-elegant > * + * {
+    @apply mt-6;
+  }
+
+  /* Responsive adjustments */
+  @screen sm {
+    .search-input {
+      @apply px-6 py-4;
+    }
+    
+    .reading-content {
+      @apply px-12;
+    }
+  }
+
+  @screen lg {
+    .reading-content {
+      @apply px-16;
+    }
+  }
+}

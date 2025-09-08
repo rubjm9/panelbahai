@@ -1,0 +1,125 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@layer base {
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+  
+  body {
+    @apply bg-white text-gray-900;
+  }
+  
+  /* Estilos para el modo lectura */
+  .reading-content {
+    @apply max-w-4xl mx-auto px-6 py-8;
+    font-family: Georgia, 'Times New Roman', serif;
+    line-height: 1.8;
+  }
+  
+  .reading-content h1 {
+    @apply text-3xl font-bold mb-8 text-bahai-navy;
+  }
+  
+  .reading-content h2 {
+    @apply text-2xl font-semibold mb-6 mt-12 text-bahai-navy;
+  }
+  
+  .reading-content h3 {
+    @apply text-xl font-semibold mb-4 mt-8 text-bahai-navy;
+  }
+  
+  /* Párrafos numerados */
+  .paragraph {
+    @apply mb-4 relative;
+  }
+  
+  .paragraph-number {
+    @apply absolute -left-12 top-0 text-sm text-bahai-darkgold font-medium;
+    width: 2.5rem;
+    text-align: right;
+  }
+  
+  .paragraph-content {
+    @apply text-gray-800 leading-relaxed;
+  }
+  
+  /* Resaltado de búsqueda */
+  .search-highlight {
+    @apply bg-yellow-200 px-1 rounded;
+  }
+  
+  /* Breadcrumbs */
+  .breadcrumb {
+    @apply text-sm text-bahai-darkgold;
+  }
+  
+  /* Índice lateral */
+  .table-of-contents {
+    @apply bg-bahai-lightgray border-l-4 border-bahai-gold;
+  }
+  
+  .table-of-contents ul {
+    @apply list-none;
+  }
+  
+  .table-of-contents li {
+    @apply py-1;
+  }
+  
+  .table-of-contents a {
+    @apply text-bahai-navy hover:text-bahai-darkgold transition-colors;
+  }
+  
+  /* Botones principales */
+  .btn-primary {
+    @apply bg-bahai-gold hover:bg-bahai-darkgold text-white font-medium py-2 px-4 rounded transition-colors;
+  }
+  
+  .btn-secondary {
+    @apply bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded transition-colors;
+  }
+}
+
+@layer components {
+  /* Componente de búsqueda */
+  .search-container {
+    @apply relative max-w-md mx-auto;
+  }
+  
+  .search-input {
+    @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-bahai-gold focus:border-transparent;
+  }
+  
+  .search-results {
+    @apply absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg mt-1 max-h-96 overflow-y-auto z-50;
+  }
+  
+  .search-result-item {
+    @apply px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0;
+  }
+  
+  /* Navegación */
+  .nav-link {
+    @apply text-bahai-navy hover:text-bahai-darkgold transition-colors duration-200;
+  }
+  
+  .nav-link.active {
+    @apply text-bahai-darkgold font-medium;
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .reading-content {
+    @apply px-4;
+  }
+  
+  .paragraph-number {
+    @apply -left-8;
+    width: 1.5rem;
+  }
+}
