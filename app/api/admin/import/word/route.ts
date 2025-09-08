@@ -19,7 +19,7 @@ const upload = multer({
         file.mimetype === 'application/msword') {
       cb(null, true);
     } else {
-      cb(new Error('Solo se permiten archivos Word (.docx, .doc)'), false);
+      cb(null, false);
     }
   }
 });

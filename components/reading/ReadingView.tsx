@@ -48,6 +48,7 @@ export default function ReadingView({
   const [occurrences, setOccurrences] = useState<number[]>([])
   const [currentOccurrenceIndex, setCurrentOccurrenceIndex] = useState<number>(0)
   const [showFinderBar, setShowFinderBar] = useState<boolean>(false)
+  const [activeHighlightIndex, setActiveHighlightIndex] = useState<number>(0)
 
   // Sincronizar término de resaltado desde props/URL/sessionStorage
   useEffect(() => {
@@ -103,6 +104,7 @@ export default function ReadingView({
     if (occurrences.length === 0) return
     const nextIndex = (currentOccurrenceIndex + 1) % occurrences.length
     setCurrentOccurrenceIndex(nextIndex)
+    setActiveHighlightIndex(0) // Resetear índice de highlight dentro del párrafo
     const paragraphNum = occurrences[nextIndex]
     navigateToParagraph(paragraphNum)
   }
@@ -112,6 +114,7 @@ export default function ReadingView({
     if (occurrences.length === 0) return
     const prevIndex = currentOccurrenceIndex === 0 ? occurrences.length - 1 : currentOccurrenceIndex - 1
     setCurrentOccurrenceIndex(prevIndex)
+    setActiveHighlightIndex(0) // Resetear índice de highlight dentro del párrafo
     const paragraphNum = occurrences[prevIndex]
     navigateToParagraph(paragraphNum)
   }
@@ -122,6 +125,7 @@ export default function ReadingView({
     setShowFinderBar(false)
     setOccurrences([])
     setCurrentOccurrenceIndex(0)
+    setActiveHighlightIndex(0)
     try {
       const url = new URL(window.location.href)
       url.searchParams.delete('q')
@@ -129,13 +133,21 @@ export default function ReadingView({
     } catch {}
   }
 
-  // Utilidad para resaltar términos en HTML simple
-  const highlightHtml = (html: string, term?: string): string => {
+  // Utilidad para resaltar términos en HTML simple con foco activo
+  const highlightHtml = (html: string, term?: string, paragraphNum?: number): string => {
     if (!term || term.trim().length === 0) return html
     try {
       const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
       const regex = new RegExp(`(${escaped})`, 'gi')
-      return html.replace(regex, '<mark class="search-highlight">$1</mark>')
+      let occurrenceIndex = 0
+      
+      return html.replace(regex, (match) => {
+        const isActive = paragraphNum === occurrences[currentOccurrenceIndex] && 
+                        occurrenceIndex === activeHighlightIndex
+        const className = isActive ? 'search-highlight-active' : 'search-highlight'
+        occurrenceIndex++
+        return `<mark class="${className}">${match}</mark>`
+      })
     } catch {
       return html
     }
@@ -387,7 +399,7 @@ export default function ReadingView({
                       </div>
                       <div 
                         className="paragraph-content"
-                        dangerouslySetInnerHTML={{ __html: highlightHtml(parrafo.texto, highlightTerm) }}
+                        dangerouslySetInnerHTML={{ __html: highlightHtml(parrafo.texto, highlightTerm, parrafo.numero) }}
                       />
                     </div>
                   </div>

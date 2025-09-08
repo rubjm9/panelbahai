@@ -74,6 +74,18 @@
     font-weight: 600;
     border-bottom: 2px solid #d4af37;
     padding-bottom: 1px;
+    transition: all 0.3s ease-in-out;
+  }
+
+  /* Resaltado activo/foco con animación */
+  .search-highlight-active {
+    @apply bg-accent-100 text-accent-800 px-1 rounded-sm;
+    font-weight: 700;
+    border-bottom: 3px solid #b8860b;
+    padding-bottom: 2px;
+    box-shadow: 0 2px 8px rgba(184, 134, 11, 0.2);
+    transform: scale(1.02);
+    transition: all 0.3s ease-in-out;
   }
 }
 
