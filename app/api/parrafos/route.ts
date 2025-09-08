@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
       data: parrafo
     }, { status: 201 });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating parrafo:', error);
     
     // Manejar error de duplicado (número único por obra)

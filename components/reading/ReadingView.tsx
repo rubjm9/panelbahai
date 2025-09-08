@@ -84,27 +84,47 @@ export default function ReadingView({
       return
     }
 
-    const found: number[] = []
+    const found: Array<{paragraphNum: number, occurrenceIndex: number}> = []
     parrafos.forEach((parrafo) => {
       const regex = new RegExp(highlightTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi')
       const matches = parrafo.texto.match(regex)
       if (matches) {
-        // Agregar el número de párrafo por cada ocurrencia encontrada
+        // Agregar cada ocurrencia con su índice dentro del párrafo
         for (let i = 0; i < matches.length; i++) {
-          found.push(parrafo.numero)
+          found.push({paragraphNum: parrafo.numero, occurrenceIndex: i})
         }
       }
     })
-    setOccurrences(found)
+    setOccurrences(found.map(item => item.paragraphNum))
     setCurrentOccurrenceIndex(0)
   }, [highlightTerm, parrafos])
+
+  // Sincronizar índice inicial cuando se carga con un párrafo específico
+  useEffect(() => {
+    if (currentParagraph && highlightTerm && occurrences.length > 0) {
+      // Encontrar el índice de la ocurrencia que corresponde al párrafo actual
+      let globalIndex = 0
+      for (let i = 0; i < parrafos.length; i++) {
+        const p = parrafos[i]
+        if (p.numero < currentParagraph) {
+          const regex = new RegExp(highlightTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi')
+          const matches = p.texto.match(regex)
+          if (matches) {
+            globalIndex += matches.length
+          }
+        } else if (p.numero === currentParagraph) {
+          break
+        }
+      }
+      setCurrentOccurrenceIndex(globalIndex)
+    }
+  }, [currentParagraph, highlightTerm, occurrences, parrafos])
 
   // Navegar a la siguiente ocurrencia
   const goToNextOccurrence = () => {
     if (occurrences.length === 0) return
     const nextIndex = (currentOccurrenceIndex + 1) % occurrences.length
     setCurrentOccurrenceIndex(nextIndex)
-    setActiveHighlightIndex(0) // Resetear índice de highlight dentro del párrafo
     const paragraphNum = occurrences[nextIndex]
     navigateToParagraph(paragraphNum)
     
@@ -119,7 +139,6 @@ export default function ReadingView({
     if (occurrences.length === 0) return
     const prevIndex = currentOccurrenceIndex === 0 ? occurrences.length - 1 : currentOccurrenceIndex - 1
     setCurrentOccurrenceIndex(prevIndex)
-    setActiveHighlightIndex(0) // Resetear índice de highlight dentro del párrafo
     const paragraphNum = occurrences[prevIndex]
     navigateToParagraph(paragraphNum)
     
@@ -135,7 +154,6 @@ export default function ReadingView({
     setShowFinderBar(false)
     setOccurrences([])
     setCurrentOccurrenceIndex(0)
-    setActiveHighlightIndex(0)
     try {
       const url = new URL(window.location.href)
       url.searchParams.delete('q')
@@ -152,14 +170,23 @@ export default function ReadingView({
       let occurrenceIndex = 0
       
       return html.replace(regex, (match) => {
-        // Calcular si esta ocurrencia es la activa
-        const currentParagraph = occurrences[currentOccurrenceIndex]
-        const isCurrentParagraph = paragraphNum === currentParagraph
+        // Calcular el índice global de esta ocurrencia
+        let globalIndex = 0
+        for (let i = 0; i < parrafos.length; i++) {
+          const p = parrafos[i]
+          if (p.numero < paragraphNum) {
+            const paragraphRegex = new RegExp(escaped, 'gi')
+            const paragraphMatches = p.texto.match(paragraphRegex)
+            if (paragraphMatches) {
+              globalIndex += paragraphMatches.length
+            }
+          } else if (p.numero === paragraphNum) {
+            break
+          }
+        }
+        globalIndex += occurrenceIndex
         
-        // Contar ocurrencias anteriores en el mismo párrafo
-        const occurrencesInCurrentParagraph = occurrences.filter(num => num === currentParagraph).length
-        const isActive = isCurrentParagraph && occurrenceIndex === activeHighlightIndex
-        
+        const isActive = globalIndex === currentOccurrenceIndex
         const className = isActive ? 'search-highlight-active' : 'search-highlight'
         occurrenceIndex++
         return `<mark class="${className}">${match}</mark>`
@@ -177,8 +204,8 @@ export default function ReadingView({
     const paragraphElements = document.querySelectorAll('.paragraph-content')
     paragraphElements.forEach((element, index) => {
       const paragraphNum = index + 1
-      if (element.innerHTML) {
-        element.innerHTML = highlightHtml(element.textContent || '', highlightTerm, paragraphNum)
+      if (element.textContent) {
+        element.innerHTML = highlightHtml(element.textContent, highlightTerm, paragraphNum)
       }
     })
   }
