@@ -107,6 +107,11 @@ export default function ReadingView({
     setActiveHighlightIndex(0) // Resetear índice de highlight dentro del párrafo
     const paragraphNum = occurrences[nextIndex]
     navigateToParagraph(paragraphNum)
+    
+    // Actualizar resaltado después de un pequeño delay
+    setTimeout(() => {
+      updateHighlighting()
+    }, 100)
   }
 
   // Navegar a la ocurrencia anterior
@@ -117,6 +122,11 @@ export default function ReadingView({
     setActiveHighlightIndex(0) // Resetear índice de highlight dentro del párrafo
     const paragraphNum = occurrences[prevIndex]
     navigateToParagraph(paragraphNum)
+    
+    // Actualizar resaltado después de un pequeño delay
+    setTimeout(() => {
+      updateHighlighting()
+    }, 100)
   }
 
   // Dejar de resaltar
@@ -142,8 +152,14 @@ export default function ReadingView({
       let occurrenceIndex = 0
       
       return html.replace(regex, (match) => {
-        const isActive = paragraphNum === occurrences[currentOccurrenceIndex] && 
-                        occurrenceIndex === activeHighlightIndex
+        // Calcular si esta ocurrencia es la activa
+        const currentParagraph = occurrences[currentOccurrenceIndex]
+        const isCurrentParagraph = paragraphNum === currentParagraph
+        
+        // Contar ocurrencias anteriores en el mismo párrafo
+        const occurrencesInCurrentParagraph = occurrences.filter(num => num === currentParagraph).length
+        const isActive = isCurrentParagraph && occurrenceIndex === activeHighlightIndex
+        
         const className = isActive ? 'search-highlight-active' : 'search-highlight'
         occurrenceIndex++
         return `<mark class="${className}">${match}</mark>`
@@ -151,6 +167,20 @@ export default function ReadingView({
     } catch {
       return html
     }
+  }
+
+  // Función para actualizar el resaltado cuando cambia la ocurrencia activa
+  const updateHighlighting = () => {
+    if (!highlightTerm || occurrences.length === 0) return
+    
+    // Forzar re-render de todos los párrafos
+    const paragraphElements = document.querySelectorAll('.paragraph-content')
+    paragraphElements.forEach((element, index) => {
+      const paragraphNum = index + 1
+      if (element.innerHTML) {
+        element.innerHTML = highlightHtml(element.textContent || '', highlightTerm, paragraphNum)
+      }
+    })
   }
 
   // Scroll to paragraph on load

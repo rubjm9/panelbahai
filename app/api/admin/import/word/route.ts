@@ -202,7 +202,7 @@ export async function POST(request: NextRequest) {
         .replace(/\s+/g, '-')
         .trim();
       
-      const seccion = new Seccion({
+      const seccion: any = new Seccion({
         titulo: sectionData.titulo,
         slug: seccionSlug,
         obra: obra._id,
