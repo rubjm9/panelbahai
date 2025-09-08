@@ -297,7 +297,13 @@ export default function SearchResultsPage() {
               </h3>
               
               <SidebarFilters
-                onFilterChange={setFilters}
+                onFilterChange={(newFilters) => {
+                  setFilters({
+                    tipo: newFilters.tipo,
+                    autor: newFilters.autor || '',
+                    obra: newFilters.obra || ''
+                  })
+                }}
                 autores={autores}
                 obras={obras}
                 className="mb-4"

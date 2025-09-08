@@ -84,18 +84,18 @@ export default function ReadingView({
       return
     }
 
-    const found: Array<{paragraphNum: number, occurrenceIndex: number}> = []
+    const found: number[] = []
     parrafos.forEach((parrafo) => {
       const regex = new RegExp(highlightTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi')
       const matches = parrafo.texto.match(regex)
       if (matches) {
-        // Agregar cada ocurrencia con su índice dentro del párrafo
+        // Agregar el número de párrafo por cada ocurrencia encontrada
         for (let i = 0; i < matches.length; i++) {
-          found.push({paragraphNum: parrafo.numero, occurrenceIndex: i})
+          found.push(parrafo.numero)
         }
       }
     })
-    setOccurrences(found.map(item => item.paragraphNum))
+    setOccurrences(found)
     setCurrentOccurrenceIndex(0)
   }, [highlightTerm, parrafos])
 
@@ -117,6 +117,11 @@ export default function ReadingView({
         }
       }
       setCurrentOccurrenceIndex(globalIndex)
+      
+      // Actualizar resaltado después de un pequeño delay
+      setTimeout(() => {
+        updateHighlighting()
+      }, 100)
     }
   }, [currentParagraph, highlightTerm, occurrences, parrafos])
 
@@ -174,7 +179,7 @@ export default function ReadingView({
         let globalIndex = 0
         for (let i = 0; i < parrafos.length; i++) {
           const p = parrafos[i]
-          if (p.numero < paragraphNum) {
+          if (p.numero < paragraphNum!) {
             const paragraphRegex = new RegExp(escaped, 'gi')
             const paragraphMatches = p.texto.match(paragraphRegex)
             if (paragraphMatches) {

@@ -69,7 +69,37 @@ export default function WordImportForm({ autores }: WordImportFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!formData.file || !formData.titulo || !formData.autorId) return
+    
+    if (!formData.file || !formData.titulo || !formData.autorId) {
+      setResult({
+        success: false,
+        error: 'Por favor completa todos los campos requeridos'
+      })
+      return
+    }
+
+    // Validar tipo de archivo
+    const allowedTypes = [
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/msword'
+    ]
+    
+    if (!allowedTypes.includes(formData.file.type)) {
+      setResult({
+        success: false,
+        error: 'Solo se permiten archivos Word (.docx, .doc)'
+      })
+      return
+    }
+
+    // Validar tamaño de archivo (10MB)
+    if (formData.file.size > 10 * 1024 * 1024) {
+      setResult({
+        success: false,
+        error: 'El archivo es demasiado grande. Máximo 10MB.'
+      })
+      return
+    }
 
     setIsLoading(true)
     setResult(null)
@@ -99,8 +129,12 @@ export default function WordImportForm({ autores }: WordImportFormProps) {
           descripcion: '',
           esPublico: false
         })
+        // Limpiar input de archivo
+        const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement
+        if (fileInput) fileInput.value = ''
       }
     } catch (error) {
+      console.error('Error importing document:', error)
       setResult({
         success: false,
         error: 'Error de conexión. Intenta de nuevo.'
