@@ -31,8 +31,8 @@ export default function SearchBox({
   const [isLoading, setIsLoading] = useState(false)
   const [filters, setFilters] = useState({
     tipo: 'todos',
-    autor: '',
-    obra: ''
+    autor: '' as string | undefined,
+    obra: '' as string | undefined
   })
   const [searchHistory, setSearchHistory] = useState<string[]>([])
   const [autores, setAutores] = useState<Array<{value: string, label: string}>>([])
@@ -218,7 +218,13 @@ export default function SearchBox({
       {/* Filtros avanzados */}
       {showFilters && (
         <AdvancedFilters
-          onFilterChange={setFilters}
+          onFilterChange={(newFilters) => {
+            setFilters({
+              tipo: newFilters.tipo,
+              autor: newFilters.autor || '',
+              obra: newFilters.obra || ''
+            });
+          }}
           autores={autores}
           obras={obras}
           className="mb-4"
