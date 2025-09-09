@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { notFound } from 'next/navigation';
 import dbConnect from '@/lib/mongodb';
 import Autor from '@/models/Autor';

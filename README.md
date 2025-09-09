@@ -214,19 +214,51 @@ npm run clean        # Limpiar cache
 ### Vercel (Recomendado)
 
 1. Conecta tu repositorio a Vercel
-2. Configura las variables de entorno
-3. El despliegue es automático
-
-### Variables de Entorno para Producción
+2. Configura las variables de entorno en el dashboard de Vercel:
+   * Ve a tu proyecto en el dashboard de Vercel
+   * Navega a Settings > Environment Variables
+   * Añade las siguientes variables:
 
 ```env
-MONGODB_URI=tu-mongodb-atlas-uri
-NEXTAUTH_URL=https://tu-dominio.com
+# URL de conexión a MongoDB Atlas (requerido)
+MONGODB_URI=mongodb+srv://usuario:password@cluster.mongodb.net/panel-bahai
+
+# URL de tu aplicación en Vercel (requerido)
+# Ejemplo: https://panel-bahai.vercel.app
+NEXTAUTH_URL=https://tu-dominio.vercel.app
+
+# Clave secreta para NextAuth (requerido)
+# Genera una con: openssl rand -base64 32
 NEXTAUTH_SECRET=clave-secreta-segura
+
+# Clave secreta para JWT (requerido)
+# Genera una con: openssl rand -base64 32
 JWT_SECRET=jwt-secret-seguro
+
+# Credenciales del administrador (requerido)
 ADMIN_EMAIL=admin@tu-dominio.com
 ADMIN_PASSWORD=password-seguro
 ```
+
+3. Si no tienes una base de datos MongoDB:
+   * Crea una cuenta en [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
+   * Crea un nuevo cluster (el tier gratuito es suficiente para empezar)
+   * En "Security > Database Access", crea un usuario con permisos de lectura/escritura
+   * En "Security > Network Access", permite acceso desde todas las IPs (0.0.0.0/0)
+   * En "Databases", click en "Connect" y copia la URL de conexión
+   * Reemplaza `<password>` en la URL con la contraseña de tu usuario
+
+4. El despliegue se realizará automáticamente después de configurar las variables de entorno
+
+Nota sobre builds en Vercel y MongoDB Atlas:
+
+* Si tu cluster de Atlas tiene restricciones de red y el proceso de build de Vercel no puede alcanzar la base de datos, la build fallará porque el código intenta conectarse durante la generación de páginas.
+* Opciones para solucionar esto:
+   1. Añadir acceso desde todas las IPs en Atlas (0.0.0.0/0) — rápido pero menos seguro.
+   2. Añadir las IPs de los builders de Vercel a la whitelist de Atlas (más seguro pero requiere mantener la lista).
+   3. Como solución temporal, configura la variable de entorno `DISABLE_DB_DURING_BUILD=true` en el entorno de build de Vercel para evitar que el código intente conectarse durante el build. Ten en cuenta que esto evita consultas a la DB durante el build; la app seguirá conectándose en runtime.
+
+En `.env.production` puedes dejar `DISABLE_DB_DURING_BUILD=true` para que la build no intente conectar. En producción, asegúrate de usar la URL real en `MONGODB_URI` y retirar el flag cuando la red esté correctamente configurada.
 
 ## 🛠️ Desarrollo
 
