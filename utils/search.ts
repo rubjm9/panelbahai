@@ -76,7 +76,8 @@ export class SearchEngine {
 
       const results = this.index.search(searchQuery);
       
-      return results
+      // Primero filtramos los documentos nulos y luego mapeamos para asegurar que el tipo sea correcto
+      const filteredResults = results
         .slice(0, limit)
         .map(result => {
           const doc = this.documents.get(result.ref);
@@ -88,8 +89,10 @@ export class SearchEngine {
             score: result.score
           };
         })
-        .filter((result): result is SearchResult => result !== null)
-        .sort(this.sortResults.bind(this));
+        .filter((result): result is SearchResult => result !== null);
+      
+      // Ordenamos los resultados filtrados
+      return filteredResults.sort(this.sortResults.bind(this));
         
     } catch (error) {
       console.error('Error en búsqueda:', error);
