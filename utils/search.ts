@@ -23,6 +23,7 @@ export interface SearchResult {
   autorSlug: string;
   seccion?: string;
   fragmento: string;
+  texto: string; // Añadido para mantener compatibilidad con SearchDocument
   numero?: number;
   tipo: 'titulo' | 'seccion' | 'parrafo';
   score: number;
@@ -77,22 +78,31 @@ export class SearchEngine {
       const results = this.index.search(searchQuery);
       
       // Primero filtramos los documentos nulos y luego mapeamos para asegurar que el tipo sea correcto
-      const filteredResults = results
+      return results
         .slice(0, limit)
         .map(result => {
           const doc = this.documents.get(result.ref);
           if (!doc) return null;
 
-          return {
-            ...doc,
+          // Creamos un objeto que cumple con la interfaz SearchResult
+          const searchResult: SearchResult = {
+            id: doc.id,
+            titulo: doc.titulo,
+            autor: doc.autor,
+            obraSlug: doc.obraSlug,
+            autorSlug: doc.autorSlug,
+            seccion: doc.seccion,
+            texto: doc.texto,
             fragmento: this.extractFragment(doc.texto, query),
+            numero: doc.numero,
+            tipo: doc.tipo,
             score: result.score
           };
+          
+          return searchResult;
         })
-        .filter((result): result is SearchResult => result !== null);
-      
-      // Ordenamos los resultados filtrados
-      return filteredResults.sort(this.sortResults.bind(this));
+        .filter((result): result is SearchResult => result !== null)
+        .sort(this.sortResults.bind(this));
         
     } catch (error) {
       console.error('Error en búsqueda:', error);
