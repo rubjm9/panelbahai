@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IAutor extends Document {
+  _id: mongoose.Types.ObjectId;
   nombre: string;
   slug: string;
   biografia?: string;

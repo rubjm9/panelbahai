@@ -2,10 +2,10 @@
 
 import { useState } from 'react'
 import { Upload, FileText, AlertCircle, CheckCircle, Loader } from 'lucide-react'
-import Autor from '@/models/Autor'
+import Autor, { IAutor } from '@/models/Autor'
 
 interface WordImportFormProps {
-  autores: Autor[]
+  autores: IAutor[]
 }
 
 interface ImportResult {
@@ -28,7 +28,7 @@ export default function WordImportForm({ autores }: WordImportFormProps) {
   const [formData, setFormData] = useState({
     file: null as File | null,
     titulo: '',
-    autorId: '',
+    autorId: '' as string,
     descripcion: '',
     esPublico: false
   })
@@ -241,7 +241,7 @@ export default function WordImportForm({ autores }: WordImportFormProps) {
             >
               <option value="">Seleccionar autor</option>
               {autores.map((autor) => (
-                <option key={autor._id} value={autor._id}>
+                <option key={autor._id?.toString()} value={autor._id?.toString()}>
                   {autor.nombre}
                 </option>
               ))}
