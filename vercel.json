@@ -5,13 +5,5 @@
       "src": "package.json",
       "use": "@vercel/next"
     }
-  ],
-  "env": {
-    "MONGODB_URI": "@mongodb-uri",
-    "NEXTAUTH_URL": "@nextauth-url",
-    "NEXTAUTH_SECRET": "@nextauth-secret",
-    "JWT_SECRET": "@jwt-secret",
-    "ADMIN_EMAIL": "@admin-email",
-    "ADMIN_PASSWORD": "@admin-password"
-  }
+  ]
 }
