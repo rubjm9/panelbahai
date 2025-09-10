@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
   try {
     await dbConnect();
     
-    const { searchParams } = new URL(request.url);
+    const { searchParams } = request.nextUrl;
     const buildIndex = searchParams.get('buildIndex') === 'true';
 
     if (buildIndex) {

@@ -1,13 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Search, BookOpen, FileText, Users, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { searchEngine, SearchResult } from '@/utils/search'
 import SidebarFilters from '@/components/search/SidebarFilters'
 
-export default function SearchResultsPage() {
+function SearchContent() {
   const searchParams = useSearchParams()
   const query = searchParams.get('q') || ''
   
@@ -341,5 +341,24 @@ export default function SearchResultsPage() {
         </div>
       </main>
     </div>
+  )
+}
+
+function SearchFallback() {
+  return (
+    <div className="min-h-screen bg-primary-50 flex items-center justify-center">
+      <div className="text-center">
+        <Search className="w-16 h-16 text-primary-400 mx-auto mb-4" />
+        <p className="text-primary-600">Cargando búsqueda...</p>
+      </div>
+    </div>
+  )
+}
+
+export default function SearchResultsPage() {
+  return (
+    <Suspense fallback={<SearchFallback />}>
+      <SearchContent />
+    </Suspense>
   )
 }

@@ -1,15 +1,26 @@
 export const dynamic = 'force-dynamic'
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getUserFromRequest } from '@/lib/auth';
+import { cookies } from 'next/headers';
+import { verifyJWT } from '@/lib/auth';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    const user = getUserFromRequest(request);
+    const cookieStore = cookies();
+    const token = cookieStore.get('auth-token')?.value;
+    
+    if (!token) {
+      return NextResponse.json(
+        { success: false, error: 'No autorizado' },
+        { status: 401 }
+      );
+    }
+
+    const user = verifyJWT(token);
     
     if (!user) {
       return NextResponse.json(
-        { success: false, error: 'No autorizado' },
+        { success: false, error: 'Token inválido' },
         { status: 401 }
       );
     }
