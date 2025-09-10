@@ -5,7 +5,7 @@ import { ChevronLeft, BookOpen, Calendar, Eye, ArrowRight } from 'lucide-react'
 // Esta función se ejecutaría en el servidor para obtener datos reales
 async function getAutorData(slug: string) {
   try {
-    const response = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/autores`, {
+    const response = await fetch(`/api/autores`, {
       cache: 'no-store'
     });
     
@@ -20,7 +20,7 @@ async function getAutorData(slug: string) {
       return null;
     }
 
-    const obrasResponse = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/obras?autor=${slug}`, {
+    const obrasResponse = await fetch(`/api/obras?autor=${slug}`, {
       cache: 'no-store'
     });
     

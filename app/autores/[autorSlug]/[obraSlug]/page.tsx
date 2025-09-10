@@ -6,7 +6,7 @@ import SearchProvider from '@/components/search/SearchProvider'
 async function getObraData(autorSlug: string, obraSlug: string) {
   try {
     const response = await fetch(
-      `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/obras/${obraSlug}?autor=${autorSlug}`,
+      `/api/obras/${obraSlug}?autor=${autorSlug}`,
       { cache: 'no-store' }
     );
     

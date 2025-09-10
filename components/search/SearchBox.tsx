@@ -5,6 +5,7 @@ import { Search, X, BookOpen, FileText, Users, Clock, Star } from 'lucide-react'
 import { searchEngine, SearchResult } from '@/utils/search'
 import Link from 'next/link'
 import AdvancedFilters from './AdvancedFilters'
+import { useSearch } from '@/components/search/SearchProvider'
 
 interface SearchBoxProps {
   onResultClick?: () => void;
@@ -25,10 +26,12 @@ export default function SearchBox({
   showFilters = true,
   context
 }: SearchBoxProps) {
+  const { isInitialized } = useSearch()
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<SearchResult[]>([])
   const [isOpen, setIsOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const loadingIndexRef = useRef(false)
   const [filters, setFilters] = useState({
     tipo: 'todos',
     autor: '' as string | undefined,
@@ -82,9 +85,28 @@ export default function SearchBox({
 
   // Realizar búsqueda con debounce y filtros
   useEffect(() => {
-    const timeoutId = setTimeout(() => {
+    const timeoutId = setTimeout(async () => {
       if (query.length >= 3) {
         setIsLoading(true)
+
+        // Asegurar que el índice esté construido si el provider aún no lo hizo
+        if (!isInitialized && !loadingIndexRef.current) {
+          try {
+            loadingIndexRef.current = true
+            const res = await fetch('/api/search?buildIndex=true')
+            if (res.ok) {
+              const { data } = await res.json()
+              if (Array.isArray(data) && data.length > 0) {
+                searchEngine.buildIndex(data)
+              }
+            }
+          } catch (e) {
+            console.error('No se pudo construir el índice de búsqueda on-demand:', e)
+          } finally {
+            loadingIndexRef.current = false
+          }
+        }
+
         let searchResults = searchEngine.search(query, 20)
 
         // Aplicar filtros
@@ -132,7 +154,7 @@ export default function SearchBox({
     }, 300)
 
     return () => clearTimeout(timeoutId)
-  }, [query, filters, context])
+  }, [query, filters, context, isInitialized])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setQuery(e.target.value)
