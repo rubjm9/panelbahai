@@ -1,12 +1,18 @@
 import { notFound } from 'next/navigation'
 import ReadingView from '@/components/reading/ReadingView'
 import SearchProvider from '@/components/search/SearchProvider'
+import { headers } from 'next/headers'
 
 // Función para obtener datos de la obra
 async function getObraData(autorSlug: string, obraSlug: string) {
   try {
+    const headersList = headers()
+    const host = headersList.get('host') || 'localhost:3000'
+    const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http'
+    const baseUrl = `${protocol}://${host}`
+    
     const response = await fetch(
-      `/api/obras/${obraSlug}?autor=${autorSlug}`,
+      `${baseUrl}/api/obras/${obraSlug}?autor=${autorSlug}`,
       { cache: 'no-store' }
     );
     

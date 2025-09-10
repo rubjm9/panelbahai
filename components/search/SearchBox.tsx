@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { Search, X, BookOpen, FileText, Users, Clock, Star } from 'lucide-react'
 import { searchEngine, SearchResult } from '@/utils/search'
 import Link from 'next/link'
@@ -69,6 +69,15 @@ export default function SearchBox({
     }
     
     loadFilterData()
+  }, [])
+
+  // Memoized handler to avoid creating a new function each render (prevents effect loops in children)
+  const handleAdvancedFiltersChange = useCallback((newFilters: { tipo: string; autor?: string; obra?: string }) => {
+    setFilters({
+      tipo: newFilters.tipo,
+      autor: newFilters.autor || '',
+      obra: newFilters.obra || ''
+    });
   }, [])
 
   // Cerrar resultados al hacer clic fuera
@@ -240,13 +249,7 @@ export default function SearchBox({
       {/* Filtros avanzados */}
       {showFilters && (
         <AdvancedFilters
-          onFilterChange={(newFilters) => {
-            setFilters({
-              tipo: newFilters.tipo,
-              autor: newFilters.autor || '',
-              obra: newFilters.obra || ''
-            });
-          }}
+          onFilterChange={handleAdvancedFiltersChange}
           autores={autores}
           obras={obras}
           className="mb-4"

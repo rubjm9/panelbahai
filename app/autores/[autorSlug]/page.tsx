@@ -1,11 +1,17 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { ChevronLeft, BookOpen, Calendar, Eye, ArrowRight } from 'lucide-react'
+import { headers } from 'next/headers'
 
 // Esta función se ejecutaría en el servidor para obtener datos reales
 async function getAutorData(slug: string) {
   try {
-    const response = await fetch(`/api/autores`, {
+    const headersList = headers()
+    const host = headersList.get('host') || 'localhost:3000'
+    const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http'
+    const baseUrl = `${protocol}://${host}`
+    
+    const response = await fetch(`${baseUrl}/api/autores`, {
       cache: 'no-store'
     });
     
@@ -20,7 +26,7 @@ async function getAutorData(slug: string) {
       return null;
     }
 
-    const obrasResponse = await fetch(`/api/obras?autor=${slug}`, {
+    const obrasResponse = await fetch(`${baseUrl}/api/obras?autor=${slug}`, {
       cache: 'no-store'
     });
     

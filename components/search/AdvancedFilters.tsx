@@ -49,7 +49,7 @@ export default function AdvancedFilters({
   // Actualizar filtros cuando cambien
   useEffect(() => {
     onFilterChange(filters)
-  }, [filters, onFilterChange])
+  }, [filters])
 
   const handleFilterChange = (key: string, value: string) => {
     setFilters(prev => ({ ...prev, [key]: value }))

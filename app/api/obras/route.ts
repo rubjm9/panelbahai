@@ -3,9 +3,72 @@ import dbConnect from '@/lib/mongodb';
 import Obra from '@/models/Obra';
 import Autor from '@/models/Autor';
 
+// Datos de fallback cuando MongoDB no esté disponible
+const fallbackObras = [
+  {
+    _id: '1',
+    titulo: "El Kitab-i-Iqan",
+    slug: "kitab-i-iqan",
+    descripcion: "El Libro de la Certeza, una de las obras más importantes sobre temas espirituales y teológicos.",
+    esPublico: true,
+    orden: 1,
+    autor: {
+      _id: '1',
+      nombre: "Bahá'u'lláh",
+      slug: "bahaullah"
+    },
+    fechaCreacion: new Date('2023-01-01')
+  },
+  {
+    _id: '2',
+    titulo: "Pasajes de los Escritos de Bahá'u'lláh",
+    slug: "pasajes-bahaullah",
+    descripcion: "Selección de pasajes representativos sobre diversos temas espirituales.",
+    esPublico: true,
+    orden: 2,
+    autor: {
+      _id: '1',
+      nombre: "Bahá'u'lláh",
+      slug: "bahaullah"
+    },
+    fechaCreacion: new Date('2023-01-01')
+  },
+  {
+    _id: '3',
+    titulo: "Contestación a Unas Preguntas",
+    slug: "contestacion-preguntas",
+    descripcion: "Respuestas a preguntas sobre temas espirituales y filosóficos.",
+    esPublico: true,
+    orden: 1,
+    autor: {
+      _id: '3',
+      nombre: "'Abdu'l-Bahá",
+      slug: "abdul-baha"
+    },
+    fechaCreacion: new Date('2023-01-01')
+  }
+];
+
 export async function GET(request: NextRequest) {
   try {
-    await dbConnect();
+    const connection = await dbConnect();
+    
+    // Si la conexión está deshabilitada durante el build, usar fallback
+    if (connection && !connection.connected) {
+      const { searchParams } = new URL(request.url);
+      const autorSlug = searchParams.get('autor');
+      
+      let filteredObras = fallbackObras;
+      if (autorSlug) {
+        filteredObras = fallbackObras.filter(obra => obra.autor.slug === autorSlug);
+      }
+      
+      return NextResponse.json({
+        success: true,
+        data: filteredObras,
+        source: 'fallback'
+      });
+    }
 
     const { searchParams } = new URL(request.url);
     const autorId = searchParams.get('autor');
@@ -28,15 +91,27 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      data: obras
+      data: obras,
+      source: 'database'
     });
 
   } catch (error) {
-    console.error('Error fetching obras:', error);
-    return NextResponse.json(
-      { success: false, error: 'Error interno del servidor' },
-      { status: 500 }
-    );
+    console.error('Error fetching obras, using fallback data:', error);
+    
+    // En caso de error, devolver datos de fallback filtrados
+    const { searchParams } = new URL(request.url);
+    const autorSlug = searchParams.get('autor');
+    
+    let filteredObras = fallbackObras;
+    if (autorSlug) {
+      filteredObras = fallbackObras.filter(obra => obra.autor.slug === autorSlug);
+    }
+    
+    return NextResponse.json({
+      success: true,
+      data: filteredObras,
+      source: 'fallback'
+    });
   }
 }
 
