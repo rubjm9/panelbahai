@@ -9,24 +9,25 @@ export const metadata = {
 export default function ContactoPage() {
   return (
     <div className="min-h-screen bg-white">
-      {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center py-6">
-            <Link 
-              href="/"
-              className="flex items-center text-bahai-darkgold hover:text-bahai-navy transition-colors mr-6"
-            >
-              <ArrowLeft className="w-5 h-5 mr-2" />
-              Volver al inicio
-            </Link>
-            <div>
-              <h1 className="text-2xl font-bold text-bahai-navy">Contacto</h1>
-              <p className="text-bahai-darkgray">Conecta con el Panel de Traducción</p>
-            </div>
+      {/* Hero azul unificado */}
+      <section className="bg-primary-900 text-white">
+        <div className="container-elegant">
+          <div className="section-elegant text-center">
+            <h1 className="display-title text-white mb-4">Contacto</h1>
+            <p className="text-xl text-primary-200 max-w-3xl mx-auto">Conecta con el Panel de Traducción</p>
           </div>
         </div>
-      </header>
+      </section>
+      {/* Breadcrumbs */}
+      <nav className="header-elegant">
+        <div className="container-elegant">
+          <div className="flex items-center py-4">
+            <Link href="/" className="text-primary-600 hover:text-primary-800 transition-colors">Inicio</Link>
+            <span className="mx-2 text-primary-400">/</span>
+            <span className="text-primary-900 font-medium">Contacto</span>
+          </div>
+        </div>
+      </nav>
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Introducción */}

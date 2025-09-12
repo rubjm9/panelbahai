@@ -173,36 +173,34 @@ export default async function AutorPage({ params }: { params: { autorSlug: strin
 
   return (
     <div className="min-h-screen bg-neutral-50">
-      {/* Header elegante */}
-      <header className="header-elegant">
+      {/* Hero azul unificado */}
+      <section className="bg-primary-900 text-white">
         <div className="container-elegant">
-          <div className="flex items-center py-6">
-            <Link 
-              href="/autores"
-              className="flex items-center text-primary-600 hover:text-primary-800 transition-colors mr-6"
-            >
-              <ChevronLeft className="w-5 h-5 mr-2" />
-              Volver a Autores
-            </Link>
-            <div className="breadcrumb">
-              <Link href="/">Inicio</Link>
-              <span className="mx-2">/</span>
-              <Link href="/autores">Autores</Link>
-              <span className="mx-2">/</span>
-              <span className="text-primary-900 font-medium">{autor.nombre}</span>
-            </div>
+          <div className="section-elegant text-center">
+            <h1 className="display-title text-white mb-4">{autor.nombre}</h1>
+            {autor.fechas && (
+              <p className="text-xl text-primary-200 max-w-3xl mx-auto">{autor.fechas}</p>
+            )}
           </div>
         </div>
-      </header>
+      </section>
+      {/* Breadcrumbs */}
+      <nav className="header-elegant">
+        <div className="container-elegant">
+          <div className="flex items-center py-4">
+            <Link href="/" className="text-primary-600 hover:text-primary-800 transition-colors">Inicio</Link>
+            <span className="mx-2 text-primary-400">/</span>
+            <Link href="/autores" className="text-primary-600 hover:text-primary-800 transition-colors">Autores</Link>
+            <span className="mx-2 text-primary-400">/</span>
+            <span className="text-primary-900 font-medium">{autor.nombre}</span>
+          </div>
+        </div>
+      </nav>
 
       {/* Hero Section elegante */}
       <section className="section-elegant bg-white">
         <div className="container-elegant">
           <div className="text-center mb-16">
-            <h1 className="display-title mb-4">{autor.nombre}</h1>
-            {autor.fechas && (
-              <p className="text-xl text-primary-600 mb-8">{autor.fechas}</p>
-            )}
             <div className="max-w-4xl mx-auto">
               <p className="text-lg text-primary-700 leading-relaxed">
                 {autor.biografia}

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, Suspense } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { Search, BookOpen, FileText, Users, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { searchEngine, SearchResult } from '@/utils/search'
@@ -10,6 +10,7 @@ import SidebarFilters from '@/components/search/SidebarFilters'
 function SearchContent() {
   const searchParams = useSearchParams()
   const query = searchParams.get('q') || ''
+  const router = useRouter()
   
   const [results, setResults] = useState<SearchResult[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -58,58 +59,53 @@ function SearchContent() {
     loadFilterData()
   }, [])
 
-  // Realizar búsqueda
+  // Construir índice una sola vez
+  const [indexReady, setIndexReady] = useState(false)
   useEffect(() => {
+    let cancelled = false
+    async function initIndex() {
+      try {
+        const response = await fetch('/api/search?buildIndex=true')
+        const data = await response.json()
+        if (!cancelled && data?.success && Array.isArray(data.data) && data.data.length > 0) {
+          searchEngine.buildIndex(data.data)
+          setIndexReady(true)
+        }
+      } catch (e) {
+        console.error('Error inicializando índice en /buscar:', e)
+      }
+    }
+    if (!indexReady) initIndex()
+    return () => { cancelled = true }
+  }, [indexReady])
+
+  // Realizar búsqueda cuando índice esté listo
+  useEffect(() => {
+    if (!indexReady) return
     if (query.length >= 3) {
       setIsLoading(true)
-      
-      const performSearch = async () => {
-        try {
-          // Asegurar que el índice esté construido
-          const response = await fetch('/api/search?buildIndex=true')
-          const data = await response.json()
-          
-          if (data.success) {
-            // Construir el índice con los datos
-            searchEngine.buildIndex(data.data)
-            
-            // Realizar búsqueda
-            let searchResults = searchEngine.search(query, 100)
-            
-            // Aplicar filtros
-            if (filters.tipo !== 'todos') {
-              searchResults = searchResults.filter(result => result.tipo === filters.tipo)
-            }
-            
-            if (filters.autor) {
-              searchResults = searchResults.filter(result => 
-                result.autorSlug === filters.autor
-              )
-            }
-            
-            if (filters.obra) {
-              searchResults = searchResults.filter(result => 
-                result.obraSlug === filters.obra
-              )
-            }
-            
-            setResults(searchResults)
-          } else {
-            setResults([])
-          }
-        } catch (error) {
-          console.error('Error searching:', error)
-          setResults([])
-        } finally {
-          setIsLoading(false)
+      try {
+        let searchResults = searchEngine.search(query, 100)
+        if (filters.tipo !== 'todos') {
+          searchResults = searchResults.filter(result => result.tipo === filters.tipo)
         }
+        if (filters.autor) {
+          searchResults = searchResults.filter(result => result.autorSlug === filters.autor)
+        }
+        if (filters.obra) {
+          searchResults = searchResults.filter(result => result.obraSlug === filters.obra)
+        }
+        setResults(searchResults)
+      } catch (error) {
+        console.error('Error searching:', error)
+        setResults([])
+      } finally {
+        setIsLoading(false)
       }
-      
-      performSearch()
     } else {
       setResults([])
     }
-  }, [query, filters])
+  }, [query, filters, indexReady])
 
   const getResultUrl = (result: SearchResult): string => {
     try {
@@ -166,7 +162,7 @@ function SearchContent() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && searchQuery.length >= 3) {
-                      window.location.href = `/buscar?q=${encodeURIComponent(searchQuery)}`
+                      router.push(`/buscar?q=${encodeURIComponent(searchQuery)}`)
                     }
                   }}
                   className="w-full pl-10 pr-4 py-3 border border-primary-200 rounded-sm bg-white text-primary-900 focus:ring-2 focus:ring-accent-600 focus:border-accent-600"
