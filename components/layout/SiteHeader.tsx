@@ -34,23 +34,16 @@ export default function SiteHeader() {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8 relative">
-            <Link href="/acerca" className="nav-link">Acerca del Panel</Link>
-            <Link href="/proximas" className="nav-link">Próximas Traducciones</Link>
-            <Link href="/contacto" className="nav-link">Contacto</Link>
-
-            {/* Enlace directo a Autores */}
-            <Link href="/autores" className="nav-link">Autores</Link>
-
             {/* Autores dropdown */}
             <div className="relative"
                  onMouseEnter={() => setOpenAuthors(true)}
                  onMouseLeave={() => setOpenAuthors(false)}>
-              <button className="nav-link inline-flex items-center">
+              <Link href="/autores" className="nav-link inline-flex items-center">
                 Autores
                 <ChevronDown className={`w-4 h-4 ml-1 transition-transform ${openAuthors ? 'rotate-180' : ''}`} />
-              </button>
+              </Link>
               {openAuthors && (
-                <div className="absolute right-0 top-full w-64 bg-white border border-primary-200 rounded-sm shadow-lg p-2"
+                <div className="absolute left-0 top-full w-64 bg-white border border-primary-200 rounded-sm shadow-lg p-2"
                      onMouseEnter={() => setOpenAuthors(true)}
                      onMouseLeave={() => setOpenAuthors(false)}>
                   <ul className="max-h-72 overflow-y-auto">
@@ -66,7 +59,9 @@ export default function SiteHeader() {
               )}
             </div>
 
-            {/* Dashboard */}
+            <Link href="/acerca" className="nav-link">Acerca del Panel</Link>
+            <Link href="/proximas" className="nav-link">Próximas Traducciones</Link>
+            <Link href="/contacto" className="nav-link">Contacto</Link>
             <Link href="/admin" className="nav-link text-accent-700 hover:text-accent-800">Dashboard</Link>
           </nav>
 
@@ -84,12 +79,13 @@ export default function SiteHeader() {
         {mobileOpen && (
           <div className="md:hidden border-t border-primary-100 py-3">
             <nav className="flex flex-col space-y-2">
-              <Link href="/acerca" className="nav-link" onClick={() => setMobileOpen(false)}>Acerca del Panel</Link>
-              <Link href="/proximas" className="nav-link" onClick={() => setMobileOpen(false)}>Próximas Traducciones</Link>
-              <Link href="/contacto" className="nav-link" onClick={() => setMobileOpen(false)}>Contacto</Link>
-              <Link href="/autores" className="nav-link" onClick={() => setMobileOpen(false)}>Autores</Link>
-              <div>
-                <div className="text-sm font-medium text-primary-700 mt-2 mb-1">Autores principales</div>
+              <Link href="/autores" className="nav-link" onClick={() => setMobileOpen(false)}>
+                <div className="flex justify-between items-center">
+                  <span>Autores</span>
+                  <ChevronDown className="w-4 h-4" />
+                </div>
+              </Link>
+              <div className="pl-4">
                 <ul className="grid grid-cols-1 gap-1">
                   {authors.map(a => (
                     <li key={a.slug}>
@@ -100,6 +96,9 @@ export default function SiteHeader() {
                   ))}
                 </ul>
               </div>
+              <Link href="/acerca" className="nav-link" onClick={() => setMobileOpen(false)}>Acerca del Panel</Link>
+              <Link href="/proximas" className="nav-link" onClick={() => setMobileOpen(false)}>Próximas Traducciones</Link>
+              <Link href="/contacto" className="nav-link" onClick={() => setMobileOpen(false)}>Contacto</Link>
               <Link href="/admin" className="nav-link text-accent-700" onClick={() => setMobileOpen(false)}>Dashboard</Link>
             </nav>
           </div>

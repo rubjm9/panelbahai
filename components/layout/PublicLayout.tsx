@@ -1,6 +1,8 @@
-import './globals.css'
+import '../../app/globals.css'
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
+import SiteHeader from '@/components/layout/SiteHeader'
+import SiteFooter from '@/components/layout/SiteFooter'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -10,16 +12,16 @@ export const metadata: Metadata = {
   keywords: ['Bahá\'í', 'literatura', 'traducción', 'español', 'textos sagrados'],
 }
 
-export default function RootLayout({
+export default function PublicLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
   return (
-    <html lang="es">
-      <body className={inter.className}>
-        {children}
-      </body>
-    </html>
+    <div>
+      <SiteHeader />
+      {children}
+      <SiteFooter />
+    </div>
   )
 }

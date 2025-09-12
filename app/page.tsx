@@ -3,111 +3,115 @@ import { Search, BookOpen, Users, Globe, ArrowRight } from 'lucide-react'
 import SearchBox from '@/components/search/SearchBox'
 import SearchProvider from '@/components/search/SearchProvider'
 
+import PublicLayout from '@/components/layout/PublicLayout'
+
 export default function HomePage() {
   return (
-    <SearchProvider>
-      <div className="min-h-screen bg-neutral-50">
-        {/* Hero principal con fondo azul */}
-        <section className="bg-hero-gradient text-white">
-          <div className="container-elegant">
-            <div className="section-elegant text-center">
-              <h2 className="display-title text-white mb-4">
-                Panel Internacional de Traducción de 
-                <br />
-                Literatura Bahá'í al español
-              </h2>
-              <p className="display-subtitle max-w-3xl mx-auto text-primary-200">
-                Accede a textos sagrados y literatura bahá'í traducida al español por el 
-                Panel de Traducción oficial, con herramientas avanzadas de búsqueda y lectura.
-              </p>
-              {/* Buscador principal */}
-              <div className="mt-10">
-                <SearchBox 
-                  placeholder="Buscar en toda la biblioteca..."
-                  className="max-w-2xl mx-auto"
-                  context="homepage"
-                  autoFocus={true}
-                />
+    <PublicLayout>
+      <SearchProvider>
+        <div className="min-h-screen bg-neutral-50">
+          {/* Hero principal con fondo azul */}
+          <section className="bg-hero-gradient text-white">
+            <div className="container-elegant">
+              <div className="section-elegant text-center">
+                <h2 className="display-title text-white mb-4">
+                  Panel Internacional de Traducción de 
+                  <br />
+                  Literatura Bahá'í al español
+                </h2>
+                <p className="display-subtitle max-w-3xl mx-auto text-primary-200">
+                  Accede a textos sagrados y literatura bahá'í traducida al español por el 
+                  Panel de Traducción oficial, con herramientas avanzadas de búsqueda y lectura.
+                </p>
+                {/* Buscador principal */}
+                <div className="mt-10">
+                  <SearchBox 
+                    placeholder="Buscar en toda la biblioteca..."
+                    className="max-w-2xl mx-auto"
+                    context="homepage"
+                    autoFocus={true}
+                  />
+                </div>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
 
-        {/* Contenido principal */}
-        <main className="section-elegant">
-          <div className="container-elegant">
-            {/* Navegación por Autores elegante */}
-            <div className="mb-20">
-              <h3 className="text-2xl font-normal text-primary-900 mb-12 text-center">
-                Explora por Autor
-              </h3>
-              <div className="grid-elegant md:grid-cols-2 lg:grid-cols-3">
-                <AuthorCard
-                  nombre="Bahá'u'lláh"
-                  slug="bahaullah"
-                  descripcion="Fundador de la Fe Bahá'í y autor de numerosos textos sagrados."
-                  icono={BookOpen}
-                />
-                <AuthorCard
-                  nombre="El Báb"
-                  slug="el-bab"
-                  descripcion="Precursor de Bahá'u'lláh y autor de textos fundamentales."
-                  icono={BookOpen}
-                />
-                <AuthorCard
-                  nombre="'Abdu'l-Bahá"
-                  slug="abdul-baha"
-                  descripcion="Hijo mayor de Bahá'u'lláh e intérprete autorizado de Sus enseñanzas."
-                  icono={BookOpen}
-                />
-                <AuthorCard
-                  nombre="Shoghi Effendi"
-                  slug="shoghi-effendi"
-                  descripcion="Guardián de la Fe Bahá'í y traductor de textos sagrados."
-                  icono={BookOpen}
-                />
-                <AuthorCard
-                  nombre="Casa Universal de Justicia"
-                  slug="casa-justicia"
-                  descripcion="Cuerpo administrativo supremo de la Fe Bahá'í."
-                  icono={Users}
-                />
-                <AuthorCard
-                  nombre="Compilaciones"
-                  slug="compilaciones"
-                  descripcion="Selecciones temáticas de textos de varios autores bahá'ís."
-                  icono={Globe}
-                />
+          {/* Contenido principal */}
+          <main className="section-elegant">
+            <div className="container-elegant">
+              {/* Navegación por Autores elegante */}
+              <div className="mb-20">
+                <h3 className="text-2xl font-normal text-primary-900 mb-12 text-center">
+                  Explora por Autor
+                </h3>
+                <div className="grid-elegant md:grid-cols-2 lg:grid-cols-3">
+                  <AuthorCard
+                    nombre="Bahá'u'lláh"
+                    slug="bahaullah"
+                    descripcion="Fundador de la Fe Bahá'í y autor de numerosos textos sagrados."
+                    icono={BookOpen}
+                  />
+                  <AuthorCard
+                    nombre="El Báb"
+                    slug="el-bab"
+                    descripcion="Precursor de Bahá'u'lláh y autor de textos fundamentales."
+                    icono={BookOpen}
+                  />
+                  <AuthorCard
+                    nombre="'Abdu'l-Bahá"
+                    slug="abdul-baha"
+                    descripcion="Hijo mayor de Bahá'u'lláh e intérprete autorizado de Sus enseñanzas."
+                    icono={BookOpen}
+                  />
+                  <AuthorCard
+                    nombre="Shoghi Effendi"
+                    slug="shoghi-effendi"
+                    descripcion="Guardián de la Fe Bahá'í y traductor de textos sagrados."
+                    icono={BookOpen}
+                  />
+                  <AuthorCard
+                    nombre="Casa Universal de Justicia"
+                    slug="casa-justicia"
+                    descripcion="Cuerpo administrativo supremo de la Fe Bahá'í."
+                    icono={Users}
+                  />
+                  <AuthorCard
+                    nombre="Compilaciones"
+                    slug="compilaciones"
+                    descripcion="Selecciones temáticas de textos de varios autores bahá'ís."
+                    icono={Globe}
+                  />
+                </div>
               </div>
-            </div>
 
-            {/* Características elegantes */}
-            <div className="card">
-              <h3 className="text-2xl font-normal text-primary-900 mb-12 text-center">
-                Características de la Plataforma
-              </h3>
-              <div className="grid-elegant md:grid-cols-3">
-                <FeatureCard
-                  icono={Search}
-                  titulo="Búsqueda Avanzada"
-                  descripcion="Encuentra cualquier texto con búsqueda en tiempo real y resultados priorizados."
-                />
-                <FeatureCard
-                  icono={BookOpen}
-                  titulo="Modo Lectura"
-                  descripcion="Párrafos numerados con anclajes directos e índice de navegación lateral."
-                />
-                <FeatureCard
-                  icono={Globe}
-                  titulo="Multilingüe"
-                  descripcion="Interfaz disponible en español e inglés, optimizada para todos los dispositivos."
-                />
+              {/* Características elegantes */}
+              <div className="card">
+                <h3 className="text-2xl font-normal text-primary-900 mb-12 text-center">
+                  Características de la Plataforma
+                </h3>
+                <div className="grid-elegant md:grid-cols-3">
+                  <FeatureCard
+                    icono={Search}
+                    titulo="Búsqueda Avanzada"
+                    descripcion="Encuentra cualquier texto con búsqueda en tiempo real y resultados priorizados."
+                  />
+                  <FeatureCard
+                    icono={BookOpen}
+                    titulo="Modo Lectura"
+                    descripcion="Párrafos numerados con anclajes directos e índice de navegación lateral."
+                  />
+                  <FeatureCard
+                    icono={Globe}
+                    titulo="Multilingüe"
+                    descripcion="Interfaz disponible en español e inglés, optimizada para todos los dispositivos."
+                  />
+                </div>
               </div>
             </div>
-          </div>
-        </main>
-      </div>
-    </SearchProvider>
+          </main>
+        </div>
+      </SearchProvider>
+    </PublicLayout>
   )
 }
 

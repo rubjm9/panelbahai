@@ -411,12 +411,12 @@ export default function ReadingView({
         </div>
       </header>
 
-      <div className="flex max-w-7xl mx-auto">
+      <div className="flex max-w-5xl mx-auto px-4">
         {/* Contenido principal elegante */}
         <main 
           ref={contentRef}
-          className={`flex-1 transition-all duration-300 ${
-            tocOpen ? 'lg:mr-80' : ''
+          className={`flex-1 transition-all duration-300 max-w-3xl mx-auto ${
+            tocOpen ? 'lg:pr-12' : 'w-full'
           }`}
         >
           <div className="reading-content">
@@ -429,7 +429,7 @@ export default function ReadingView({
               </p>
             </header>
 
-            <div className="prose prose-lg max-w-none">
+            <div className="prose prose-lg max-w-none w-full">
               {parrafos.map((parrafo, index) => {
                 // Check if this paragraph starts a new section
                 const previousParagraph = index > 0 ? parrafos[index - 1] : null
