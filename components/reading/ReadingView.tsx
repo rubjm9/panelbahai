@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { ChevronLeft, ChevronRight, Menu, X, BookOpen, ChevronUp, ChevronDown } from 'lucide-react'
+import { ChevronRight, Menu, X, BookOpen, ChevronUp, ChevronDown } from 'lucide-react'
 import Link from 'next/link'
 
 interface Paragraph {
@@ -49,6 +49,7 @@ export default function ReadingView({
   const [currentOccurrenceIndex, setCurrentOccurrenceIndex] = useState<number>(0)
   const [showFinderBar, setShowFinderBar] = useState<boolean>(false)
   const [activeHighlightIndex, setActiveHighlightIndex] = useState<number>(0)
+  const [isScrolled, setIsScrolled] = useState<boolean>(false)
 
   // Sincronizar término de resaltado desde props/URL/sessionStorage
   useEffect(() => {
@@ -239,6 +240,17 @@ export default function ReadingView({
     } catch {}
   }, [currentParagraph, highlightQuery])
 
+  // Detectar scroll para hacer el header más fino
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollTop = window.scrollY
+      setIsScrolled(scrollTop > 20)
+    }
+
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -370,36 +382,27 @@ export default function ReadingView({
 
   return (
     <div className="min-h-screen bg-neutral-50">
-      {/* Header elegante con breadcrumbs */}
-      <header className="header-elegant sticky top-0 z-40">
+      {/* Breadcrumb fijo con altura reducida al hacer scroll */}
+      <div className={`sticky top-[73px] z-30 bg-white border-b border-neutral-200 transition-all duration-300 ${isScrolled ? 'py-2' : 'py-4'}`}>
         <div className="container-elegant">
-          <div className="flex items-center justify-between py-6">
-            <div className="flex items-center space-x-6">
-              <Link 
-                href={`/autores/${obra.autorSlug}`}
-                className="flex items-center text-primary-600 hover:text-primary-800 transition-colors"
-              >
-                <ChevronLeft className="w-5 h-5 mr-2" />
-                Volver
+          <div className="flex items-center justify-between">
+            <nav className="breadcrumb">
+              <Link href="/">Inicio</Link>
+              <span className="mx-2">/</span>
+              <Link href={`/autores/${obra.autorSlug}`}>
+                {obra.autor}
               </Link>
-              <nav className="breadcrumb">
-                <Link href="/">Inicio</Link>
-                <span className="mx-2">/</span>
-                <Link href={`/autores/${obra.autorSlug}`}>
-                  {obra.autor}
-                </Link>
-                <span className="mx-2">/</span>
-                <span className="text-primary-900 font-medium">{obra.titulo}</span>
-                {getCurrentSectionTitle() && (
-                  <>
-                    <span className="mx-2">/</span>
-                    <span className="text-primary-600">{getCurrentSectionTitle()}</span>
-                  </>
-                )}
-                <span className="mx-2">•</span>
-                <span className="text-primary-500">Párrafo {activeParagraph}</span>
-              </nav>
-            </div>
+              <span className="mx-2">/</span>
+              <span className="text-primary-900 font-medium">{obra.titulo}</span>
+              {getCurrentSectionTitle() && (
+                <>
+                  <span className="mx-2">/</span>
+                  <span className="text-primary-600">{getCurrentSectionTitle()}</span>
+                </>
+              )}
+              <span className="mx-2">•</span>
+              <span className="text-primary-500">Párrafo {activeParagraph}</span>
+            </nav>
             
             <button
               onClick={() => setTocOpen(!tocOpen)}
@@ -409,17 +412,15 @@ export default function ReadingView({
             </button>
           </div>
         </div>
-      </header>
+      </div>
 
       <div className="flex max-w-7xl mx-auto">
         {/* Contenido principal elegante */}
         <main 
           ref={contentRef}
-          className={`flex-1 transition-all duration-300 ${
-            tocOpen ? 'lg:mr-80' : ''
-          }`}
+          className="flex-1 transition-all duration-300"
         >
-          <div className="reading-content">
+          <div className="reading-content px-4 lg:px-8">
             <header className="mb-16 text-center">
               <h1 className="display-title mb-4">
                 {obra.titulo}
@@ -473,8 +474,8 @@ export default function ReadingView({
 
         {/* Índice lateral elegante */}
         <aside className={`
-          fixed lg:sticky top-0 right-0 h-full lg:h-screen w-80 bg-white lg:bg-neutral-50 
-          border-l border-neutral-200 transition-transform duration-300 z-30
+          fixed lg:sticky top-[120px] right-0 h-full lg:h-[calc(100vh-7.5rem)] w-80 bg-white lg:bg-neutral-50 
+          border-l border-neutral-200 transition-transform duration-300
           ${tocOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0 lg:w-0 lg:opacity-0'}
         `}>
           <div className="table-of-contents p-8 h-full overflow-y-auto lg:overflow-y-auto">
