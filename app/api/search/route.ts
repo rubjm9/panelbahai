@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import mongoose from 'mongoose';
 import { SearchDocument } from '@/utils/search';
+import SearchIndex from '@/models/SearchIndex';
 
 // Registrar modelos explícitamente para evitar errores de schema
 const AutorSchema = new mongoose.Schema({
@@ -147,6 +148,25 @@ export async function GET(request: NextRequest) {
         });
       }
 
+      // Primero intentar obtener el índice de la base de datos
+      const existingIndex = await SearchIndex.findOne({ version: '1.0' });
+      
+      if (existingIndex && existingIndex.documents.length > 0) {
+        console.log(`📚 Usando índice existente con ${existingIndex.documents.length} documentos`);
+        return NextResponse.json({
+          success: true,
+          data: existingIndex.documents,
+          count: existingIndex.count,
+          obras: existingIndex.obras,
+          secciones: existingIndex.secciones,
+          parrafos: existingIndex.parrafos,
+          lastUpdated: existingIndex.lastUpdated,
+          source: 'database'
+        });
+      }
+
+      console.log('🔄 Índice no encontrado en BD, construyendo nuevo índice...');
+
       // Construir índice de búsqueda
       const documents: SearchDocument[] = [];
 
@@ -227,10 +247,29 @@ export async function GET(request: NextRequest) {
         }
       }
 
+      // Guardar el índice en la base de datos
+      await SearchIndex.findOneAndUpdate(
+        { version: '1.0' },
+        {
+          documents,
+          lastUpdated: new Date(),
+          count: documents.length,
+          obras: obras.length,
+          secciones: secciones.length,
+          parrafos: parrafos.length
+        },
+        { upsert: true, new: true }
+      );
+
+      console.log(`💾 Nuevo índice guardado con ${documents.length} documentos`);
+
       return NextResponse.json({
         success: true,
         data: documents,
         count: documents.length,
+        obras: obras.length,
+        secciones: secciones.length,
+        parrafos: parrafos.length,
         source: 'database'
       });
     }
