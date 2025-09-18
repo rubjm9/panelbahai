@@ -65,7 +65,7 @@ function SearchContent() {
     let cancelled = false
     
     // Verificar si el índice ya está construido
-    if (searchEngine.index && searchEngine.documents.size > 0) {
+    if ((searchEngine as any).index && (searchEngine as any).documents.size > 0) {
       setIndexReady(true)
       return
     }

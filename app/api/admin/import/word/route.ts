@@ -215,11 +215,10 @@ export async function POST(request: NextRequest) {
     }
     
     // Convertir archivo a buffer
-    const buffer = Buffer.from(await file.arrayBuffer());
+    const arrayBuffer = await file.arrayBuffer();
     
     // Convertir Word a HTML usando mammoth con configuración mejorada
-    const result = await mammoth.convertToHtml({ 
-      buffer,
+    const result = await mammoth.convertToHtml(arrayBuffer as any, {
       styleMap: [
         "p[style-name='Heading 1'] => h2:fresh",
         "p[style-name='Heading 2'] => h3:fresh", 

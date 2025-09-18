@@ -34,7 +34,7 @@ export default async function AdminObrasPage() {
     return (
       <div className="p-8">
         <h1 className="text-2xl font-bold text-red-600 mb-4">Error</h1>
-        <p className="text-gray-600">Error al cargar las obras: {error.message}</p>
+        <p className="text-gray-600">Error al cargar las obras: {error instanceof Error ? error.message : 'Error desconocido'}</p>
       </div>
     );
   }
