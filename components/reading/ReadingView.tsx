@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { ChevronRight, Menu, X, BookOpen, ChevronUp, ChevronDown } from 'lucide-react'
+import { ChevronRight, Menu, X, BookOpen, ChevronUp, ChevronDown, PanelLeft, PanelLeftClose } from 'lucide-react'
 import Link from 'next/link'
 
 interface Paragraph {
@@ -50,6 +50,9 @@ export default function ReadingView({
   const [showFinderBar, setShowFinderBar] = useState<boolean>(false)
   const [activeHighlightIndex, setActiveHighlightIndex] = useState<number>(0)
   const [isScrolled, setIsScrolled] = useState<boolean>(false)
+  const [showCopyDropdown, setShowCopyDropdown] = useState<number | null>(null)
+  const sidebarRef = useRef<HTMLDivElement>(null)
+  const sidebarScrollRef = useRef<HTMLDivElement>(null)
 
   // Sincronizar término de resaltado desde props/URL/sessionStorage
   useEffect(() => {
@@ -251,6 +254,21 @@ export default function ReadingView({
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
+  // Cerrar dropdown al hacer click fuera
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showCopyDropdown !== null) {
+        const target = event.target as HTMLElement
+        if (!target.closest('.paragraph-number')) {
+          setShowCopyDropdown(null)
+        }
+      }
+    }
+
+    document.addEventListener('click', handleClickOutside)
+    return () => document.removeEventListener('click', handleClickOutside)
+  }, [showCopyDropdown])
+
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -303,11 +321,14 @@ export default function ReadingView({
   }
 
   // Navigate to section
-  const navigateToSection = (sectionSlug: string) => {
-    const sectionElement = document.getElementById(`section-${sectionSlug}`)
+  const navigateToSection = (sectionTitle: string) => {
+    const sectionElement = document.getElementById(`section-${sectionTitle.toLowerCase().replace(/\s+/g, '-')}`)
     if (sectionElement) {
       sectionElement.scrollIntoView({ behavior: 'smooth', block: 'start' })
-      setTocOpen(false)
+      // No cerrar el sidebar automáticamente
+      // setTocOpen(false)
+      // Update active section
+      setActiveSection(sectionTitle)
     }
   }
 
@@ -316,6 +337,7 @@ export default function ReadingView({
     const handleScroll = () => {
       const paragraphElements = document.querySelectorAll('.paragraph')
       let currentActive = activeParagraph
+      let currentSection = activeSection
 
       paragraphElements.forEach((element) => {
         const rect = element.getBoundingClientRect()
@@ -323,11 +345,35 @@ export default function ReadingView({
           const paragraphNum = parseInt(element.id.replace('p', ''))
           if (paragraphNum !== currentActive) {
             currentActive = paragraphNum
+            // Update active section based on current paragraph
+            const paragraph = parrafos.find(p => p.numero === paragraphNum)
+            if (paragraph?.seccion) {
+              currentSection = paragraph.seccion
+            }
           }
         }
       })
 
       setActiveParagraph(currentActive)
+      setActiveSection(currentSection)
+
+      // Sincronizar scroll del sidebar
+      if (sidebarScrollRef.current && currentSection) {
+        const activeSectionElement = sidebarScrollRef.current.querySelector(`[data-section="${currentSection.toLowerCase().replace(/\s+/g, '-')}"]`)
+        if (activeSectionElement) {
+          const sidebarRect = sidebarScrollRef.current.getBoundingClientRect()
+          const elementRect = activeSectionElement.getBoundingClientRect()
+          
+          // Solo hacer scroll si el elemento no está visible en el sidebar
+          if (elementRect.top < sidebarRect.top || elementRect.bottom > sidebarRect.bottom) {
+            activeSectionElement.scrollIntoView({ 
+              behavior: 'smooth', 
+              block: 'center',
+              inline: 'nearest'
+            })
+          }
+        }
+      }
 
       // Update URL without page reload
       const url = new URL(window.location.href)
@@ -343,26 +389,27 @@ export default function ReadingView({
 
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
-  }, [activeParagraph])
+  }, [activeParagraph, activeSection, parrafos])
 
   const renderTableOfContents = (sections: Section[], level: number = 0): JSX.Element[] => {
     return sections.map((section) => (
-      <div key={section.id} className={`ml-${level * 4}`}>
+      <div key={section.id} className={`ml-${level * 3}`}>
         <button
-          onClick={() => navigateToSection(section.slug)}
-          className={`w-full text-left py-2 px-3 text-sm hover:text-primary-800 transition-colors rounded-sm ${
-            activeSection === section.slug ? 'text-primary-900 font-medium bg-primary-50' : 'text-primary-600'
+          onClick={() => navigateToSection(section.titulo)}
+          data-section={section.titulo.toLowerCase().replace(/\s+/g, '-')}
+          className={`w-full text-left py-1.5 px-2 text-sm hover:text-primary-800 transition-colors rounded-sm ${
+            activeSection === section.titulo ? 'text-primary-900 font-medium bg-neutral-200' : 'text-primary-600'
           }`}
         >
           <div className="flex items-center justify-between">
-            <span>{section.titulo}</span>
-            <span className="text-xs text-primary-500">
-              {getSectionParagraphCount(section.slug)}
+            <span className="truncate">{section.titulo}</span>
+            <span className="text-xs text-primary-500 ml-2 flex-shrink-0">
+              {getSectionStartParagraph(section.titulo)}
             </span>
           </div>
         </button>
         {section.subsecciones && section.subsecciones.length > 0 && (
-          <div className="ml-4">
+          <div className="ml-3">
             {renderTableOfContents(section.subsecciones, level + 1)}
           </div>
         )}
@@ -375,9 +422,29 @@ export default function ReadingView({
     return parrafos.filter(p => p.seccion === sectionSlug).length
   }
 
+  // Get the starting paragraph number for a section
+  const getSectionStartParagraph = (sectionTitle: string) => {
+    const sectionParagraphs = parrafos.filter(p => p.seccion === sectionTitle)
+    if (sectionParagraphs.length === 0) return 0
+    return Math.min(...sectionParagraphs.map(p => p.numero))
+  }
+
   const getCurrentSectionTitle = (): string => {
     const paragraph = parrafos.find(p => p.numero === activeParagraph)
     return paragraph?.seccion || ''
+  }
+
+  // Copy paragraph link to clipboard
+  const copyParagraphLink = async (paragraphNum: number) => {
+    try {
+      const url = new URL(window.location.href)
+      url.hash = `p${paragraphNum}`
+      await navigator.clipboard.writeText(url.toString())
+      setShowCopyDropdown(null)
+      // Show a brief success message (you could add a toast notification here)
+    } catch (error) {
+      console.error('Error copying link:', error)
+    }
   }
 
   return (
@@ -404,12 +471,15 @@ export default function ReadingView({
               <span className="text-primary-500">Párrafo {activeParagraph}</span>
             </nav>
             
-            <button
-              onClick={() => setTocOpen(!tocOpen)}
-              className="lg:hidden p-2 text-primary-600 hover:text-primary-800 transition-colors"
-            >
-              {tocOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </button>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => setTocOpen(!tocOpen)}
+                className="p-2 text-primary-600 hover:text-primary-800 transition-colors"
+                title={tocOpen ? 'Ocultar índice' : 'Mostrar índice'}
+              >
+                {tocOpen ? <PanelLeft className="w-5 h-5" /> : <PanelLeftClose className="w-5 h-5" />}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -457,8 +527,30 @@ export default function ReadingView({
                         activeParagraph === parrafo.numero ? 'bg-primary-25' : ''
                       }`}
                     >
-                      <div className="paragraph-number">
-                        {parrafo.numero}
+                      <div className="relative flex items-center">
+                        <div 
+                          className={`paragraph-number transition-all duration-300 ${
+                            activeParagraph === parrafo.numero 
+                              ? 'bg-accent-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-medium' 
+                              : ''
+                          }`}
+                          onClick={() => setShowCopyDropdown(showCopyDropdown === parrafo.numero ? null : parrafo.numero)}
+                          style={{ cursor: 'pointer' }}
+                        >
+                          {parrafo.numero}
+                        </div>
+                        
+                        {/* Dropdown para copiar enlace */}
+                        {showCopyDropdown === parrafo.numero && (
+                          <div className="absolute left-0 -top-1.5 z-50 bg-white border border-primary-200 rounded-sm shadow-lg py-1 min-w-48">
+                            <button
+                              onClick={() => copyParagraphLink(parrafo.numero)}
+                              className="w-full text-left px-3 py-2 text-xs text-primary-700 hover:bg-primary-50 transition-colors font-sans font-semibold"
+                            >
+                              Copiar enlace a este párrafo
+                            </button>
+                          </div>
+                        )}
                       </div>
                       <div 
                         className="paragraph-content"
@@ -473,13 +565,16 @@ export default function ReadingView({
         </main>
 
         {/* Índice lateral elegante */}
-        <aside className={`
-          fixed lg:sticky top-[120px] right-0 h-full lg:h-[calc(100vh-7.5rem)] w-80 bg-white lg:bg-neutral-50 
-          border-l border-neutral-200 transition-transform duration-300
-          ${tocOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0 lg:w-0 lg:opacity-0'}
-        `}>
-          <div className="table-of-contents p-8 h-full overflow-y-auto lg:overflow-y-auto">
-            <div className="flex items-center justify-between mb-8">
+        <aside 
+          ref={sidebarRef}
+          className={`
+            fixed lg:sticky top-[120px] right-0 h-full lg:h-[calc(100vh-7.5rem)] w-80 bg-white lg:bg-gradient-to-r lg:from-neutral-100 lg:to-neutral-50
+            border-l border-neutral-200 transition-transform duration-300
+            ${tocOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0 lg:w-0 lg:opacity-0'}
+          `}
+        >
+          <div ref={sidebarScrollRef} className="table-of-contents p-6 h-full overflow-y-auto lg:overflow-y-auto">
+            <div className="flex items-center justify-between mb-6 px-2">
               <h3 className="font-medium text-primary-900 text-lg">Índice</h3>
               <button
                 onClick={() => setTocOpen(false)}
@@ -502,16 +597,16 @@ export default function ReadingView({
               </div>
             )}
 
-            <div className="mt-12 pt-8 border-t border-neutral-200">
-              <h4 className="font-medium text-primary-900 mb-6">Navegación</h4>
-              <div className="space-y-4 text-sm">
+            <div className="mt-8 pt-6 border-t border-neutral-200">
+              <h4 className="font-medium text-primary-900 mb-4">Navegación</h4>
+              <div className="space-y-3 text-sm">
                 <div className="flex items-center justify-between">
                   <span className="text-primary-600">Párrafo actual:</span>
                   <span className="font-medium text-primary-900">
                     {activeParagraph} de {parrafos.length}
                   </span>
                 </div>
-                <div className="flex space-x-3">
+                <div className="flex space-x-2">
                   <button
                     onClick={() => navigateToParagraph(activeParagraph - 1)}
                     disabled={activeParagraph <= 1}

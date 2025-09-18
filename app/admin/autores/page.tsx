@@ -27,7 +27,7 @@ export default async function AdminAutoresPage() {
   );
 
   return (
-    <div className="admin-content">
+    <div>
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-display font-bold text-primary-900 mb-2">

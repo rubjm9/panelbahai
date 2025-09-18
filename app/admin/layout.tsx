@@ -11,7 +11,8 @@ import {
   Menu, 
   X,
   LogOut,
-  BarChart3
+  BarChart3,
+  Search
 } from 'lucide-react'
 
 const navigation = [
@@ -19,6 +20,7 @@ const navigation = [
   { name: 'Autores', href: '/admin/autores', icon: Users },
   { name: 'Obras', href: '/admin/obras', icon: BookOpen },
   { name: 'Importar', href: '/admin/importar', icon: FileText },
+  { name: 'Búsqueda', href: '/admin/busqueda', icon: Search },
   { name: 'Usuarios', href: '/admin/usuarios', icon: Users },
   { name: 'Configuración', href: '/admin/configuracion', icon: Settings },
 ]
@@ -48,7 +50,7 @@ export default function AdminLayout({
           <div className="flex-1 h-0 pt-5 pb-4 overflow-y-auto">
             <div className="flex-shrink-0 flex items-center px-4">
               <div className="flex items-center">
-                <div className="w-8 h-8 bg-accent-600 rounded-full flex items-center justify-center mr-3">
+                <div className="w-8 h-8 bg-primary-600 flex items-center justify-center mr-3">
                   <BookOpen className="w-4 h-4 text-white" />
                 </div>
                 <span className="text-xl font-bold text-primary-900">Admin Panel</span>
@@ -61,9 +63,9 @@ export default function AdminLayout({
                   <Link
                     key={item.name}
                     href={item.href}
-                    className={`group flex items-center px-2 py-2 text-base font-medium rounded-md ${
+                    className={`group flex items-center px-2 py-2 text-base font-medium  ${
                       pathname === item.href
-                        ? 'bg-accent-600 text-white'
+                        ? 'bg-primary-600 text-white'
                         : 'text-primary-600 hover:bg-primary-50 hover:text-primary-900'
                     }`}
                   >
@@ -83,7 +85,7 @@ export default function AdminLayout({
           <div className="flex-1 flex flex-col pt-5 pb-4 overflow-y-auto">
             <div className="flex items-center flex-shrink-0 px-4">
               <div className="flex items-center">
-                <div className="w-8 h-8 bg-accent-600 rounded-full flex items-center justify-center mr-3">
+                <div className="w-8 h-8 bg-primary-600 flex items-center justify-center mr-3">
                   <BookOpen className="w-4 h-4 text-white" />
                 </div>
                 <span className="text-xl font-bold text-primary-900">Admin Panel</span>
@@ -96,9 +98,9 @@ export default function AdminLayout({
                   <Link
                     key={item.name}
                     href={item.href}
-                    className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md ${
+                    className={`group flex items-center px-2 py-2 text-sm font-medium  ${
                       pathname === item.href
-                        ? 'bg-accent-600 text-white'
+                        ? 'bg-primary-600 text-white'
                         : 'text-primary-600 hover:bg-primary-50 hover:text-primary-900'
                     }`}
                   >
@@ -125,29 +127,14 @@ export default function AdminLayout({
 
       {/* Contenido principal */}
       <div className="lg:pl-64 flex flex-col flex-1">
-        <div className="relative z-10 flex-shrink-0 flex h-16 bg-white shadow lg:border-none">
+        {/* Botón móvil para abrir sidebar */}
+        <div className="lg:hidden">
           <button
             onClick={() => setSidebarOpen(true)}
-            className="px-4 border-r border-gray-200 text-gray-400 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-bahai-gold lg:hidden"
+            className="fixed top-4 left-4 z-50 p-2 bg-white shadow-md text-gray-600 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-600"
           >
             <Menu className="h-6 w-6" />
           </button>
-          <div className="flex-1 px-4 flex justify-between sm:px-6 lg:px-8">
-            <div className="flex-1 flex">
-              <div className="w-full flex md:ml-0">
-                <div className="relative w-full text-gray-400 focus-within:text-gray-600">
-                  <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none">
-                    <FileText className="h-5 w-5" />
-                  </div>
-                  <input
-                    className="block w-full h-full pl-8 pr-3 py-2 border-transparent text-gray-900 placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-0 focus:border-transparent"
-                    placeholder="Buscar en administración..."
-                    type="search"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
 
         <main className="flex-1 relative overflow-y-auto focus:outline-none">

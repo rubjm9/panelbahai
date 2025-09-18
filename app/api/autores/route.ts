@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
     const connection = await dbConnect();
     
     // Si la conexión está deshabilitada durante el build, usar fallback
-    if (connection && !connection.connected) {
+    if (connection && connection.connected === false) {
       return NextResponse.json({
         success: true,
         data: fallbackAutores,

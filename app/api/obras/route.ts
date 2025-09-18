@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Obra from '@/models/Obra';
 import Autor from '@/models/Autor';
+import { rebuildSearchIndexAsync } from '@/utils/search-rebuild';
 
 // Datos de fallback cuando MongoDB no esté disponible
 const fallbackObras = [
@@ -54,7 +55,7 @@ export async function GET(request: NextRequest) {
     const connection = await dbConnect();
     
     // Si la conexión está deshabilitada durante el build, usar fallback
-    if (connection && !connection.connected) {
+    if (connection && connection.connected === false) {
       const { searchParams } = new URL(request.url);
       const autorSlug = searchParams.get('autor');
       
@@ -71,13 +72,32 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const autorId = searchParams.get('autor');
+    const autorParam = searchParams.get('autor');
     const esPublico = searchParams.get('esPublico');
 
     let query: any = { activo: true };
     
-    if (autorId) {
-      query.autor = autorId;
+    if (autorParam) {
+      // Verificar si es un ObjectId válido o un slug
+      const isObjectId = /^[0-9a-fA-F]{24}$/.test(autorParam);
+      
+      if (isObjectId) {
+        // Es un ObjectId, usar directamente
+        query.autor = autorParam;
+      } else {
+        // Es un slug, buscar el autor primero
+        const autor = await Autor.findOne({ slug: autorParam, activo: true });
+        if (autor) {
+          query.autor = autor._id;
+        } else {
+          // Si no se encuentra el autor, devolver array vacío
+          return NextResponse.json({
+            success: true,
+            data: [],
+            source: 'database'
+          });
+        }
+      }
     }
     
     if (esPublico !== null) {
@@ -157,6 +177,9 @@ export async function POST(request: NextRequest) {
 
     // Populate autor para la respuesta
     await obra.populate('autor', 'nombre slug');
+
+    // Reconstruir índice de búsqueda automáticamente
+    rebuildSearchIndexAsync();
 
     return NextResponse.json({
       success: true,

@@ -17,8 +17,7 @@ export default function HomePage() {
                 Literatura Bahá'í al español
               </h2>
               <p className="display-subtitle max-w-3xl mx-auto text-primary-200">
-                Accede a textos sagrados y literatura bahá'í traducida al español por el 
-                Panel de Traducción oficial, con herramientas avanzadas de búsqueda y lectura.
+              Traducción de autoridad actualizada de las obras de Bahá'u'lláh, el Báb, 'Abdu'l-Bahá, Shoghi Effendi y algunas de la Casa Universal de Justicia.
               </p>
               {/* Buscador principal */}
               <div className="mt-10">

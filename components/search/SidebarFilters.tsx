@@ -48,7 +48,7 @@ export default function SidebarFilters({
   // Actualizar filtros cuando cambien
   useEffect(() => {
     onFilterChange(filters)
-  }, [filters, onFilterChange])
+  }, [filters]) // Removido onFilterChange de las dependencias
 
   const handleFilterChange = (key: string, value: string) => {
     setFilters(prev => ({ ...prev, [key]: value }))

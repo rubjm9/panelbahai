@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Upload, FileText, AlertCircle, CheckCircle, Loader } from 'lucide-react'
+import { Upload, FileText, AlertCircle, CheckCircle, Loader, Calendar, Hash } from 'lucide-react'
 import Autor, { IAutor } from '@/models/Autor'
 
 interface WordImportFormProps {
@@ -30,6 +30,9 @@ export default function WordImportForm({ autores }: WordImportFormProps) {
     titulo: '',
     autorId: '' as string,
     descripcion: '',
+    orden: 0,
+    fechaPublicacion: '',
+    estado: 'borrador' as 'publicado' | 'borrador' | 'archivado',
     esPublico: false
   })
   const [isLoading, setIsLoading] = useState(false)
@@ -110,6 +113,9 @@ export default function WordImportForm({ autores }: WordImportFormProps) {
       formDataToSend.append('titulo', formData.titulo)
       formDataToSend.append('autorId', formData.autorId)
       formDataToSend.append('descripcion', formData.descripcion)
+      formDataToSend.append('orden', formData.orden.toString())
+      formDataToSend.append('fechaPublicacion', formData.fechaPublicacion)
+      formDataToSend.append('estado', formData.estado)
       formDataToSend.append('esPublico', formData.esPublico.toString())
 
       const response = await fetch('/api/admin/import/word', {
@@ -127,6 +133,9 @@ export default function WordImportForm({ autores }: WordImportFormProps) {
           titulo: '',
           autorId: '',
           descripcion: '',
+          orden: 0,
+          fechaPublicacion: '',
+          estado: 'borrador',
           esPublico: false
         })
         // Limpiar input de archivo
@@ -261,6 +270,55 @@ export default function WordImportForm({ autores }: WordImportFormProps) {
             rows={3}
             className="w-full px-3 py-2 border border-primary-200 rounded-sm focus:ring-2 focus:ring-accent-600 focus:border-accent-600"
           />
+        </div>
+
+        {/* Campos adicionales */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-primary-700 mb-2">
+              <Hash className="w-4 h-4 inline mr-1" />
+              Orden
+            </label>
+            <input
+              type="number"
+              name="orden"
+              value={formData.orden}
+              onChange={handleInputChange}
+              placeholder="0"
+              min="0"
+              className="w-full px-3 py-2 border border-primary-200 rounded-sm focus:ring-2 focus:ring-accent-600 focus:border-accent-600"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-primary-700 mb-2">
+              <Calendar className="w-4 h-4 inline mr-1" />
+              Fecha de Publicación
+            </label>
+            <input
+              type="date"
+              name="fechaPublicacion"
+              value={formData.fechaPublicacion}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-primary-200 rounded-sm focus:ring-2 focus:ring-accent-600 focus:border-accent-600"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-primary-700 mb-2">
+              Estado
+            </label>
+            <select
+              name="estado"
+              value={formData.estado}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-primary-200 rounded-sm focus:ring-2 focus:ring-accent-600 focus:border-accent-600"
+            >
+              <option value="borrador">Borrador</option>
+              <option value="publicado">Publicado</option>
+              <option value="archivado">Archivado</option>
+            </select>
+          </div>
         </div>
 
         <div className="flex items-center">

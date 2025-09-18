@@ -20,37 +20,30 @@ export default async function AdminImportPage() {
 
   if (!autores.length) {
     return (
-      <div className="admin-content">
-        <div className="text-center py-16">
-          <Users className="w-16 h-16 text-primary-400 mx-auto mb-4" />
-          <h3 className="text-xl font-medium text-primary-800 mb-2">
-            No hay autores registrados
-          </h3>
-          <p className="text-primary-500 mb-6">
-            Necesitas crear al menos un autor antes de importar documentos.
-          </p>
-          <a href="/admin/autores" className="btn-primary">
-            Crear autor
-          </a>
-        </div>
+      <div className="text-center py-16">
+        <Users className="w-16 h-16 text-primary-400 mx-auto mb-4" />
+        <h3 className="text-xl font-medium text-primary-800 mb-2">
+          No hay autores registrados
+        </h3>
+        <p className="text-primary-500 mb-6">
+          Necesitas crear al menos un autor antes de importar documentos.
+        </p>
+        <a href="/admin/autores" className="btn-primary">
+          Crear autor
+        </a>
       </div>
     );
   }
 
   return (
-    <div className="admin-content">
+    <div>
       <div className="mb-8">
-        <div className="flex items-center mb-4">
-          <Upload className="w-8 h-8 text-accent-600 mr-3" />
-          <div>
-            <h1 className="text-3xl font-bold text-primary-900">
-              Importar documentos
-            </h1>
-            <p className="text-primary-600 mt-1">
-              Importa documentos Word y conviértelos automáticamente en obras estructuradas
-            </p>
-          </div>
-        </div>
+        <h1 className="text-3xl font-display font-bold text-primary-900 mb-2">
+          Importar documentos
+        </h1>
+        <p className="text-primary-600 font-reading">
+          Importa documentos Word y conviértelos automáticamente en obras estructuradas
+        </p>
       </div>
 
       <div className="grid gap-8 lg:grid-cols-3">

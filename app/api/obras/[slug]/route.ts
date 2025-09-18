@@ -3,6 +3,7 @@ import dbConnect from '@/lib/mongodb';
 import Obra from '@/models/Obra';
 import Seccion from '@/models/Seccion';
 import Parrafo from '@/models/Parrafo';
+import { rebuildSearchIndexAsync } from '@/utils/search-rebuild';
 
 export async function GET(
   request: NextRequest,
@@ -128,6 +129,9 @@ export async function PUT(
       );
     }
 
+    // Reconstruir índice de búsqueda automáticamente
+    rebuildSearchIndexAsync();
+
     return NextResponse.json({
       success: true,
       data: obra
@@ -173,6 +177,9 @@ export async function DELETE(
       { obra: obra._id },
       { activo: false, fechaActualizacion: new Date() }
     );
+
+    // Reconstruir índice de búsqueda automáticamente
+    rebuildSearchIndexAsync();
 
     return NextResponse.json({
       success: true,

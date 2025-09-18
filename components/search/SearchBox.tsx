@@ -392,43 +392,55 @@ export default function SearchBox({
           ) : (
             <>
               {results.length > 0 ? (
-                <div>
-                  <div className="divide-y divide-neutral-100">
-                    {results.map((result, index) => {
-                      const url = `/autores/${result.autorSlug}/${result.obraSlug}${result.numero ? `?p=${result.numero}` : ''}${query ? `${result.numero ? '&' : '?'}q=${encodeURIComponent(query)}` : ''}`;
-                      return (
-                        <Link
-                          key={result.id}
-                          href={url}
-                          onClick={onResultClick}
-                          className={`search-result-item group ${index === selectedIndex ? 'selected' : ''}`}
-                          data-index={index}
-                        >
-                          <div className="flex items-start justify-between mb-2">
-                            <div className="flex-1">
-                              <h4 className="font-medium text-primary-900 text-sm mb-1 group-hover:text-primary-800 transition-colors">
-                                {result.titulo}
-                              </h4>
-                              <p className="text-xs text-accent-600">
-                                {result.autor} • {getResultTypeLabel(result.tipo)}
-                                {result.numero && ` • Párrafo ${result.numero}`}
-                              </p>
+                <div className="flex flex-col h-full">
+                  {/* Área scrolleable de resultados */}
+                  <div className="flex-1 overflow-y-auto max-h-72">
+                    <div className="divide-y divide-neutral-100">
+                      {results.map((result, index) => {
+                        const url = `/autores/${result.autorSlug}/${result.obraSlug}${result.numero ? `?p=${result.numero}` : ''}${query ? `${result.numero ? '&' : '?'}q=${encodeURIComponent(query)}` : ''}`;
+                        return (
+                          <Link
+                            key={result.id}
+                            href={url}
+                            onClick={onResultClick}
+                            className={`search-result-item group ${index === selectedIndex ? 'selected' : ''}`}
+                            data-index={index}
+                          >
+                            <div className="flex items-start justify-between mb-2">
+                              <div className="flex-1">
+                                <h4 className="font-medium text-primary-900 text-sm mb-1 group-hover:text-primary-800 transition-colors">
+                                  {result.titulo}
+                                </h4>
+                                <p className="text-xs text-accent-600">
+                                  {result.autor} • {getResultTypeLabel(result.tipo)}
+                                  {result.numero && ` • Párrafo ${result.numero}`}
+                                </p>
+                              </div>
                             </div>
-                          </div>
-                          <p
-                            className="text-sm text-primary-600 leading-relaxed"
-                            dangerouslySetInnerHTML={{ __html: searchEngine.highlightTerms(result.fragmento, query) }}
-                          />
-                        </Link>
-                      )
-                    })}
+                            <p
+                              className="text-sm text-primary-600 leading-relaxed"
+                              dangerouslySetInnerHTML={{ __html: searchEngine.highlightTerms(result.fragmento, query) }}
+                            />
+                          </Link>
+                        )
+                      })}
+                    </div>
                   </div>
-                  <div className="px-6 py-4 bg-neutral-50 text-xs text-primary-500 text-center border-t border-neutral-200">
-                    {results.length} resultado{results.length !== 1 ? 's' : ''} encontrado{results.length !== 1 ? 's' : ''}
-                    <button onClick={handleSearchClick} className="block mx-auto mt-2 text-accent-600 hover:text-accent-800 font-medium">
-                      Ver todos los resultados →
-                    </button>
-                  </div>
+                  
+                  {/* Contador siempre visible en la parte inferior */}
+                  <button 
+                    onClick={handleSearchClick} 
+                    className="px-6 py-3 bg-gradient-to-r from-neutral-100 to-neutral-200 text-sm text-primary-600 text-center border-t border-neutral-200 flex-shrink-0 hover:from-neutral-200 hover:to-neutral-300 hover:text-primary-800 transition-all duration-200 cursor-pointer w-full group"
+                  >
+                    <div className="flex items-center justify-center space-x-2">
+                      <span className="font-medium">
+                        Ver los {results.length} resultado{results.length !== 1 ? 's' : ''} encontrado{results.length !== 1 ? 's' : ''}
+                      </span>
+                      <span className="text-accent-600 group-hover:text-accent-700 transition-colors">
+                        →
+                      </span>
+                    </div>
+                  </button>
                 </div>
               ) : (
                 query.length >= 3 && (

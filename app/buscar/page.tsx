@@ -59,12 +59,20 @@ function SearchContent() {
     loadFilterData()
   }, [])
 
-  // Construir índice una sola vez
+  // Construir índice una sola vez - optimizado
   const [indexReady, setIndexReady] = useState(false)
   useEffect(() => {
     let cancelled = false
+    
+    // Verificar si el índice ya está construido
+    if (searchEngine.index && searchEngine.documents.size > 0) {
+      setIndexReady(true)
+      return
+    }
+    
     async function initIndex() {
       try {
+        setIsLoading(true)
         const response = await fetch('/api/search?buildIndex=true')
         const data = await response.json()
         if (!cancelled && data?.success && Array.isArray(data.data) && data.data.length > 0) {
@@ -73,35 +81,46 @@ function SearchContent() {
         }
       } catch (e) {
         console.error('Error inicializando índice en /buscar:', e)
+      } finally {
+        if (!cancelled) {
+          setIsLoading(false)
+        }
       }
     }
-    if (!indexReady) initIndex()
+    
+    initIndex()
     return () => { cancelled = true }
-  }, [indexReady])
+  }, [])
 
-  // Realizar búsqueda cuando índice esté listo
+  // Realizar búsqueda cuando índice esté listo - optimizado
   useEffect(() => {
     if (!indexReady) return
+    
     if (query.length >= 3) {
-      setIsLoading(true)
-      try {
-        let searchResults = searchEngine.search(query, 100)
-        if (filters.tipo !== 'todos') {
-          searchResults = searchResults.filter(result => result.tipo === filters.tipo)
+      // Usar setTimeout para evitar bloqueos de UI
+      const searchTimeout = setTimeout(() => {
+        setIsLoading(true)
+        try {
+          let searchResults = searchEngine.search(query, 100)
+          if (filters.tipo !== 'todos') {
+            searchResults = searchResults.filter(result => result.tipo === filters.tipo)
+          }
+          if (filters.autor) {
+            searchResults = searchResults.filter(result => result.autorSlug === filters.autor)
+          }
+          if (filters.obra) {
+            searchResults = searchResults.filter(result => result.obraSlug === filters.obra)
+          }
+          setResults(searchResults)
+        } catch (error) {
+          console.error('Error searching:', error)
+          setResults([])
+        } finally {
+          setIsLoading(false)
         }
-        if (filters.autor) {
-          searchResults = searchResults.filter(result => result.autorSlug === filters.autor)
-        }
-        if (filters.obra) {
-          searchResults = searchResults.filter(result => result.obraSlug === filters.obra)
-        }
-        setResults(searchResults)
-      } catch (error) {
-        console.error('Error searching:', error)
-        setResults([])
-      } finally {
-        setIsLoading(false)
-      }
+      }, 50) // Pequeño delay para permitir que la UI se actualice
+      
+      return () => clearTimeout(searchTimeout)
     } else {
       setResults([])
     }
@@ -197,7 +216,17 @@ function SearchContent() {
             </div>
 
             {/* Resultados */}
-            {results.length > 0 ? (
+            {isLoading ? (
+              <div className="text-center py-16">
+                <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-accent-600 mx-auto mb-4"></div>
+                <h3 className="text-xl font-medium text-primary-800 mb-2">
+                  Cargando los resultados de la búsqueda
+                </h3>
+                <p className="text-primary-500">
+                  Buscando "{query}" en toda la biblioteca...
+                </p>
+              </div>
+            ) : results.length > 0 ? (
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
                   <p className="text-sm text-primary-600">

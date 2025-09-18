@@ -9,6 +9,10 @@ export interface IObra extends Document {
   orden: number;
   activo: boolean;
   esPublico: boolean;
+  estado: 'publicado' | 'borrador' | 'archivado';
+  contenido?: string;
+  archivoDoc?: string;
+  archivoPdf?: string;
   fechaCreacion: Date;
   fechaActualizacion: Date;
 }
@@ -48,6 +52,20 @@ const ObraSchema: Schema = new Schema({
   esPublico: {
     type: Boolean,
     default: false
+  },
+  estado: {
+    type: String,
+    enum: ['publicado', 'borrador', 'archivado'],
+    default: 'borrador'
+  },
+  contenido: {
+    type: String
+  },
+  archivoDoc: {
+    type: String
+  },
+  archivoPdf: {
+    type: String
   },
   fechaCreacion: {
     type: Date,

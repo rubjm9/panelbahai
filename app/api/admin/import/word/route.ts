@@ -9,6 +9,7 @@ import Autor from '@/models/Autor';
 import Obra from '@/models/Obra';
 import Seccion from '@/models/Seccion';
 import Parrafo from '@/models/Parrafo';
+import { rebuildSearchIndexAsync } from '@/utils/search-rebuild';
 
 // Configurar multer para manejar archivos en memoria
 const upload = multer({
@@ -31,21 +32,39 @@ function parseWordContent(html: string, titulo: string, autorId: string) {
   const sections: Array<{titulo: string, contenido: string}> = [];
   const paragraphs: Array<{numero: number, texto: string, seccion?: string}> = [];
   
-  // Dividir por headers (h1, h2, h3, etc.)
+  console.log('HTML original de Mammoth:', html); // Debug
+  
+  // Limpiar HTML pero mantener estructura básica
+  let cleanHtml = html
+    .replace(/<p[^>]*>/g, '<p>')
+    .replace(/<br[^>]*>/g, '\n')
+    .replace(/<\/p>/g, '\n\n')
+    .replace(/<h([1-6])[^>]*>/g, '\n<h$1>')
+    .replace(/<\/h([1-6])>/g, '</h$1>\n');
+  
+  console.log('HTML limpio:', cleanHtml); // Debug
+  
+  // Dividir por headers (h1, h2, h3, etc.) y también por párrafos con estilos de título
   const headerRegex = /<h([1-6])[^>]*>(.*?)<\/h[1-6]>/gi;
+  const titleStyleRegex = /<p[^>]*style="[^"]*font-weight:\s*bold[^"]*"[^>]*>(.*?)<\/p>/gi;
+  
   let lastIndex = 0;
   let match;
   let currentSection = '';
   let paragraphNumber = 1;
   
-  while ((match = headerRegex.exec(html)) !== null) {
+  // Buscar headers HTML estándar
+  while ((match = headerRegex.exec(cleanHtml)) !== null) {
     const [fullMatch, level, title] = match;
     const headerIndex = match.index;
     
     // Extraer contenido entre headers
     if (lastIndex < headerIndex) {
-      const content = html.substring(lastIndex, headerIndex);
-      const cleanContent = content.replace(/<[^>]*>/g, '').trim();
+      const content = cleanHtml.substring(lastIndex, headerIndex);
+      const cleanContent = content
+        .replace(/<[^>]*>/g, '') // Remover tags HTML
+        .replace(/\n\s*\n/g, '\n\n') // Normalizar saltos de línea
+        .trim();
       
       if (cleanContent) {
         if (currentSection) {
@@ -55,7 +74,7 @@ function parseWordContent(html: string, titulo: string, autorId: string) {
           });
         }
         
-        // Dividir en párrafos
+        // Dividir en párrafos respetando saltos de línea
         const paraTexts = cleanContent.split(/\n\s*\n/).filter(p => p.trim());
         paraTexts.forEach(paraText => {
           if (paraText.trim()) {
@@ -74,10 +93,42 @@ function parseWordContent(html: string, titulo: string, autorId: string) {
     lastIndex = headerIndex + fullMatch.length;
   }
   
+  // Si no encontramos headers HTML, buscar párrafos con estilos de título
+  if (sections.length === 0) {
+    console.log('No se encontraron headers HTML, buscando estilos de título...'); // Debug
+    
+    // Resetear para buscar por estilos
+    lastIndex = 0;
+    currentSection = '';
+    paragraphNumber = 1;
+    
+    // Buscar párrafos con estilos de título (bold, font-size grande, etc.)
+    const titleParagraphs = cleanHtml.match(/<p[^>]*style="[^"]*font-weight:\s*bold[^"]*"[^>]*>(.*?)<\/p>/gi) || [];
+    
+    if (titleParagraphs.length > 0) {
+      console.log('Títulos encontrados por estilo:', titleParagraphs); // Debug
+      
+      // Procesar cada título encontrado
+      titleParagraphs.forEach((titlePara, index) => {
+        const titleMatch = titlePara.match(/<p[^>]*style="[^"]*font-weight:\s*bold[^"]*"[^>]*>(.*?)<\/p>/i);
+        if (titleMatch) {
+          const titleText = titleMatch[1].replace(/<[^>]*>/g, '').trim();
+          if (titleText) {
+            currentSection = titleText;
+            console.log('Título detectado:', titleText); // Debug
+          }
+        }
+      });
+    }
+  }
+  
   // Procesar contenido después del último header
-  if (lastIndex < html.length) {
-    const content = html.substring(lastIndex);
-    const cleanContent = content.replace(/<[^>]*>/g, '').trim();
+  if (lastIndex < cleanHtml.length) {
+    const content = cleanHtml.substring(lastIndex);
+    const cleanContent = content
+      .replace(/<[^>]*>/g, '') // Remover tags HTML
+      .replace(/\n\s*\n/g, '\n\n') // Normalizar saltos de línea
+      .trim();
     
     if (cleanContent) {
       if (currentSection) {
@@ -87,7 +138,7 @@ function parseWordContent(html: string, titulo: string, autorId: string) {
         });
       }
       
-      // Dividir en párrafos
+      // Dividir en párrafos respetando saltos de línea
       const paraTexts = cleanContent.split(/\n\s*\n/).filter(p => p.trim());
       paraTexts.forEach(paraText => {
         if (paraText.trim()) {
@@ -103,7 +154,11 @@ function parseWordContent(html: string, titulo: string, autorId: string) {
   
   // Si no hay headers, tratar todo como una sección
   if (sections.length === 0 && paragraphs.length === 0) {
-    const cleanContent = html.replace(/<[^>]*>/g, '').trim();
+    const cleanContent = cleanHtml
+      .replace(/<[^>]*>/g, '') // Remover tags HTML
+      .replace(/\n\s*\n/g, '\n\n') // Normalizar saltos de línea
+      .trim();
+    
     if (cleanContent) {
       sections.push({
         titulo: 'Contenido principal',
@@ -123,7 +178,10 @@ function parseWordContent(html: string, titulo: string, autorId: string) {
     }
   }
   
-  return { sections, paragraphs };
+  console.log('Secciones encontradas:', sections); // Debug
+  console.log('Párrafos encontrados:', paragraphs.length); // Debug
+  
+  return { sections, paragraphs, cleanHtml };
 }
 
 export async function POST(request: NextRequest) {
@@ -135,6 +193,9 @@ export async function POST(request: NextRequest) {
     const titulo = formData.get('titulo') as string;
     const autorId = formData.get('autorId') as string;
     const descripcion = formData.get('descripcion') as string;
+    const orden = parseInt(formData.get('orden') as string) || 0;
+    const fechaPublicacion = formData.get('fechaPublicacion') as string;
+    const estado = formData.get('estado') as string || 'borrador';
     const esPublico = formData.get('esPublico') === 'true';
     
     if (!file || !titulo || !autorId) {
@@ -156,12 +217,30 @@ export async function POST(request: NextRequest) {
     // Convertir archivo a buffer
     const buffer = Buffer.from(await file.arrayBuffer());
     
-    // Convertir Word a HTML usando mammoth
-    const result = await mammoth.convertToHtml({ buffer });
+    // Convertir Word a HTML usando mammoth con configuración mejorada
+    const result = await mammoth.convertToHtml({ 
+      buffer,
+      styleMap: [
+        "p[style-name='Heading 1'] => h2:fresh",
+        "p[style-name='Heading 2'] => h3:fresh", 
+        "p[style-name='Heading 3'] => h4:fresh",
+        "p[style-name='Heading 4'] => h5:fresh",
+        "p[style-name='Heading 5'] => h6:fresh",
+        "p[style-name='Heading 6'] => h6:fresh",
+        "p[style-name='Título 1'] => h2:fresh",
+        "p[style-name='Título 2'] => h3:fresh",
+        "p[style-name='Título 3'] => h4:fresh",
+        "p[style-name='Título 4'] => h5:fresh",
+        "p[style-name='Título 5'] => h6:fresh",
+        "p[style-name='Título 6'] => h6:fresh"
+      ]
+    });
     const html = result.value;
     
+    console.log('HTML convertido por Mammoth:', html); // Debug
+    
     // Parsear contenido
-    const { sections, paragraphs } = parseWordContent(html, titulo, autorId);
+    const { sections, paragraphs, cleanHtml } = parseWordContent(html, titulo, autorId);
     
     if (paragraphs.length === 0) {
       return NextResponse.json(
@@ -189,8 +268,12 @@ export async function POST(request: NextRequest) {
       slug,
       autor: autorId,
       descripcion: descripcion || '',
+      orden,
+      fechaPublicacion: fechaPublicacion ? new Date(fechaPublicacion) : undefined,
+      estado,
       esPublico,
-      orden: 0,
+      contenido: cleanHtml, // Guardar el contenido HTML completo
+      archivoDoc: file.name, // Guardar el nombre del archivo original
       activo: true
     });
     
@@ -239,6 +322,9 @@ export async function POST(request: NextRequest) {
     
     // Populate autor para la respuesta
     await obra.populate('autor', 'nombre slug');
+    
+    // Reconstruir índice de búsqueda automáticamente
+    rebuildSearchIndexAsync();
     
     return NextResponse.json({
       success: true,

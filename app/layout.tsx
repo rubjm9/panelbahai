@@ -1,8 +1,7 @@
 import './globals.css'
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
-import SiteHeader from '@/components/layout/SiteHeader'
-import SiteFooter from '@/components/layout/SiteFooter'
+import ConditionalLayout from '@/components/layout/ConditionalLayout'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -20,9 +19,9 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body className={inter.className}>
-        <SiteHeader />
-        {children}
-        <SiteFooter />
+        <ConditionalLayout>
+          {children}
+        </ConditionalLayout>
       </body>
     </html>
   )

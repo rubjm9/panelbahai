@@ -35,6 +35,12 @@ export class SearchEngine {
 
   constructor() {}
 
+  // Limpiar índice existente
+  clearIndex() {
+    this.index = null;
+    this.documents.clear();
+  }
+
   // Construir índice con documentos
   buildIndex(documents: SearchDocument[]) {
     this.documents.clear();

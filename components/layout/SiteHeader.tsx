@@ -35,20 +35,17 @@ export default function SiteHeader() {
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8 relative">
             <Link href="/acerca" className="nav-link">Acerca del Panel</Link>
-            <Link href="/proximas" className="nav-link">Próximas Traducciones</Link>
+            <Link href="/proximas-traducciones" className="nav-link">Próximas Traducciones</Link>
             <Link href="/contacto" className="nav-link">Contacto</Link>
-
-            {/* Enlace directo a Autores */}
-            <Link href="/autores" className="nav-link">Autores</Link>
 
             {/* Autores dropdown */}
             <div className="relative"
                  onMouseEnter={() => setOpenAuthors(true)}
                  onMouseLeave={() => setOpenAuthors(false)}>
-              <button className="nav-link inline-flex items-center">
+              <Link href="/autores" className="nav-link inline-flex items-center">
                 Autores
                 <ChevronDown className={`w-4 h-4 ml-1 transition-transform ${openAuthors ? 'rotate-180' : ''}`} />
-              </button>
+              </Link>
               {openAuthors && (
                 <div className="absolute right-0 top-full w-64 bg-white border border-primary-200 rounded-sm shadow-lg p-2"
                      onMouseEnter={() => setOpenAuthors(true)}

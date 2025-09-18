@@ -2,7 +2,7 @@ import { Settings, Database, Search, Mail, Shield, Globe, RefreshCw, Trash2 } fr
 
 export default function AdminConfiguracionPage() {
   return (
-    <div className="admin-content">
+    <div>
       <div className="mb-8">
         <h1 className="text-3xl font-display font-bold text-primary-900 mb-2">
           Configuración del Sistema
