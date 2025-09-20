@@ -63,6 +63,9 @@ export default function SiteHeader() {
               )}
             </div>
 
+            {/* Búsqueda Avanzada */}
+            <Link href="/busqueda-avanzada" className="nav-link">Búsqueda Avanzada</Link>
+
             {/* Dashboard */}
             <Link href="/admin" className="nav-link text-accent-700 hover:text-accent-800">Dashboard</Link>
           </nav>
@@ -85,6 +88,7 @@ export default function SiteHeader() {
               <Link href="/proximas" className="nav-link" onClick={() => setMobileOpen(false)}>Próximas Traducciones</Link>
               <Link href="/contacto" className="nav-link" onClick={() => setMobileOpen(false)}>Contacto</Link>
               <Link href="/autores" className="nav-link" onClick={() => setMobileOpen(false)}>Autores</Link>
+              <Link href="/busqueda-avanzada" className="nav-link" onClick={() => setMobileOpen(false)}>Búsqueda Avanzada</Link>
               <div>
                 <div className="text-sm font-medium text-primary-700 mt-2 mb-1">Autores principales</div>
                 <ul className="grid grid-cols-1 gap-1">
