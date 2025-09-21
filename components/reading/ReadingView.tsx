@@ -44,7 +44,7 @@ export default function ReadingView({
   const [activeParagraph, setActiveParagraph] = useState<number>(currentParagraph || 1)
   const [showToc, setShowToc] = useState(false)
   const [tocOpen, setTocOpen] = useState(true)
-  const [sidebarType, setSidebarType] = useState<'toc' | 'library'>('toc')
+  const [libraryOpen, setLibraryOpen] = useState(true)
   const contentRef = useRef<HTMLDivElement>(null)
   const [highlightTerm, setHighlightTerm] = useState<string>(highlightQuery || '')
   const [occurrences, setOccurrences] = useState<number[]>([])
@@ -475,39 +475,26 @@ export default function ReadingView({
             
             <div className="flex items-center space-x-2">
               <button
-                onClick={() => {
-                  setSidebarType('library')
-                  setTocOpen(true)
-                }}
+                onClick={() => setLibraryOpen(!libraryOpen)}
                 className={`p-2 transition-colors ${
-                  sidebarType === 'library' && tocOpen 
+                  libraryOpen 
                     ? 'text-accent-600 hover:text-accent-800' 
                     : 'text-primary-600 hover:text-primary-800'
                 }`}
-                title="Mostrar biblioteca"
+                title={libraryOpen ? 'Ocultar biblioteca' : 'Mostrar biblioteca'}
               >
                 <Library className="w-5 h-5" />
               </button>
               <button
-                onClick={() => {
-                  setSidebarType('toc')
-                  setTocOpen(true)
-                }}
+                onClick={() => setTocOpen(!tocOpen)}
                 className={`p-2 transition-colors ${
-                  sidebarType === 'toc' && tocOpen 
+                  tocOpen 
                     ? 'text-accent-600 hover:text-accent-800' 
                     : 'text-primary-600 hover:text-primary-800'
                 }`}
-                title="Mostrar índice"
+                title={tocOpen ? 'Ocultar índice' : 'Mostrar índice'}
               >
                 <BookOpen className="w-5 h-5" />
-              </button>
-              <button
-                onClick={() => setTocOpen(!tocOpen)}
-                className="p-2 text-primary-600 hover:text-primary-800 transition-colors"
-                title={tocOpen ? 'Ocultar sidebar' : 'Mostrar sidebar'}
-              >
-                {tocOpen ? <PanelLeft className="w-5 h-5" /> : <PanelLeftClose className="w-5 h-5" />}
               </button>
             </div>
           </div>
@@ -515,10 +502,43 @@ export default function ReadingView({
       </div>
 
       <div className="flex max-w-7xl mx-auto">
+        {/* Sidebar izquierdo - Biblioteca */}
+        <aside 
+          className={`
+            fixed lg:sticky top-[120px] left-0 h-full lg:h-[calc(100vh-7.5rem)] w-80 bg-white lg:bg-gradient-to-r lg:from-neutral-100 lg:to-neutral-50
+            border-r border-neutral-200 transition-transform duration-300 z-20
+            ${libraryOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0 lg:w-0 lg:opacity-0'}
+          `}
+        >
+          <div className="h-full overflow-y-auto lg:overflow-y-auto">
+            {/* Header del sidebar izquierdo */}
+            <div className="flex items-center justify-between p-4 border-b border-neutral-200">
+              <div className="flex items-center space-x-2">
+                <Library className="w-5 h-5 text-primary-700" />
+                <h3 className="font-medium text-primary-900 text-lg">Biblioteca</h3>
+              </div>
+              <button
+                onClick={() => setLibraryOpen(false)}
+                className="lg:hidden p-1 text-primary-500 hover:text-primary-700"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Contenido de la biblioteca */}
+            <WorksTree 
+              currentObraSlug={obra.slug}
+              currentAutorSlug={obra.autorSlug}
+            />
+          </div>
+        </aside>
+
         {/* Contenido principal elegante */}
         <main 
           ref={contentRef}
-          className="flex-1 transition-all duration-300"
+          className={`flex-1 transition-all duration-300 ${
+            libraryOpen ? 'lg:ml-80' : ''
+          } ${tocOpen ? 'lg:mr-80' : ''}`}
         >
           <div className="reading-content px-4 lg:px-8">
             <header className="mb-16 text-center">
@@ -594,30 +614,21 @@ export default function ReadingView({
           </div>
         </main>
 
-        {/* Sidebar lateral elegante */}
+        {/* Sidebar derecho - Índice */}
         <aside 
           ref={sidebarRef}
           className={`
             fixed lg:sticky top-[120px] right-0 h-full lg:h-[calc(100vh-7.5rem)] w-80 bg-white lg:bg-gradient-to-r lg:from-neutral-100 lg:to-neutral-50
-            border-l border-neutral-200 transition-transform duration-300
+            border-l border-neutral-200 transition-transform duration-300 z-20
             ${tocOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0 lg:w-0 lg:opacity-0'}
           `}
         >
           <div ref={sidebarScrollRef} className="h-full overflow-y-auto lg:overflow-y-auto">
-            {/* Header del sidebar */}
+            {/* Header del sidebar derecho */}
             <div className="flex items-center justify-between p-4 border-b border-neutral-200">
               <div className="flex items-center space-x-2">
-                {sidebarType === 'toc' ? (
-                  <>
-                    <BookOpen className="w-5 h-5 text-primary-700" />
-                    <h3 className="font-medium text-primary-900 text-lg">Índice</h3>
-                  </>
-                ) : (
-                  <>
-                    <Library className="w-5 h-5 text-primary-700" />
-                    <h3 className="font-medium text-primary-900 text-lg">Biblioteca</h3>
-                  </>
-                )}
+                <BookOpen className="w-5 h-5 text-primary-700" />
+                <h3 className="font-medium text-primary-900 text-lg">Índice</h3>
               </div>
               <button
                 onClick={() => setTocOpen(false)}
@@ -627,64 +638,57 @@ export default function ReadingView({
               </button>
             </div>
 
-            {/* Contenido del sidebar */}
-            {sidebarType === 'toc' ? (
-              <div className="p-6">
-                {secciones.length > 0 ? (
-                  <nav className="space-y-1">
-                    {renderTableOfContents(secciones)}
-                  </nav>
-                ) : (
-                  <div className="text-center py-8">
-                    <BookOpen className="w-8 h-8 text-primary-400 mx-auto mb-3" />
-                    <p className="text-sm text-primary-500">
-                      Esta obra no tiene secciones definidas.
-                    </p>
-                  </div>
-                )}
+            {/* Contenido del índice */}
+            <div className="p-6">
+              {secciones.length > 0 ? (
+                <nav className="space-y-1">
+                  {renderTableOfContents(secciones)}
+                </nav>
+              ) : (
+                <div className="text-center py-8">
+                  <BookOpen className="w-8 h-8 text-primary-400 mx-auto mb-3" />
+                  <p className="text-sm text-primary-500">
+                    Esta obra no tiene secciones definidas.
+                  </p>
+                </div>
+              )}
 
-                <div className="mt-8 pt-6 border-t border-neutral-200">
-                  <h4 className="font-medium text-primary-900 mb-4">Navegación</h4>
-                  <div className="space-y-3 text-sm">
-                    <div className="flex items-center justify-between">
-                      <span className="text-primary-600">Párrafo actual:</span>
-                      <span className="font-medium text-primary-900">
-                        {activeParagraph} de {parrafos.length}
-                      </span>
-                    </div>
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => navigateToParagraph(activeParagraph - 1)}
-                        disabled={activeParagraph <= 1}
-                        className="btn-secondary text-xs disabled:opacity-50 disabled:cursor-not-allowed flex-1"
-                      >
-                        ← Anterior
-                      </button>
-                      <button
-                        onClick={() => navigateToParagraph(activeParagraph + 1)}
-                        disabled={activeParagraph >= parrafos.length}
-                        className="btn-secondary text-xs disabled:opacity-50 disabled:cursor-not-allowed flex-1"
-                      >
-                        Siguiente →
-                      </button>
-                    </div>
-                    
-                    <div className="text-xs text-primary-500 space-y-1 pt-2 border-t border-primary-200">
-                      <p><strong>Atajos de teclado:</strong></p>
-                      <p>↑↓ Navegar párrafos</p>
-                      <p>Home/End Ir al inicio/final</p>
-                      <p>Ctrl+I Toggle índice</p>
-                      <p>Esc Cerrar índice</p>
-                    </div>
+              <div className="mt-8 pt-6 border-t border-neutral-200">
+                <h4 className="font-medium text-primary-900 mb-4">Navegación</h4>
+                <div className="space-y-3 text-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="text-primary-600">Párrafo actual:</span>
+                    <span className="font-medium text-primary-900">
+                      {activeParagraph} de {parrafos.length}
+                    </span>
+                  </div>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => navigateToParagraph(activeParagraph - 1)}
+                      disabled={activeParagraph <= 1}
+                      className="btn-secondary text-xs disabled:opacity-50 disabled:cursor-not-allowed flex-1"
+                    >
+                      ← Anterior
+                    </button>
+                    <button
+                      onClick={() => navigateToParagraph(activeParagraph + 1)}
+                      disabled={activeParagraph >= parrafos.length}
+                      className="btn-secondary text-xs disabled:opacity-50 disabled:cursor-not-allowed flex-1"
+                    >
+                      Siguiente →
+                    </button>
+                  </div>
+                  
+                  <div className="text-xs text-primary-500 space-y-1 pt-2 border-t border-primary-200">
+                    <p><strong>Atajos de teclado:</strong></p>
+                    <p>↑↓ Navegar párrafos</p>
+                    <p>Home/End Ir al inicio/final</p>
+                    <p>Ctrl+I Toggle índice</p>
+                    <p>Esc Cerrar índice</p>
                   </div>
                 </div>
               </div>
-            ) : (
-              <WorksTree 
-                currentObraSlug={obra.slug}
-                currentAutorSlug={obra.autorSlug}
-              />
-            )}
+            </div>
           </div>
         </aside>
       </div>
@@ -724,10 +728,13 @@ export default function ReadingView({
       )}
 
       {/* Overlay para móvil */}
-      {tocOpen && (
+      {(tocOpen || libraryOpen) && (
         <div 
           className="fixed inset-0 bg-black bg-opacity-20 z-20 lg:hidden"
-          onClick={() => setTocOpen(false)}
+          onClick={() => {
+            setTocOpen(false)
+            setLibraryOpen(false)
+          }}
         />
       )}
     </div>

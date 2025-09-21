@@ -117,10 +117,6 @@ export default function WorksTree({ currentObraSlug, currentAutorSlug }: WorksTr
 
   return (
     <div className="p-4">
-      <div className="flex items-center space-x-2 mb-6">
-        <BookOpen className="w-5 h-5 text-primary-700" />
-        <h3 className="font-medium text-primary-900 text-lg">Biblioteca</h3>
-      </div>
 
       <div className="space-y-1">
         {autores.map((autor) => {
@@ -179,7 +175,7 @@ export default function WorksTree({ currentObraSlug, currentAutorSlug }: WorksTr
                         className={`
                           flex items-center space-x-2 py-1.5 px-3 rounded-sm transition-colors
                           ${isCurrentObra 
-                            ? 'bg-accent-100 text-accent-900 font-medium' 
+                            ? 'text-primary-900 font-medium bg-neutral-200' 
                             : 'text-primary-600 hover:bg-primary-50'
                           }
                         `}
