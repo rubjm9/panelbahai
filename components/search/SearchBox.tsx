@@ -242,7 +242,22 @@ export default function SearchBox({
         e.preventDefault()
         if (selectedIndex >= 0 && selectedIndex < results.length) {
           const result = results[selectedIndex]
-          const url = `/autores/${result.autorSlug}/${result.obraSlug}${result.numero ? `?p=${result.numero}` : ''}${query ? `${result.numero ? '&' : '?'}q=${encodeURIComponent(query)}` : ''}`
+          // Construir URL de manera más robusta
+          let url = `/autores/${result.autorSlug}/${result.obraSlug}`;
+          const params = new URLSearchParams();
+          
+          if (result.numero) {
+            params.set('p', result.numero.toString());
+          }
+          
+          if (query) {
+            params.set('q', query);
+          }
+          
+          if (params.toString()) {
+            url += `?${params.toString()}`;
+          }
+          
           router.push(url)
           if (onResultClick) onResultClick()
         } else if (query.trim()) {
@@ -399,7 +414,22 @@ export default function SearchBox({
                   <div className="flex-1 overflow-y-auto max-h-72">
                     <div className="divide-y divide-neutral-100">
                       {results.map((result, index) => {
-                        const url = `/autores/${result.autorSlug}/${result.obraSlug}${result.numero ? `?p=${result.numero}` : ''}${query ? `${result.numero ? '&' : '?'}q=${encodeURIComponent(query)}` : ''}`;
+                        // Construir URL de manera más robusta
+                        let url = `/autores/${result.autorSlug}/${result.obraSlug}`;
+                        const params = new URLSearchParams();
+                        
+                        if (result.numero) {
+                          params.set('p', result.numero.toString());
+                        }
+                        
+                        if (query) {
+                          params.set('q', query);
+                        }
+                        
+                        if (params.toString()) {
+                          url += `?${params.toString()}`;
+                        }
+                        
                         return (
                           <Link
                             key={result.id}
