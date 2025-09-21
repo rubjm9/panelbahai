@@ -7,6 +7,7 @@ import { searchEngine, SearchResult } from '@/utils/search'
 import Link from 'next/link'
 import AdvancedFilters from './AdvancedFilters'
 import { useSearch } from '@/components/search/SearchProvider'
+import SearchHelp from './SearchHelp'
 
 interface SearchBoxProps {
   onResultClick?: () => void;
@@ -342,6 +343,7 @@ export default function SearchBox({
                 <X className="w-4 h-4" />
               </button>
             )}
+            <SearchHelp className={`${context === 'homepage' ? 'text-gray-300 hover:text-white' : 'text-gray-400 hover:text-gray-600'}`} />
           </div>
         </div>
         

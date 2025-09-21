@@ -1,11 +1,11 @@
 import Link from 'next/link'
 import { Search, BookOpen, Users, Globe, ArrowRight } from 'lucide-react'
-import HybridSearchBox from '@/components/search/HybridSearchBox'
-import EnhancedSearchProvider from '@/components/search/EnhancedSearchProvider'
+import SearchBox from '@/components/search/SearchBox'
+import SearchProvider from '@/components/search/SearchProvider'
 
 export default function HomePage() {
   return (
-    <EnhancedSearchProvider>
+    <SearchProvider>
       <div className="min-h-screen bg-neutral-50">
         {/* Hero principal con fondo azul */}
         <section className="bg-hero-gradient text-white">
@@ -21,7 +21,7 @@ export default function HomePage() {
               </p>
               {/* Buscador principal */}
               <div className="mt-10">
-                <HybridSearchBox 
+                <SearchBox 
                   placeholder="Buscar en toda la biblioteca..."
                   className="max-w-2xl mx-auto"
                   context="homepage"
@@ -106,7 +106,7 @@ export default function HomePage() {
           </div>
         </main>
       </div>
-    </EnhancedSearchProvider>
+    </SearchProvider>
   )
 }
 
