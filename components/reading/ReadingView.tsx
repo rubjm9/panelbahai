@@ -1,8 +1,9 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { ChevronRight, Menu, X, BookOpen, ChevronUp, ChevronDown, PanelLeft, PanelLeftClose } from 'lucide-react'
+import { ChevronRight, Menu, X, BookOpen, ChevronUp, ChevronDown, PanelLeft, PanelLeftClose, Library } from 'lucide-react'
 import Link from 'next/link'
+import WorksTree from './WorksTree'
 
 interface Paragraph {
   numero: number;
@@ -43,6 +44,7 @@ export default function ReadingView({
   const [activeParagraph, setActiveParagraph] = useState<number>(currentParagraph || 1)
   const [showToc, setShowToc] = useState(false)
   const [tocOpen, setTocOpen] = useState(true)
+  const [sidebarType, setSidebarType] = useState<'toc' | 'library'>('toc')
   const contentRef = useRef<HTMLDivElement>(null)
   const [highlightTerm, setHighlightTerm] = useState<string>(highlightQuery || '')
   const [occurrences, setOccurrences] = useState<number[]>([])
@@ -473,9 +475,37 @@ export default function ReadingView({
             
             <div className="flex items-center space-x-2">
               <button
+                onClick={() => {
+                  setSidebarType('library')
+                  setTocOpen(true)
+                }}
+                className={`p-2 transition-colors ${
+                  sidebarType === 'library' && tocOpen 
+                    ? 'text-accent-600 hover:text-accent-800' 
+                    : 'text-primary-600 hover:text-primary-800'
+                }`}
+                title="Mostrar biblioteca"
+              >
+                <Library className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => {
+                  setSidebarType('toc')
+                  setTocOpen(true)
+                }}
+                className={`p-2 transition-colors ${
+                  sidebarType === 'toc' && tocOpen 
+                    ? 'text-accent-600 hover:text-accent-800' 
+                    : 'text-primary-600 hover:text-primary-800'
+                }`}
+                title="Mostrar índice"
+              >
+                <BookOpen className="w-5 h-5" />
+              </button>
+              <button
                 onClick={() => setTocOpen(!tocOpen)}
                 className="p-2 text-primary-600 hover:text-primary-800 transition-colors"
-                title={tocOpen ? 'Ocultar índice' : 'Mostrar índice'}
+                title={tocOpen ? 'Ocultar sidebar' : 'Mostrar sidebar'}
               >
                 {tocOpen ? <PanelLeft className="w-5 h-5" /> : <PanelLeftClose className="w-5 h-5" />}
               </button>
@@ -564,7 +594,7 @@ export default function ReadingView({
           </div>
         </main>
 
-        {/* Índice lateral elegante */}
+        {/* Sidebar lateral elegante */}
         <aside 
           ref={sidebarRef}
           className={`
@@ -573,9 +603,22 @@ export default function ReadingView({
             ${tocOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0 lg:w-0 lg:opacity-0'}
           `}
         >
-          <div ref={sidebarScrollRef} className="table-of-contents p-6 h-full overflow-y-auto lg:overflow-y-auto">
-            <div className="flex items-center justify-between mb-6 px-2">
-              <h3 className="font-medium text-primary-900 text-lg">Índice</h3>
+          <div ref={sidebarScrollRef} className="h-full overflow-y-auto lg:overflow-y-auto">
+            {/* Header del sidebar */}
+            <div className="flex items-center justify-between p-4 border-b border-neutral-200">
+              <div className="flex items-center space-x-2">
+                {sidebarType === 'toc' ? (
+                  <>
+                    <BookOpen className="w-5 h-5 text-primary-700" />
+                    <h3 className="font-medium text-primary-900 text-lg">Índice</h3>
+                  </>
+                ) : (
+                  <>
+                    <Library className="w-5 h-5 text-primary-700" />
+                    <h3 className="font-medium text-primary-900 text-lg">Biblioteca</h3>
+                  </>
+                )}
+              </div>
               <button
                 onClick={() => setTocOpen(false)}
                 className="lg:hidden p-1 text-primary-500 hover:text-primary-700"
@@ -583,55 +626,65 @@ export default function ReadingView({
                 <X className="w-4 h-4" />
               </button>
             </div>
-            
-            {secciones.length > 0 ? (
-              <nav className="space-y-1">
-                {renderTableOfContents(secciones)}
-              </nav>
-            ) : (
-              <div className="text-center py-8">
-                <BookOpen className="w-8 h-8 text-primary-400 mx-auto mb-3" />
-                <p className="text-sm text-primary-500">
-                  Esta obra no tiene secciones definidas.
-                </p>
-              </div>
-            )}
 
-            <div className="mt-8 pt-6 border-t border-neutral-200">
-              <h4 className="font-medium text-primary-900 mb-4">Navegación</h4>
-              <div className="space-y-3 text-sm">
-                <div className="flex items-center justify-between">
-                  <span className="text-primary-600">Párrafo actual:</span>
-                  <span className="font-medium text-primary-900">
-                    {activeParagraph} de {parrafos.length}
-                  </span>
-                </div>
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => navigateToParagraph(activeParagraph - 1)}
-                    disabled={activeParagraph <= 1}
-                    className="btn-secondary text-xs disabled:opacity-50 disabled:cursor-not-allowed flex-1"
-                  >
-                    ← Anterior
-                  </button>
-                  <button
-                    onClick={() => navigateToParagraph(activeParagraph + 1)}
-                    disabled={activeParagraph >= parrafos.length}
-                    className="btn-secondary text-xs disabled:opacity-50 disabled:cursor-not-allowed flex-1"
-                  >
-                    Siguiente →
-                  </button>
-                </div>
-                
-                <div className="text-xs text-primary-500 space-y-1 pt-2 border-t border-primary-200">
-                  <p><strong>Atajos de teclado:</strong></p>
-                  <p>↑↓ Navegar párrafos</p>
-                  <p>Home/End Ir al inicio/final</p>
-                  <p>Ctrl+I Toggle índice</p>
-                  <p>Esc Cerrar índice</p>
+            {/* Contenido del sidebar */}
+            {sidebarType === 'toc' ? (
+              <div className="p-6">
+                {secciones.length > 0 ? (
+                  <nav className="space-y-1">
+                    {renderTableOfContents(secciones)}
+                  </nav>
+                ) : (
+                  <div className="text-center py-8">
+                    <BookOpen className="w-8 h-8 text-primary-400 mx-auto mb-3" />
+                    <p className="text-sm text-primary-500">
+                      Esta obra no tiene secciones definidas.
+                    </p>
+                  </div>
+                )}
+
+                <div className="mt-8 pt-6 border-t border-neutral-200">
+                  <h4 className="font-medium text-primary-900 mb-4">Navegación</h4>
+                  <div className="space-y-3 text-sm">
+                    <div className="flex items-center justify-between">
+                      <span className="text-primary-600">Párrafo actual:</span>
+                      <span className="font-medium text-primary-900">
+                        {activeParagraph} de {parrafos.length}
+                      </span>
+                    </div>
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => navigateToParagraph(activeParagraph - 1)}
+                        disabled={activeParagraph <= 1}
+                        className="btn-secondary text-xs disabled:opacity-50 disabled:cursor-not-allowed flex-1"
+                      >
+                        ← Anterior
+                      </button>
+                      <button
+                        onClick={() => navigateToParagraph(activeParagraph + 1)}
+                        disabled={activeParagraph >= parrafos.length}
+                        className="btn-secondary text-xs disabled:opacity-50 disabled:cursor-not-allowed flex-1"
+                      >
+                        Siguiente →
+                      </button>
+                    </div>
+                    
+                    <div className="text-xs text-primary-500 space-y-1 pt-2 border-t border-primary-200">
+                      <p><strong>Atajos de teclado:</strong></p>
+                      <p>↑↓ Navegar párrafos</p>
+                      <p>Home/End Ir al inicio/final</p>
+                      <p>Ctrl+I Toggle índice</p>
+                      <p>Esc Cerrar índice</p>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
+            ) : (
+              <WorksTree 
+                currentObraSlug={obra.slug}
+                currentAutorSlug={obra.autorSlug}
+              />
+            )}
           </div>
         </aside>
       </div>
