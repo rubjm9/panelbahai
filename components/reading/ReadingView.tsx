@@ -393,7 +393,7 @@ export default function ReadingView({
 
   const renderTableOfContents = (sections: Section[], level: number = 0): JSX.Element[] => {
     return sections.map((section) => (
-      <div key={section.id} className={`ml-${level * 3}`}>
+      <div key={`${section.id}-${level}`} className={`ml-${level * 3}`}>
         <button
           onClick={() => navigateToSection(section.titulo)}
           data-section={section.titulo.toLowerCase().replace(/\s+/g, '-')}
