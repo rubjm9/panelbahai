@@ -538,8 +538,8 @@ export default function ReadingView({
           ref={contentRef}
           className={`flex-1 transition-all duration-300 ${
             libraryOpen && tocOpen ? 'lg:mx-16' : 
-            libraryOpen ? 'lg:ml-80 lg:mr-16' : 
-            tocOpen ? 'lg:ml-16 lg:mr-80' : 
+            libraryOpen ? 'lg:ml-80 lg:mr-auto lg:max-w-4xl' : 
+            tocOpen ? 'lg:mr-80 lg:ml-auto lg:max-w-4xl' : 
             'lg:mx-auto lg:max-w-7xl'
           }`}
         >
