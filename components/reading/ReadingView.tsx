@@ -537,9 +537,9 @@ export default function ReadingView({
         <main 
           ref={contentRef}
           className={`flex-1 transition-all duration-300 ${
-            libraryOpen && tocOpen ? 'lg:mx-32' : 
-            libraryOpen ? 'lg:ml-80 lg:mr-8' : 
-            tocOpen ? 'lg:ml-8 lg:mr-80' : 
+            libraryOpen && tocOpen ? 'lg:mx-16' : 
+            libraryOpen ? 'lg:ml-80 lg:mr-16' : 
+            tocOpen ? 'lg:ml-16 lg:mr-80' : 
             'lg:mx-auto lg:max-w-7xl'
           }`}
         >
