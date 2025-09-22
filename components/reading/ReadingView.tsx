@@ -482,7 +482,7 @@ export default function ReadingView({
                     ? 'text-accent-600 hover:text-accent-800' 
                     : 'text-primary-600 hover:text-primary-800'
                 }`}
-                title={libraryOpen ? 'Ocultar biblioteca' : 'Mostrar biblioteca'}
+                title={libraryOpen ? 'Ocultar biblioteca de obras' : 'Mostrar biblioteca de obras por autor'}
               >
                 <Library className="w-5 h-5" />
               </button>
@@ -493,7 +493,7 @@ export default function ReadingView({
                     ? 'text-accent-600 hover:text-accent-800' 
                     : 'text-primary-600 hover:text-primary-800'
                 }`}
-                title={tocOpen ? 'Ocultar índice' : 'Mostrar índice'}
+                title={tocOpen ? 'Ocultar índice de contenidos' : 'Mostrar índice de contenidos y navegación'}
               >
                 <BookOpen className="w-5 h-5" />
               </button>
@@ -504,7 +504,7 @@ export default function ReadingView({
                     ? 'text-accent-600 hover:text-accent-800' 
                     : 'text-primary-600 hover:text-primary-800'
                 }`}
-                title={focusMode ? 'Salir del modo lectura' : 'Modo lectura sin distracciones'}
+                title={focusMode ? 'Salir del modo lectura sin distracciones' : 'Activar modo lectura sin distracciones (oculta menús y sidebars)'}
               >
                 <Focus className="w-5 h-5" />
               </button>
@@ -600,6 +600,7 @@ export default function ReadingView({
           border-l border-neutral-200 transition-transform duration-300 z-30
           ${tocOpen && !focusMode ? 'translate-x-0' : 'translate-x-full'}
         `}
+        style={{ top: '140px' }}
       >
           <div ref={sidebarScrollRef} className="h-full overflow-y-auto lg:overflow-y-auto">
             {/* Header del sidebar derecho */}
@@ -677,6 +678,7 @@ export default function ReadingView({
           border-r border-neutral-200 transition-transform duration-300 z-30
           ${libraryOpen && !focusMode ? 'translate-x-0' : '-translate-x-full'}
         `}
+        style={{ top: '140px' }}
       >
         <div className="h-full overflow-y-auto">
           {/* Header del sidebar izquierdo */}
@@ -749,7 +751,7 @@ export default function ReadingView({
       {/* Overlay para modo lectura sin distracciones */}
       {focusMode && (
         <div 
-          className="fixed top-0 left-0 right-0 h-[73px] bg-white z-40"
+          className="fixed top-0 left-0 right-0 h-[120px] bg-white z-40"
           onClick={() => setFocusMode(false)}
         />
       )}
