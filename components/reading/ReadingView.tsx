@@ -399,13 +399,13 @@ export default function ReadingView({
         <button
           onClick={() => navigateToSection(section.titulo)}
           data-section={section.titulo.toLowerCase().replace(/\s+/g, '-')}
-          className={`w-full text-left py-1.5 px-2 text-sm hover:text-primary-800 transition-colors rounded-sm ${
+          className={`w-full text-left py-1 px-2 text-xs hover:text-primary-800 transition-colors rounded-sm ${
             activeSection === section.titulo ? 'text-primary-900 font-medium bg-neutral-200' : 'text-primary-600'
           }`}
         >
           <div className="flex items-center justify-between">
             <span className="truncate">{section.titulo}</span>
-            <span className="text-xs text-primary-500 ml-2 flex-shrink-0">
+            <span className="text-xs text-primary-500 ml-1 flex-shrink-0">
               {getSectionStartParagraph(section.titulo)}
             </span>
           </div>
@@ -584,17 +584,17 @@ export default function ReadingView({
       <aside 
         ref={sidebarRef}
         className={`
-          fixed top-[120px] right-0 h-[calc(100vh-7.5rem)] w-64 bg-white lg:bg-gradient-to-r lg:from-neutral-100 lg:to-neutral-50
+          fixed top-[140px] right-0 h-[calc(100vh-8.75rem)] w-64 bg-white lg:bg-gradient-to-r lg:from-neutral-100 lg:to-neutral-50
           border-l border-neutral-200 transition-transform duration-300 z-30
           ${tocOpen ? 'translate-x-0' : 'translate-x-full'}
         `}
       >
           <div ref={sidebarScrollRef} className="h-full overflow-y-auto lg:overflow-y-auto">
             {/* Header del sidebar derecho */}
-            <div className="flex items-center justify-between p-4 border-b border-neutral-200">
+            <div className="flex items-center justify-between p-3 border-b border-neutral-200">
               <div className="flex items-center space-x-2">
-                <BookOpen className="w-5 h-5 text-primary-700" />
-                <h3 className="font-medium text-primary-900 text-lg">Índice</h3>
+                <BookOpen className="w-4 h-4 text-primary-700" />
+                <h3 className="font-medium text-primary-900 text-base">Índice</h3>
               </div>
               <button
                 onClick={() => setTocOpen(false)}
@@ -605,7 +605,7 @@ export default function ReadingView({
             </div>
 
             {/* Contenido del índice */}
-            <div className="p-6">
+            <div className="p-4">
               {secciones.length > 0 ? (
                 <nav className="space-y-1">
                   {renderTableOfContents(secciones)}
@@ -619,7 +619,7 @@ export default function ReadingView({
                 </div>
               )}
 
-              <div className="mt-8 pt-6 border-t border-neutral-200">
+              <div className="mt-6 pt-4 border-t border-neutral-200">
                 <h4 className="font-medium text-primary-900 mb-4">Navegación</h4>
                 <div className="space-y-3 text-sm">
                   <div className="flex items-center justify-between">
@@ -661,17 +661,17 @@ export default function ReadingView({
       {/* Sidebar izquierdo flotante - Biblioteca */}
       <aside 
         className={`
-          fixed top-[120px] left-0 h-[calc(100vh-7.5rem)] w-64 bg-white lg:bg-gradient-to-l lg:from-neutral-100 lg:to-neutral-50
+          fixed top-[140px] left-0 h-[calc(100vh-8.75rem)] w-64 bg-white lg:bg-gradient-to-l lg:from-neutral-100 lg:to-neutral-50
           border-r border-neutral-200 transition-transform duration-300 z-30
           ${libraryOpen ? 'translate-x-0' : '-translate-x-full'}
         `}
       >
         <div className="h-full overflow-y-auto">
           {/* Header del sidebar izquierdo */}
-          <div className="flex items-center justify-between p-4 border-b border-neutral-200">
+          <div className="flex items-center justify-between p-3 border-b border-neutral-200">
             <div className="flex items-center space-x-2">
-              <Library className="w-5 h-5 text-primary-700" />
-              <h3 className="font-medium text-primary-900 text-lg">Biblioteca</h3>
+              <Library className="w-4 h-4 text-primary-700" />
+              <h3 className="font-medium text-primary-900 text-base">Biblioteca</h3>
             </div>
             <button
               onClick={() => setLibraryOpen(false)}
