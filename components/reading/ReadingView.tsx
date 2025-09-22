@@ -545,9 +545,9 @@ export default function ReadingView({
                     >
                       <div className="relative flex items-center">
                         <div 
-                          className={`paragraph-number transition-all duration-300 ${
+                          className={`paragraph-number transition-colors duration-300 ${
                             activeParagraph === parrafo.numero 
-                              ? 'bg-accent-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-medium' 
+                              ? 'bg-accent-500 text-white rounded-sm w-8 h-8 flex items-center justify-center text-sm font-medium' 
                               : ''
                           }`}
                           onClick={() => setShowCopyDropdown(showCopyDropdown === parrafo.numero ? null : parrafo.numero)}
@@ -584,7 +584,7 @@ export default function ReadingView({
       <aside 
         ref={sidebarRef}
         className={`
-          fixed top-[120px] right-0 h-[calc(100vh-7.5rem)] w-80 bg-white lg:bg-gradient-to-r lg:from-neutral-100 lg:to-neutral-50
+          fixed top-[120px] right-0 h-[calc(100vh-7.5rem)] w-64 bg-white lg:bg-gradient-to-r lg:from-neutral-100 lg:to-neutral-50
           border-l border-neutral-200 transition-transform duration-300 z-30
           ${tocOpen ? 'translate-x-0' : 'translate-x-full'}
         `}
@@ -661,7 +661,7 @@ export default function ReadingView({
       {/* Sidebar izquierdo flotante - Biblioteca */}
       <aside 
         className={`
-          fixed top-[120px] left-0 h-[calc(100vh-7.5rem)] w-80 bg-white lg:bg-gradient-to-l lg:from-neutral-100 lg:to-neutral-50
+          fixed top-[120px] left-0 h-[calc(100vh-7.5rem)] w-64 bg-white lg:bg-gradient-to-l lg:from-neutral-100 lg:to-neutral-50
           border-r border-neutral-200 transition-transform duration-300 z-30
           ${libraryOpen ? 'translate-x-0' : '-translate-x-full'}
         `}
