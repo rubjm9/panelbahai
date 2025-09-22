@@ -536,9 +536,12 @@ export default function ReadingView({
         {/* Contenido principal elegante */}
         <main 
           ref={contentRef}
-          className={`flex-1 max-w-7xl mx-auto transition-all duration-300 ${
-            libraryOpen ? 'lg:ml-80' : ''
-          } ${tocOpen ? 'lg:mr-80' : ''}`}
+          className={`flex-1 transition-all duration-300 ${
+            libraryOpen && tocOpen ? 'lg:mx-80' : 
+            libraryOpen ? 'lg:ml-80 lg:mr-0' : 
+            tocOpen ? 'lg:ml-0 lg:mr-80' : 
+            'lg:mx-auto lg:max-w-7xl'
+          }`}
         >
           <div className="reading-content px-4 lg:px-8">
             <header className="mb-16 text-center">
