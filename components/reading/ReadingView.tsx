@@ -545,9 +545,9 @@ export default function ReadingView({
                     >
                       <div className="relative flex items-center">
                         <div 
-                          className={`paragraph-number transition-colors duration-300 ${
+                          className={`paragraph-number transition-colors duration-300 w-8 h-8 flex items-center justify-center text-sm font-medium ${
                             activeParagraph === parrafo.numero 
-                              ? 'bg-accent-500 text-white rounded-sm w-8 h-8 flex items-center justify-center text-sm font-medium' 
+                              ? 'bg-accent-500 text-white rounded-sm' 
                               : ''
                           }`}
                           onClick={() => setShowCopyDropdown(showCopyDropdown === parrafo.numero ? null : parrafo.numero)}
@@ -584,9 +584,9 @@ export default function ReadingView({
       <aside 
         ref={sidebarRef}
         className={`
-          fixed top-[140px] right-0 h-[calc(100vh-8.75rem)] w-64 bg-white lg:bg-gradient-to-r lg:from-neutral-100 lg:to-neutral-50
+          fixed lg:sticky top-[140px] lg:top-[140px] right-0 h-[calc(100vh-8.75rem)] lg:h-[calc(100vh-8.75rem)] w-64 bg-white lg:bg-gradient-to-r lg:from-neutral-100 lg:to-neutral-50
           border-l border-neutral-200 transition-transform duration-300 z-30
-          ${tocOpen ? 'translate-x-0' : 'translate-x-full'}
+          ${tocOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0 lg:w-0 lg:opacity-0'}
         `}
       >
           <div ref={sidebarScrollRef} className="h-full overflow-y-auto lg:overflow-y-auto">
@@ -661,9 +661,9 @@ export default function ReadingView({
       {/* Sidebar izquierdo flotante - Biblioteca */}
       <aside 
         className={`
-          fixed top-[140px] left-0 h-[calc(100vh-8.75rem)] w-64 bg-white lg:bg-gradient-to-l lg:from-neutral-100 lg:to-neutral-50
+          fixed lg:sticky top-[140px] lg:top-[140px] left-0 h-[calc(100vh-8.75rem)] lg:h-[calc(100vh-8.75rem)] w-64 bg-white lg:bg-gradient-to-l lg:from-neutral-100 lg:to-neutral-50
           border-r border-neutral-200 transition-transform duration-300 z-30
-          ${libraryOpen ? 'translate-x-0' : '-translate-x-full'}
+          ${libraryOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0 lg:w-0 lg:opacity-0'}
         `}
       >
         <div className="h-full overflow-y-auto">
