@@ -501,48 +501,11 @@ export default function ReadingView({
         </div>
       </div>
 
-      <div className="flex">
-        {/* Sidebar izquierdo - Biblioteca */}
-        <aside 
-          className={`
-            fixed lg:sticky top-[120px] left-0 h-full lg:h-[calc(100vh-7.5rem)] w-80 bg-white lg:bg-gradient-to-l lg:from-neutral-100 lg:to-neutral-50
-            border-r border-neutral-200 transition-transform duration-300 z-20
-            ${libraryOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0 lg:w-0 lg:opacity-0'}
-          `}
-        >
-          <div className="h-full overflow-y-auto lg:overflow-y-auto">
-            {/* Header del sidebar izquierdo */}
-            <div className="flex items-center justify-between p-4 border-b border-neutral-200">
-              <div className="flex items-center space-x-2">
-                <Library className="w-5 h-5 text-primary-700" />
-                <h3 className="font-medium text-primary-900 text-lg">Biblioteca</h3>
-              </div>
-              <button
-                onClick={() => setLibraryOpen(false)}
-                className="lg:hidden p-1 text-primary-500 hover:text-primary-700"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Contenido de la biblioteca */}
-            <WorksTree 
-              currentObraSlug={obra.slug}
-              currentAutorSlug={obra.autorSlug}
-            />
-          </div>
-        </aside>
-
-        {/* Contenido principal elegante */}
-        <main 
-          ref={contentRef}
-          className={`flex-1 transition-all duration-300 ${
-            libraryOpen && tocOpen ? 'lg:mx-16' : 
-            libraryOpen ? 'lg:ml-80 lg:mr-auto lg:max-w-4xl' : 
-            tocOpen ? 'lg:mr-80 lg:ml-auto lg:max-w-4xl' : 
-            'lg:mx-auto lg:max-w-7xl'
-          }`}
-        >
+      {/* Contenido principal con ancho fijo */}
+      <main 
+        ref={contentRef}
+        className="mx-auto max-w-4xl px-4 lg:px-8"
+      >
           <div className="reading-content px-4 lg:px-8">
             <header className="mb-16 text-center">
               <h1 className="display-title mb-4">
@@ -617,15 +580,15 @@ export default function ReadingView({
           </div>
         </main>
 
-        {/* Sidebar derecho - Índice */}
-        <aside 
-          ref={sidebarRef}
-          className={`
-            fixed lg:sticky top-[120px] right-0 h-full lg:h-[calc(100vh-7.5rem)] w-80 bg-white lg:bg-gradient-to-r lg:from-neutral-100 lg:to-neutral-50
-            border-l border-neutral-200 transition-transform duration-300 z-20
-            ${tocOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0 lg:w-0 lg:opacity-0'}
-          `}
-        >
+      {/* Sidebar derecho flotante - Índice */}
+      <aside 
+        ref={sidebarRef}
+        className={`
+          fixed top-[120px] right-0 h-[calc(100vh-7.5rem)] w-80 bg-white lg:bg-gradient-to-r lg:from-neutral-100 lg:to-neutral-50
+          border-l border-neutral-200 transition-transform duration-300 z-30
+          ${tocOpen ? 'translate-x-0' : 'translate-x-full'}
+        `}
+      >
           <div ref={sidebarScrollRef} className="h-full overflow-y-auto lg:overflow-y-auto">
             {/* Header del sidebar derecho */}
             <div className="flex items-center justify-between p-4 border-b border-neutral-200">
@@ -635,7 +598,7 @@ export default function ReadingView({
               </div>
               <button
                 onClick={() => setTocOpen(false)}
-                className="lg:hidden p-1 text-primary-500 hover:text-primary-700"
+                className="p-1 text-primary-500 hover:text-primary-700"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -694,7 +657,37 @@ export default function ReadingView({
             </div>
           </div>
         </aside>
-      </div>
+
+      {/* Sidebar izquierdo flotante - Biblioteca */}
+      <aside 
+        className={`
+          fixed top-[120px] left-0 h-[calc(100vh-7.5rem)] w-80 bg-white lg:bg-gradient-to-l lg:from-neutral-100 lg:to-neutral-50
+          border-r border-neutral-200 transition-transform duration-300 z-30
+          ${libraryOpen ? 'translate-x-0' : '-translate-x-full'}
+        `}
+      >
+        <div className="h-full overflow-y-auto">
+          {/* Header del sidebar izquierdo */}
+          <div className="flex items-center justify-between p-4 border-b border-neutral-200">
+            <div className="flex items-center space-x-2">
+              <Library className="w-5 h-5 text-primary-700" />
+              <h3 className="font-medium text-primary-900 text-lg">Biblioteca</h3>
+            </div>
+            <button
+              onClick={() => setLibraryOpen(false)}
+              className="p-1 text-primary-500 hover:text-primary-700"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Contenido de la biblioteca */}
+          <WorksTree 
+            currentObraSlug={obra.slug}
+            currentAutorSlug={obra.autorSlug}
+          />
+        </div>
+      </aside>
 
       {/* Barra flotante de navegación de ocurrencias */}
       {showFinderBar && highlightTerm && occurrences.length > 0 && (
