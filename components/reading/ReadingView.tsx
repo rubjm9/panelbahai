@@ -501,11 +501,11 @@ export default function ReadingView({
         </div>
       </div>
 
-      <div className="flex max-w-7xl mx-auto">
+      <div className="flex">
         {/* Sidebar izquierdo - Biblioteca */}
         <aside 
           className={`
-            fixed lg:sticky top-[120px] left-0 h-full lg:h-[calc(100vh-7.5rem)] w-80 bg-white lg:bg-gradient-to-r lg:from-neutral-100 lg:to-neutral-50
+            fixed lg:sticky top-[120px] left-0 h-full lg:h-[calc(100vh-7.5rem)] w-80 bg-white lg:bg-gradient-to-l lg:from-neutral-100 lg:to-neutral-50
             border-r border-neutral-200 transition-transform duration-300 z-20
             ${libraryOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0 lg:w-0 lg:opacity-0'}
           `}
@@ -536,7 +536,7 @@ export default function ReadingView({
         {/* Contenido principal elegante */}
         <main 
           ref={contentRef}
-          className={`flex-1 transition-all duration-300 ${
+          className={`flex-1 max-w-7xl mx-auto transition-all duration-300 ${
             libraryOpen ? 'lg:ml-80' : ''
           } ${tocOpen ? 'lg:mr-80' : ''}`}
         >
