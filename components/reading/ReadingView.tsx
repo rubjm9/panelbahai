@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { ChevronRight, Menu, X, BookOpen, ChevronUp, ChevronDown, PanelLeft, PanelLeftClose, Library } from 'lucide-react'
+import { ChevronRight, Menu, X, BookOpen, ChevronUp, ChevronDown, PanelLeft, PanelLeftClose, Library, Focus } from 'lucide-react'
 import Link from 'next/link'
 import WorksTree from './WorksTree'
 
@@ -53,6 +53,7 @@ export default function ReadingView({
   const [activeHighlightIndex, setActiveHighlightIndex] = useState<number>(0)
   const [isScrolled, setIsScrolled] = useState<boolean>(false)
   const [showCopyDropdown, setShowCopyDropdown] = useState<number | null>(null)
+  const [focusMode, setFocusMode] = useState<boolean>(false)
   const sidebarRef = useRef<HTMLDivElement>(null)
   const sidebarScrollRef = useRef<HTMLDivElement>(null)
 
@@ -496,6 +497,17 @@ export default function ReadingView({
               >
                 <BookOpen className="w-5 h-5" />
               </button>
+              <button
+                onClick={() => setFocusMode(!focusMode)}
+                className={`p-2 transition-colors ${
+                  focusMode 
+                    ? 'text-accent-600 hover:text-accent-800' 
+                    : 'text-primary-600 hover:text-primary-800'
+                }`}
+                title={focusMode ? 'Salir del modo lectura' : 'Modo lectura sin distracciones'}
+              >
+                <Focus className="w-5 h-5" />
+              </button>
             </div>
           </div>
         </div>
@@ -584,9 +596,9 @@ export default function ReadingView({
       <aside 
         ref={sidebarRef}
         className={`
-          fixed lg:sticky top-[140px] lg:top-[140px] right-0 h-[calc(100vh-8.75rem)] lg:h-[calc(100vh-8.75rem)] w-64 bg-white lg:bg-gradient-to-r lg:from-neutral-100 lg:to-neutral-50
+          fixed top-[140px] right-0 h-[calc(100vh-8.75rem)] w-64 bg-white lg:bg-gradient-to-r lg:from-neutral-100 lg:to-neutral-50
           border-l border-neutral-200 transition-transform duration-300 z-30
-          ${tocOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0 lg:w-0 lg:opacity-0'}
+          ${tocOpen && !focusMode ? 'translate-x-0' : 'translate-x-full'}
         `}
       >
           <div ref={sidebarScrollRef} className="h-full overflow-y-auto lg:overflow-y-auto">
@@ -661,9 +673,9 @@ export default function ReadingView({
       {/* Sidebar izquierdo flotante - Biblioteca */}
       <aside 
         className={`
-          fixed lg:sticky top-[140px] lg:top-[140px] left-0 h-[calc(100vh-8.75rem)] lg:h-[calc(100vh-8.75rem)] w-64 bg-white lg:bg-gradient-to-l lg:from-neutral-100 lg:to-neutral-50
+          fixed top-[140px] left-0 h-[calc(100vh-8.75rem)] w-64 bg-white lg:bg-gradient-to-l lg:from-neutral-100 lg:to-neutral-50
           border-r border-neutral-200 transition-transform duration-300 z-30
-          ${libraryOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0 lg:w-0 lg:opacity-0'}
+          ${libraryOpen && !focusMode ? 'translate-x-0' : '-translate-x-full'}
         `}
       >
         <div className="h-full overflow-y-auto">
@@ -731,6 +743,14 @@ export default function ReadingView({
             setTocOpen(false)
             setLibraryOpen(false)
           }}
+        />
+      )}
+
+      {/* Overlay para modo lectura sin distracciones */}
+      {focusMode && (
+        <div 
+          className="fixed top-0 left-0 right-0 h-[73px] bg-white z-40"
+          onClick={() => setFocusMode(false)}
         />
       )}
     </div>
