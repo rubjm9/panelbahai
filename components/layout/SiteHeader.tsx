@@ -18,7 +18,7 @@ export default function SiteHeader() {
   const [mobileOpen, setMobileOpen] = useState(false)
 
   return (
-    <header className="bg-white shadow-sm border-b border-primary-100 sticky top-0 z-50">
+    <header id={`header`} className="bg-white shadow-sm border-b border-primary-100 sticky top-0 z-50">
       <div className="container-elegant">
         <div className="flex justify-between items-center py-4">
           {/* Logo */}

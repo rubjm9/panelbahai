@@ -54,6 +54,8 @@ export default function ReadingView({
   const [isScrolled, setIsScrolled] = useState<boolean>(false)
   const [showCopyDropdown, setShowCopyDropdown] = useState<number | null>(null)
   const [focusMode, setFocusMode] = useState<boolean>(false)
+  const [paragraphInput, setParagraphInput] = useState<string>('')
+  const [showParagraphInput, setShowParagraphInput] = useState<boolean>(false)
   const sidebarRef = useRef<HTMLDivElement>(null)
   const sidebarScrollRef = useRef<HTMLDivElement>(null)
 
@@ -225,11 +227,24 @@ export default function ReadingView({
   // Scroll to paragraph on load
   useEffect(() => {
     if (currentParagraph) {
-      const element = document.getElementById(`p${currentParagraph}`)
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'center' })
-        setActiveParagraph(currentParagraph)
-      }
+      // Pequeño delay para asegurar que el DOM esté renderizado
+      setTimeout(() => {
+        const element = document.getElementById(`p${currentParagraph}`)
+        if (element) {
+          scrollToElement(element)
+          setActiveParagraph(currentParagraph)
+          
+          // Agregar resaltado temporal después del scroll
+          setTimeout(() => {
+            element.classList.add('paragraph-highlight-temp')
+            
+            // Remover el resaltado después de 3 segundos
+            setTimeout(() => {
+              element.classList.remove('paragraph-highlight-temp')
+            }, 3000)
+          }, 300) // Delay adicional para que el scroll termine
+        }
+      }, 100)
     }
     // Si no hay highlightQuery, intentar recuperar del sessionStorage
     try {
@@ -245,6 +260,47 @@ export default function ReadingView({
       }
     } catch {}
   }, [currentParagraph, highlightQuery])
+
+  // Detectar cambios en el hash de la URL para resaltado temporal
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash
+      if (hash.startsWith('#p')) {
+        const paragraphNum = parseInt(hash.substring(2))
+        if (!isNaN(paragraphNum)) {
+          // Pequeño delay para asegurar que el DOM esté renderizado
+          setTimeout(() => {
+            const element = document.getElementById(`p${paragraphNum}`)
+            if (element) {
+              // Scroll suave al párrafo con centrado vertical
+              scrollToElement(element)
+              setActiveParagraph(paragraphNum)
+              
+              // Agregar resaltado temporal después del scroll
+              setTimeout(() => {
+                element.classList.add('paragraph-highlight-temp')
+                
+                // Remover el resaltado después de 3 segundos
+                setTimeout(() => {
+                  element.classList.remove('paragraph-highlight-temp')
+                }, 3000)
+              }, 300) // Delay adicional para que el scroll termine
+            }
+          }, 100)
+        }
+      }
+    }
+
+    // Ejecutar inmediatamente si hay hash en la URL
+    handleHashChange()
+
+    // Escuchar cambios en el hash
+    window.addEventListener('hashchange', handleHashChange)
+    
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange)
+    }
+  }, [focusMode]) // Agregar focusMode como dependencia para recalcular offset
 
   // Detectar scroll para hacer el header más fino
   useEffect(() => {
@@ -296,14 +352,11 @@ export default function ReadingView({
           event.preventDefault()
           navigateToParagraph(parrafos.length)
           break
-        case 'Escape':
-          setTocOpen(false)
-          break
-        case 'i':
-        case 'I':
+        case 'l':
+        case 'L':
           if (event.ctrlKey || event.metaKey) {
             event.preventDefault()
-            setTocOpen(!tocOpen)
+            setFocusMode(!focusMode)
           }
           break
       }
@@ -311,16 +364,70 @@ export default function ReadingView({
 
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [activeParagraph, parrafos.length, tocOpen])
+  }, [activeParagraph, parrafos.length, tocOpen, focusMode])
+
+  // Helper function to scroll to element with proper centering
+  const scrollToElement = (element: HTMLElement) => {
+    const breadcrumbHeight = focusMode ? 73 : 0 // Altura del breadcrumb en modo focus
+    const elementRect = element.getBoundingClientRect()
+    const absoluteElementTop = elementRect.top + window.pageYOffset
+    const viewportHeight = window.innerHeight
+    const elementHeight = elementRect.height
+    
+    // Calcular posición para centrar verticalmente
+    const centerPosition = absoluteElementTop - (viewportHeight / 2) + (elementHeight / 2)
+    
+    // Ajustar por la altura del breadcrumb en modo focus
+    const finalPosition = centerPosition - breadcrumbHeight
+    
+    window.scrollTo({
+      top: Math.max(0, finalPosition), // No permitir scroll negativo
+      behavior: 'smooth'
+    })
+  }
 
   // Navigate to specific paragraph
   const navigateToParagraph = (paragraphNumber: number) => {
     const targetParagraph = Math.max(1, Math.min(paragraphNumber, parrafos.length))
     const element = document.getElementById(`p${targetParagraph}`)
     if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      scrollToElement(element)
       setActiveParagraph(targetParagraph)
+      
+      // Agregar resaltado temporal después del scroll
+      setTimeout(() => {
+        element.classList.add('paragraph-highlight-temp')
+        
+        // Remover el resaltado después de 3 segundos
+        setTimeout(() => {
+          element.classList.remove('paragraph-highlight-temp')
+        }, 3000)
+      }, 300) // Delay adicional para que el scroll termine
     }
+  }
+
+  // Handle paragraph input navigation
+  const handleParagraphInputSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    const paragraphNum = parseInt(paragraphInput)
+    if (!isNaN(paragraphNum) && paragraphNum >= 1 && paragraphNum <= parrafos.length) {
+      navigateToParagraph(paragraphNum)
+      setParagraphInput('')
+      setShowParagraphInput(false)
+    }
+  }
+
+  const handleParagraphInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    // Solo permitir números
+    if (value === '' || /^\d+$/.test(value)) {
+      setParagraphInput(value)
+    }
+  }
+
+  const handleParagraphNumberClick = () => {
+    setShowParagraphInput(true)
+    setParagraphInput(activeParagraph.toString())
   }
 
   // Navigate to section
@@ -450,10 +557,92 @@ export default function ReadingView({
     }
   }
 
+  // Aplicar clase al body cuando esté en modo lectura sin distracciones
+  useEffect(() => {
+    if (focusMode) {
+      document.body.classList.add('focus-mode')
+    } else {
+      document.body.classList.remove('focus-mode')
+    }
+    
+    // Cleanup al desmontar
+    return () => {
+      document.body.classList.remove('focus-mode')
+    }
+  }, [focusMode])
+
+  // Posicionar tooltips correctamente
+  useEffect(() => {
+    const handleMouseEnter = (e: MouseEvent) => {
+      const target = e.target as HTMLElement
+      if (target && target.hasAttribute && target.hasAttribute('data-tooltip')) {
+        const rect = target.getBoundingClientRect()
+        const tooltipText = target.getAttribute('data-tooltip') || ''
+        
+        // Crear tooltip en el body para evitar problemas de z-index
+        const tooltipElement = document.createElement('div')
+        tooltipElement.className = 'custom-tooltip'
+        tooltipElement.textContent = tooltipText
+        tooltipElement.style.position = 'fixed'
+        tooltipElement.style.left = `${rect.left + rect.width / 2}px`
+        tooltipElement.style.top = `${rect.bottom + 8}px`
+        tooltipElement.style.transform = 'translateX(-50%)'
+        tooltipElement.style.zIndex = '999999'
+        tooltipElement.style.opacity = '1'
+        tooltipElement.style.visibility = 'visible'
+        
+        // Crear flecha
+        const arrowElement = document.createElement('div')
+        arrowElement.className = 'custom-tooltip-arrow'
+        arrowElement.style.position = 'fixed'
+        arrowElement.style.left = `${rect.left + rect.width / 2}px`
+        arrowElement.style.top = `${rect.bottom + 4}px`
+        arrowElement.style.transform = 'translateX(-50%)'
+        arrowElement.style.zIndex = '999999'
+        arrowElement.style.opacity = '1'
+        arrowElement.style.visibility = 'visible'
+        
+        document.body.appendChild(tooltipElement)
+        document.body.appendChild(arrowElement)
+        
+        // Guardar referencias para limpiar después
+        target.setAttribute('data-tooltip-element', 'true')
+        target.setAttribute('data-tooltip-id', tooltipElement.id || 'tooltip-' + Date.now())
+        target.setAttribute('data-arrow-id', arrowElement.id || 'arrow-' + Date.now())
+      }
+    }
+
+    const handleMouseLeave = (e: MouseEvent) => {
+      const target = e.target as HTMLElement
+      if (target && target.hasAttribute && target.hasAttribute('data-tooltip')) {
+        // Remover tooltips del DOM
+        const tooltips = document.querySelectorAll('.custom-tooltip')
+        const arrows = document.querySelectorAll('.custom-tooltip-arrow')
+        
+        tooltips.forEach(tooltip => tooltip.remove())
+        arrows.forEach(arrow => arrow.remove())
+      }
+    }
+
+    document.addEventListener('mouseenter', handleMouseEnter, true)
+    document.addEventListener('mouseleave', handleMouseLeave, true)
+    
+    return () => {
+      document.removeEventListener('mouseenter', handleMouseEnter, true)
+      document.removeEventListener('mouseleave', handleMouseLeave, true)
+    }
+  }, [])
+
   return (
-    <div className="min-h-screen bg-neutral-50">
-      {/* Breadcrumb fijo con altura reducida al hacer scroll */}
-      <div className={`sticky top-[73px] z-30 bg-white border-b border-neutral-200 transition-all duration-300 ${isScrolled ? 'py-2' : 'py-4'}`}>
+    <>
+      {/* Breadcrumb fijo con altura reducida al hacer scroll - FUERA del contenedor principal */}
+      <div id={`breadcrumb`} className={`${focusMode ? 'fixed left-0 right-0' : 'sticky'} z-30 bg-white border-b border-neutral-200 transition-all duration-300 ${
+        focusMode 
+          ? 'top-0 py-2' 
+          : isScrolled 
+            ? 'top-[73px] py-2' 
+            : 'top-[73px] py-4'
+      }`}>
         <div className="container-elegant">
           <div className="flex items-center justify-between">
             <nav className="breadcrumb">
@@ -482,7 +671,7 @@ export default function ReadingView({
                     ? 'text-accent-600 hover:text-accent-800' 
                     : 'text-primary-600 hover:text-primary-800'
                 }`}
-                title={libraryOpen ? 'Ocultar biblioteca de obras' : 'Mostrar biblioteca de obras por autor'}
+                data-tooltip={libraryOpen ? 'Ocultar biblioteca' : 'Mostrar biblioteca'}
               >
                 <Library className="w-5 h-5" />
               </button>
@@ -493,7 +682,7 @@ export default function ReadingView({
                     ? 'text-accent-600 hover:text-accent-800' 
                     : 'text-primary-600 hover:text-primary-800'
                 }`}
-                title={tocOpen ? 'Ocultar índice de contenidos' : 'Mostrar índice de contenidos y navegación'}
+                data-tooltip={tocOpen ? 'Ocultar índice de contenidos' : 'Mostrar índice de contenidos'}
               >
                 <BookOpen className="w-5 h-5" />
               </button>
@@ -504,7 +693,7 @@ export default function ReadingView({
                     ? 'text-accent-600 hover:text-accent-800' 
                     : 'text-primary-600 hover:text-primary-800'
                 }`}
-                title={focusMode ? 'Salir del modo lectura sin distracciones' : 'Activar modo lectura sin distracciones (oculta menús y sidebars)'}
+                data-tooltip={focusMode ? 'Salir del modo lectura enfocada' : 'Activar modo lectura enfocada'}
               >
                 <Focus className="w-5 h-5" />
               </button>
@@ -513,10 +702,12 @@ export default function ReadingView({
         </div>
       </div>
 
+      <div className="bg-neutral-50">
+
       {/* Contenido principal con ancho fijo */}
       <main 
         ref={contentRef}
-        className="mx-auto max-w-4xl px-4 lg:px-8"
+        className="mx-auto max-w-4xl px-4 lg:px-8 min-h-screen"
       >
           <div className="reading-content px-4 lg:px-8">
             <header className="mb-16 text-center">
@@ -592,15 +783,53 @@ export default function ReadingView({
           </div>
         </main>
 
+      {/* Sidebar izquierdo flotante - Biblioteca */}
+      <aside 
+        className={`
+          fixed left-0 w-64 bg-white lg:bg-gradient-to-l lg:from-neutral-100 lg:to-neutral-50
+          border-r border-neutral-200 transition-all duration-300 z-30
+          ${libraryOpen && !focusMode ? 'translate-x-0' : '-translate-x-full'}
+          ${isScrolled ? 'top-[126px]' : 'top-[142px]'}
+        `}
+        style={{
+          height: isScrolled ? 'calc(100vh - 126px)' : 'calc(100vh - 142px)'
+        }}
+      >
+        <div className="h-full overflow-y-auto">
+          {/* Header del sidebar izquierdo */}
+          <div className="flex items-center justify-between p-3 border-b border-neutral-200">
+            <div className="flex items-center space-x-2">
+              <Library className="w-4 h-4 text-primary-700" />
+              <h3 className="font-medium text-primary-900 text-base">Biblioteca</h3>
+            </div>
+            <button
+              onClick={() => setLibraryOpen(false)}
+              className="p-1 text-primary-500 hover:text-primary-700"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Contenido de la biblioteca */}
+          <WorksTree 
+            currentObraSlug={obra.slug}
+            currentAutorSlug={obra.autorSlug}
+          />
+        </div>
+      </aside>
+
       {/* Sidebar derecho flotante - Índice */}
       <aside 
         ref={sidebarRef}
         className={`
-          fixed top-[140px] right-0 h-[calc(100vh-8.75rem)] w-64 bg-white lg:bg-gradient-to-r lg:from-neutral-100 lg:to-neutral-50
-          border-l border-neutral-200 transition-transform duration-300 z-30
+          fixed right-0 w-64 bg-white lg:bg-gradient-to-r lg:from-neutral-100 lg:to-neutral-50
+          border-l border-neutral-200 transition-all duration-300 z-30
           ${tocOpen && !focusMode ? 'translate-x-0' : 'translate-x-full'}
+          ${isScrolled ? 'top-[126px]' : 'top-[142px]'}
         `}
-        style={{ top: '140px' }}
+        style={{
+          height: isScrolled ? 'calc(100vh - 126px)' : 'calc(100vh - 142px)'
+        }}
       >
           <div ref={sidebarScrollRef} className="h-full overflow-y-auto lg:overflow-y-auto">
             {/* Header del sidebar derecho */}
@@ -632,14 +861,63 @@ export default function ReadingView({
                 </div>
               )}
 
+              {/* Sección de Descargas */}
               <div className="mt-6 pt-4 border-t border-neutral-200">
-                <h4 className="font-medium text-primary-900 mb-4">Navegación</h4>
+                <h4 className="font-medium text-primary-900 mb-3">Descargas</h4>
+                <div className="flex space-x-2">
+                  <button className="flex-1 flex items-center justify-center space-x-1 px-2 py-1.5 text-xs bg-neutral-100 hover:bg-neutral-200 text-neutral-700 border border-neutral-300 rounded transition-colors">
+                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+                    </svg>
+                    <span className="font-medium">PDF</span>
+                  </button>
+                  
+                  <button className="flex-1 flex items-center justify-center space-x-1 px-2 py-1.5 text-xs bg-neutral-100 hover:bg-neutral-200 text-neutral-700 border border-neutral-300 rounded transition-colors">
+                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+                    </svg>
+                    <span className="font-medium">DOC</span>
+                  </button>
+                  
+                  <button className="flex-1 flex items-center justify-center space-x-1 px-2 py-1.5 text-xs bg-neutral-100 hover:bg-neutral-200 text-neutral-700 border border-neutral-300 rounded transition-colors">
+                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+                    </svg>
+                    <span className="font-medium">EPUB</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="mt-6 pt-4 border-t border-neutral-200">
+                <h4 className="font-medium text-primary-900 mb-2">Navegación</h4>
+                <p className="text-xs text-neutral-600 mb-4">
+                  Para navegar a un párrafo en concreto, introduzca el número a continuación.
+                </p>
                 <div className="space-y-3 text-sm">
                   <div className="flex items-center justify-between">
                     <span className="text-primary-600">Párrafo actual:</span>
-                    <span className="font-medium text-primary-900">
-                      {activeParagraph} de {parrafos.length}
-                    </span>
+                    {showParagraphInput ? (
+                      <form onSubmit={handleParagraphInputSubmit} className="flex items-center space-x-1">
+                        <input
+                          type="text"
+                          value={paragraphInput}
+                          onChange={handleParagraphInputChange}
+                          onBlur={() => setShowParagraphInput(false)}
+                          className="w-12 px-1 py-0.5 text-xs text-center border border-neutral-300 rounded focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
+                          placeholder="Nº"
+                          autoFocus
+                        />
+                        <span className="text-xs text-neutral-500">de {parrafos.length}</span>
+                      </form>
+                    ) : (
+                      <span 
+                        className="font-medium text-primary-900 cursor-pointer hover:text-primary-700 transition-colors"
+                        onClick={handleParagraphNumberClick}
+                        title="Hacer clic para navegar a un párrafo específico"
+                      >
+                        {activeParagraph} de {parrafos.length}
+                      </span>
+                    )}
                   </div>
                   <div className="flex space-x-2">
                     <button
@@ -662,46 +940,14 @@ export default function ReadingView({
                     <p><strong>Atajos de teclado:</strong></p>
                     <p>↑↓ Navegar párrafos</p>
                     <p>Home/End Ir al inicio/final</p>
-                    <p>Ctrl+I Toggle índice</p>
-                    <p>Esc Cerrar índice</p>
+                    <p>Ctrl+L Modo lectura concentrada</p>
                   </div>
                 </div>
               </div>
+
             </div>
           </div>
         </aside>
-
-      {/* Sidebar izquierdo flotante - Biblioteca */}
-      <aside 
-        className={`
-          fixed top-[140px] left-0 h-[calc(100vh-8.75rem)] w-64 bg-white lg:bg-gradient-to-l lg:from-neutral-100 lg:to-neutral-50
-          border-r border-neutral-200 transition-transform duration-300 z-30
-          ${libraryOpen && !focusMode ? 'translate-x-0' : '-translate-x-full'}
-        `}
-        style={{ top: '140px' }}
-      >
-        <div className="h-full overflow-y-auto">
-          {/* Header del sidebar izquierdo */}
-          <div className="flex items-center justify-between p-3 border-b border-neutral-200">
-            <div className="flex items-center space-x-2">
-              <Library className="w-4 h-4 text-primary-700" />
-              <h3 className="font-medium text-primary-900 text-base">Biblioteca</h3>
-            </div>
-            <button
-              onClick={() => setLibraryOpen(false)}
-              className="p-1 text-primary-500 hover:text-primary-700"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-
-          {/* Contenido de la biblioteca */}
-          <WorksTree 
-            currentObraSlug={obra.slug}
-            currentAutorSlug={obra.autorSlug}
-          />
-        </div>
-      </aside>
 
       {/* Barra flotante de navegación de ocurrencias */}
       {showFinderBar && highlightTerm && occurrences.length > 0 && (
@@ -737,6 +983,28 @@ export default function ReadingView({
         </div>
       )}
 
+      {/* Pestaña para mostrar biblioteca cuando está oculta */}
+      {!libraryOpen && !focusMode && (
+        <button
+          onClick={() => setLibraryOpen(true)}
+          className="sidebar-tab sidebar-tab-left"
+          title="Mostrar biblioteca"
+        >
+          <Library className="w-4 h-4" />
+        </button>
+      )}
+
+      {/* Pestaña para mostrar índice cuando está oculto */}
+      {!tocOpen && !focusMode && (
+        <button
+          onClick={() => setTocOpen(true)}
+          className="sidebar-tab sidebar-tab-right"
+          title="Mostrar índice"
+        >
+          <BookOpen className="w-4 h-4" />
+        </button>
+      )}
+
       {/* Overlay para móvil */}
       {(tocOpen || libraryOpen) && (
         <div 
@@ -748,13 +1016,7 @@ export default function ReadingView({
         />
       )}
 
-      {/* Overlay para modo lectura sin distracciones */}
-      {focusMode && (
-        <div 
-          className="fixed top-0 left-0 right-0 h-[120px] bg-white z-40"
-          onClick={() => setFocusMode(false)}
-        />
-      )}
-    </div>
+      </div>
+    </>
   )
 }
