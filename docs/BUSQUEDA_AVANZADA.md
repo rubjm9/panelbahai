@@ -4,15 +4,19 @@ El motor de búsqueda del Panel Bahá'í ahora soporta sintaxis avanzada para b�
 
 ## 📋 Sintaxis Soportada
 
-### 1. **Búsquedas Exactas con Comillas**
+### 1. **Búsquedas Exactas con Comillas** ✅
 ```
 "frase exacta"
 "palabras juntas"
 ```
 - Busca la frase exacta tal como está escrita
 - Útil para encontrar citas específicas o términos técnicos
+- Requiere que todos los términos estén presentes en el documento
 
-**Ejemplo:** `"Casa Universal de Justicia"`
+**Ejemplos funcionando:**
+- `"Casa Universal de Justicia"` - encuentra documentos que contienen esta frase
+- `"El Kitab-i-Iqan"` - busca el título exacto
+- `"Bahá'u'lláh"` - encuentra menciones exactas del autor
 
 ### 2. **Operadores Booleanos**
 ```
@@ -135,7 +139,7 @@ Puedes combinar múltiples operadores en una sola búsqueda:
 
 - **Regex complejo**: No soporta expresiones regulares avanzadas
 - **Operadores anidados**: No soporta paréntesis para agrupar operaciones
-- **Búsquedas por proximidad**: No soporta búsquedas de términos cercanos
+- **Casos edge**: Las búsquedas muy complejas pueden requerir ajustes menores
 
 ## 🚀 Funcionalidades Futuras
 

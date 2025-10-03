@@ -118,12 +118,15 @@ export class SearchEngine {
     // Detectar búsquedas exactas con comillas
     const exactMatches = query.match(/"([^"]+)"/g);
     if (exactMatches) {
-      // Para búsquedas exactas, usar el término completo sin modificaciones
+      // Para búsquedas exactas, convertir a términos requeridos con fuzzy matching
+      // esto proporciona mejor compatibilidad con Lunr
       let processedQuery = query;
       exactMatches.forEach(match => {
         const cleanTerm = match.replace(/"/g, '');
-        // Para Lunr, las búsquedas exactas se pueden hacer con el término completo
-        processedQuery = processedQuery.replace(match, cleanTerm);
+        // Convertir cada término de la frase en un término requerido con fuzzy matching
+        const terms = cleanTerm.split(/\s+/).filter(t => t.length > 0);
+        const requiredTerms = terms.map(term => `+${term} ${term}~1`).join(' ');
+        processedQuery = processedQuery.replace(match, requiredTerms);
       });
       return processedQuery;
     }
