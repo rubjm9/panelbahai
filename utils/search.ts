@@ -75,10 +75,30 @@ export class SearchEngine {
     }
 
     try {
+      // Extraer frases exactas de la consulta (para filtrado posterior)
+      const exactPhrases = this.extractExactPhrases(query);
+      
       // Procesar la consulta para detectar sintaxis avanzada
       const processedQuery = this.processAdvancedQuery(query);
       
-      const results = this.index.search(processedQuery);
+      let results = this.index.search(processedQuery);
+      
+      // Filtrar resultados si hay búsquedas exactas con comillas
+      if (exactPhrases.length > 0) {
+        results = results.filter(result => {
+          const doc = this.documents.get(result.ref);
+          if (!doc) return false;
+          
+          // Buscar en todos los campos indexables
+          const searchableText = `${doc.titulo} ${doc.autor} ${doc.seccion || ''} ${doc.texto}`.toLowerCase();
+          
+          // Verificar que todas las frases exactas estén presentes
+          return exactPhrases.every(phrase => {
+            const phraseLower = phrase.toLowerCase();
+            return searchableText.includes(phraseLower);
+          });
+        });
+      }
       
       // Primero filtramos los documentos nulos y luego mapeamos para asegurar que el tipo sea correcto
       return results
@@ -113,19 +133,28 @@ export class SearchEngine {
     }
   }
 
+  // Extraer frases exactas de la consulta (texto entre comillas)
+  private extractExactPhrases(query: string): string[] {
+    const matches = query.match(/"([^"]+)"/g);
+    if (!matches) return [];
+    
+    return matches.map(match => match.replace(/"/g, ''));
+  }
+
   // Procesar consulta avanzada con soporte para sintaxis especial
   private processAdvancedQuery(query: string): string {
     // Detectar búsquedas exactas con comillas
     const exactMatches = query.match(/"([^"]+)"/g);
     if (exactMatches) {
-      // Para búsquedas exactas, convertir a términos requeridos con fuzzy matching
-      // esto proporciona mejor compatibilidad con Lunr
+      // Para búsquedas exactas, convertir a términos requeridos para la búsqueda inicial
+      // El filtrado exacto se hará después en el método search()
       let processedQuery = query;
       exactMatches.forEach(match => {
         const cleanTerm = match.replace(/"/g, '');
-        // Convertir cada término de la frase en un término requerido con fuzzy matching
+        // Convertir cada término de la frase en un término requerido
+        // Esto ayuda a Lunr a encontrar documentos relevantes, pero luego filtramos por frase exacta
         const terms = cleanTerm.split(/\s+/).filter(t => t.length > 0);
-        const requiredTerms = terms.map(term => `+${term} ${term}~1`).join(' ');
+        const requiredTerms = terms.map(term => `+${term}`).join(' ');
         processedQuery = processedQuery.replace(match, requiredTerms);
       });
       return processedQuery;

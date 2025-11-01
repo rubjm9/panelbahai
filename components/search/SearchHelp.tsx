@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { HelpCircle, X, Search, Quote, Plus, Minus, Asterisk, Zap } from 'lucide-react'
 
 interface SearchHelpProps {
@@ -9,6 +10,13 @@ interface SearchHelpProps {
 
 export default function SearchHelp({ className = "" }: SearchHelpProps) {
   const [isOpen, setIsOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
+  const modalRef = useRef<HTMLDivElement>(null)
+
+  // Solo montar en el cliente
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const searchExamples = [
     {
@@ -43,6 +51,40 @@ export default function SearchHelp({ className = "" }: SearchHelpProps) {
     }
   ]
 
+  // Cerrar con ESC
+  useEffect(() => {
+    if (!isOpen) return
+
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsOpen(false)
+      }
+    }
+
+    document.addEventListener('keydown', handleEscape)
+    return () => document.removeEventListener('keydown', handleEscape)
+  }, [isOpen])
+
+  // Prevenir scroll del body cuando el modal está abierto
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = 'unset'
+    }
+    
+    return () => {
+      document.body.style.overflow = 'unset'
+    }
+  }, [isOpen])
+
+  // Cerrar al hacer clic fuera del modal
+  const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) {
+      setIsOpen(false)
+    }
+  }
+
   if (!isOpen) {
     return (
       <button
@@ -56,9 +98,22 @@ export default function SearchHelp({ className = "" }: SearchHelpProps) {
     )
   }
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+  // Renderizar modal usando Portal para evitar problemas de z-index y overflow
+  if (!mounted || typeof window === 'undefined') {
+    return null
+  }
+
+  const modalContent = (
+    <div 
+      ref={modalRef}
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4"
+      onClick={handleOverlayClick}
+      style={{ position: 'fixed' }}
+    >
+      <div 
+        className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-primary-200">
           <div className="flex items-center gap-3">
@@ -172,4 +227,6 @@ export default function SearchHelp({ className = "" }: SearchHelpProps) {
       </div>
     </div>
   )
+
+  return createPortal(modalContent, document.body)
 }
