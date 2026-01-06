@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Save, X, Upload, FileText, File } from 'lucide-react'
 import Link from 'next/link'
@@ -38,7 +38,11 @@ export default function EditObraForm({ obra, autores }: EditObraFormProps) {
   const [contenido, setContenido] = useState(obra.contenido || '')
   const [slug, setSlug] = useState(obra.slug || '')
   const [slugError, setSlugError] = useState<string | null>(null)
+  const [fechaPublicacion, setFechaPublicacion] = useState(
+    obra.fechaPublicacion ? obra.fechaPublicacion.split('T')[0] : ''
+  )
   const router = useRouter()
+  const formRef = useRef<HTMLFormElement>(null)
   
   // Debug: mostrar el contenido recibido
   console.log('EditObraForm - Obra recibida:', obra)
@@ -198,25 +202,62 @@ export default function EditObraForm({ obra, autores }: EditObraFormProps) {
     }
 
     try {
-      const formData = new FormData(e.currentTarget)
+      // Usar la referencia del formulario en lugar de e.currentTarget
+      const form = formRef.current
+      if (!form) {
+        throw new Error('Formulario no encontrado')
+      }
+      
+      const formData = new FormData(form)
       formData.set('slug', slug) // Asegurar que el slug se incluya
+      formData.set('contenido', contenido) // Asegurar que el contenido se incluya
+      formData.set('fechaPublicacion', fechaPublicacion) // Asegurar que la fecha se incluya
+      
+      console.log('Enviando actualización de obra:', {
+        obraId: obra._id,
+        slug,
+        contenidoLength: contenido.length,
+        titulo: formData.get('titulo'),
+        autor: formData.get('autor')
+      })
       
       const response = await fetch(`/api/admin/obras/${obra._id}`, {
         method: 'PUT',
         body: formData,
       })
 
+      console.log('Respuesta recibida:', {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok
+      })
+
       if (response.ok) {
+        const data = await response.json()
+        console.log('Datos de respuesta:', data)
         setMessage({ type: 'success', text: 'Obra actualizada correctamente' })
         setTimeout(() => {
           router.push('/admin/obras')
         }, 1500)
       } else {
-        const error = await response.json()
-        setMessage({ type: 'error', text: error.message || 'Error al actualizar la obra' })
+        let errorData
+        try {
+          const text = await response.text()
+          console.error('Error response text:', text)
+          errorData = JSON.parse(text)
+        } catch (parseError) {
+          console.error('Error parseando respuesta:', parseError)
+          errorData = { message: `Error ${response.status}: ${response.statusText}` }
+        }
+        console.error('Error data:', errorData)
+        setMessage({ type: 'error', text: errorData.message || `Error ${response.status}: ${response.statusText}` })
       }
-    } catch (error) {
-      setMessage({ type: 'error', text: 'Error de conexión' })
+    } catch (error: any) {
+      console.error('Error en handleSubmit:', error)
+      console.error('Error name:', error?.name)
+      console.error('Error message:', error?.message)
+      console.error('Error stack:', error?.stack)
+      setMessage({ type: 'error', text: `Error de conexión: ${error?.message || 'Por favor, intenta de nuevo.'}` })
     } finally {
       setIsSubmitting(false)
     }
@@ -234,7 +275,7 @@ export default function EditObraForm({ obra, autores }: EditObraFormProps) {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label htmlFor="titulo" className="block text-sm font-medium text-primary-900 mb-2">
@@ -321,11 +362,11 @@ export default function EditObraForm({ obra, autores }: EditObraFormProps) {
         </div>
 
         {/* Campos de archivos */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div>
             <label htmlFor="archivoDoc" className="block text-sm font-medium text-primary-900 mb-2">
               <FileText className="w-4 h-4 inline mr-2" />
-              Archivo DOC/DOCX
+              Archivo DOC/DOCX (opcional)
             </label>
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-primary-400 transition-colors">
               <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
@@ -355,7 +396,7 @@ export default function EditObraForm({ obra, autores }: EditObraFormProps) {
           <div>
             <label htmlFor="archivoPdf" className="block text-sm font-medium text-primary-900 mb-2">
               <File className="w-4 h-4 inline mr-2" />
-              Archivo PDF
+              Archivo PDF (opcional)
             </label>
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-primary-400 transition-colors">
               <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
@@ -378,6 +419,36 @@ export default function EditObraForm({ obra, autores }: EditObraFormProps) {
               </label>
               <p className="text-xs text-gray-500 mt-2">
                 Formato: .pdf (máx. 10MB)
+              </p>
+            </div>
+          </div>
+
+          <div>
+            <label htmlFor="archivoEpub" className="block text-sm font-medium text-primary-900 mb-2">
+              <FileText className="w-4 h-4 inline mr-2" />
+              Archivo EPUB (opcional)
+            </label>
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-primary-400 transition-colors">
+              <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+              <p className="text-sm text-gray-600 mb-2">
+                Arrastra y suelta tu archivo EPUB aquí
+              </p>
+              <input
+                type="file"
+                id="archivoEpub"
+                name="archivoEpub"
+                accept=".epub"
+                className="hidden"
+              />
+              <label
+                htmlFor="archivoEpub"
+                className="btn-secondary cursor-pointer inline-flex items-center"
+              >
+                <Upload className="w-4 h-4 mr-2" />
+                Seleccionar archivo
+              </label>
+              <p className="text-xs text-gray-500 mt-2">
+                Formato: .epub (máx. 10MB)
               </p>
             </div>
           </div>
@@ -535,7 +606,8 @@ export default function EditObraForm({ obra, autores }: EditObraFormProps) {
               type="date"
               id="fechaPublicacion"
               name="fechaPublicacion"
-              defaultValue={obra.fechaPublicacion ? obra.fechaPublicacion.split('T')[0] : ''}
+              value={fechaPublicacion}
+              onChange={(e) => setFechaPublicacion(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-600 focus:border-transparent"
             />
           </div>

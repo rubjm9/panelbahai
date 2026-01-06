@@ -1,18 +1,20 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState } from 'react'
-import { searchEngine } from '@/utils/search'
+import { createContext, useContext, useEffect } from 'react'
+import { useSearch as useSearchHook } from '@/lib/hooks/useSearch'
 
 interface SearchContextType {
   isInitialized: boolean;
   isLoading: boolean;
   error: string | null;
+  rebuild: () => Promise<void>;
 }
 
 const SearchContext = createContext<SearchContextType>({
   isInitialized: false,
   isLoading: false,
-  error: null
+  error: null,
+  rebuild: async () => {}
 })
 
 export function useSearch() {
@@ -24,63 +26,23 @@ interface SearchProviderProps {
 }
 
 export default function SearchProvider({ children }: SearchProviderProps) {
-  const [isInitialized, setIsInitialized] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  const rebuildIndex = async () => {
-    setIsLoading(true)
-    setError(null)
-
-    try {
-      // Limpiar índice existente
-      searchEngine.clearIndex()
-      setIsInitialized(false)
-
-      // Reconstruir el índice de búsqueda
-      const response = await fetch('/api/search?buildIndex=true')
-      
-      if (!response.ok) {
-        throw new Error('Error al obtener datos para el índice de búsqueda')
-      }
-
-      const { data: documents } = await response.json()
-      
-      if (documents && documents.length > 0) {
-        searchEngine.buildIndex(documents)
-        setIsInitialized(true)
-        console.log(`✅ Índice de búsqueda reconstruido con ${documents.length} documentos`)
-      } else {
-        console.warn('No se encontraron documentos para indexar')
-      }
-    } catch (err) {
-      console.error('Error reconstruyendo motor de búsqueda:', err)
-      setError(err instanceof Error ? err.message : 'Error desconocido')
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    async function initializeSearch() {
-      if (isInitialized) return
-
-      await rebuildIndex()
-    }
-
-    initializeSearch()
-  }, [isInitialized])
+  const search = useSearchHook({ autoInitialize: true })
 
   // Exponer función de reconstrucción globalmente
   useEffect(() => {
-    (window as any).rebuildSearchIndex = rebuildIndex
+    (window as any).rebuildSearchIndex = search.rebuild
     return () => {
       delete (window as any).rebuildSearchIndex
     }
-  }, [])
+  }, [search.rebuild])
 
   return (
-    <SearchContext.Provider value={{ isInitialized, isLoading, error }}>
+    <SearchContext.Provider value={{ 
+      isInitialized: search.isInitialized, 
+      isLoading: search.isLoading, 
+      error: search.error,
+      rebuild: search.rebuild
+    }}>
       {children}
     </SearchContext.Provider>
   )

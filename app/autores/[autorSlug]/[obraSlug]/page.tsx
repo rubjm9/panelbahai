@@ -1,27 +1,53 @@
 import { notFound } from 'next/navigation'
 import ReadingView from '@/components/reading/ReadingView'
 import SearchProvider from '@/components/search/SearchProvider'
-import { headers } from 'next/headers'
+import { getCachedPublishedWorkComplete } from '@/lib/services/public/obraService'
 
-// Función para obtener datos de la obra
+// Función para obtener datos de la obra usando servicios
 async function getObraData(autorSlug: string, obraSlug: string) {
   try {
-    const headersList = headers()
-    const host = headersList.get('host') || 'localhost:3000'
-    const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http'
-    const baseUrl = `${protocol}://${host}`
+    const data = await getCachedPublishedWorkComplete(obraSlug, autorSlug);
     
-    const response = await fetch(
-      `${baseUrl}/api/obras/${obraSlug}?autor=${autorSlug}`,
-      { cache: 'no-store' }
-    );
-    
-    if (!response.ok) {
+    if (!data) {
       return null;
     }
-    
-    const { data } = await response.json();
-    return data;
+
+    // Transformar datos del servicio al formato esperado por el componente
+    return {
+      obra: {
+        titulo: data.obra.titulo,
+        slug: data.obra.slug,
+        descripcion: data.obra.descripcion,
+        fechaPublicacion: data.obra.fechaPublicacion,
+        autor: {
+          nombre: data.obra.autor.nombre,
+          slug: data.obra.autor.slug
+        },
+        archivoDoc: data.obra.archivoDoc,
+        archivoPdf: data.obra.archivoPdf,
+        archivoEpub: data.obra.archivoEpub
+      },
+      secciones: data.secciones.map(sec => ({
+        id: sec._id,
+        titulo: sec.titulo,
+        slug: sec.slug,
+        nivel: sec.nivel,
+        orden: sec.orden,
+        subsecciones: sec.subsecciones.map(sub => ({
+          id: sub._id,
+          titulo: sub.titulo,
+          slug: sub.slug,
+          nivel: sub.nivel,
+          orden: sub.orden,
+          subsecciones: []
+        }))
+      })),
+      parrafos: data.parrafos.map(p => ({
+        numero: p.numero,
+        texto: p.texto,
+        seccion: p.seccion?.titulo
+      }))
+    };
   } catch (error) {
     console.error('Error fetching obra data:', error);
     return null;
@@ -202,7 +228,10 @@ export default async function ReadingPage({ params, searchParams }: ReadingPageP
           titulo: obra.titulo,
           autor: obra.autor.nombre,
           autorSlug: obra.autor.slug,
-          slug: obra.slug
+          slug: obra.slug,
+          archivoDoc: obra.archivoDoc,
+          archivoPdf: obra.archivoPdf,
+          archivoEpub: obra.archivoEpub
         }}
         parrafos={parrafos}
         secciones={secciones}
@@ -217,17 +246,26 @@ export default async function ReadingPage({ params, searchParams }: ReadingPageP
 export async function generateMetadata({ params }: { params: { autorSlug: string, obraSlug: string } }) {
   const { autorSlug, obraSlug } = params;
   
-  // Intentar obtener datos reales
-  let data = await getObraData(autorSlug, obraSlug);
+  // Intentar obtener datos reales usando servicio
+  const data = await getCachedPublishedWorkComplete(obraSlug, autorSlug);
   
   if (!data) {
+    // Fallback a datos de respaldo
     const obraData = obrasData[obraSlug];
     if (obraData) {
-      data = obraData;
+      return {
+        title: `${obraData.obra.titulo} - ${obraData.obra.autor.nombre} | Panel Bahá'í`,
+        description: obraData.obra.descripcion || `${obraData.obra.titulo} por ${obraData.obra.autor.nombre}. Lectura completa con párrafos numerados y búsqueda avanzada.`,
+        keywords: ['Bahá\'í', obraData.obra.autor.nombre, obraData.obra.titulo, 'literatura', 'textos sagrados'],
+        openGraph: {
+          title: `${obraData.obra.titulo} - ${obraData.obra.autor.nombre}`,
+          description: obraData.obra.descripcion,
+          type: 'article',
+          authors: [obraData.obra.autor.nombre]
+        }
+      };
     }
-  }
-
-  if (!data) {
+    
     return {
       title: 'Obra no encontrada - Panel Bahá\'í',
       description: 'La obra solicitada no se encuentra disponible.'

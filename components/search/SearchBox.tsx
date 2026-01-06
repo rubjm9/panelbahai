@@ -30,6 +30,7 @@ export default function SearchBox({
   const router = useRouter()
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<SearchResult[]>([])
+  const [totalResults, setTotalResults] = useState(0)
   const [isOpen, setIsOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [selectedIndex, setSelectedIndex] = useState(-1)
@@ -131,7 +132,9 @@ export default function SearchBox({
           }
         }
 
-        let searchResults = searchEngine.search(query, 20)
+        let searchResponse = searchEngine.search(query, 20)
+        let searchResults = searchResponse.results
+        let total = searchResponse.total
 
         // Aplicar filtros
         if (filters.tipo !== 'todos') {
@@ -150,8 +153,8 @@ export default function SearchBox({
           )
         }
 
-        // No aplicar filtros adicionales por contexto; mostrar todos los resultados relevantes
         setResults(searchResults)
+        setTotalResults(total)
         setIsOpen(true)
         setIsLoading(false)
 
@@ -161,6 +164,7 @@ export default function SearchBox({
         }
       } else {
         setResults([])
+        setTotalResults(0)
         setIsOpen(false)
       }
     }, 300)
@@ -466,7 +470,7 @@ export default function SearchBox({
                   >
                     <div className="flex items-center justify-center space-x-2">
                       <span className="font-medium">
-                        Ver los {results.length} resultado{results.length !== 1 ? 's' : ''} encontrado{results.length !== 1 ? 's' : ''}
+                        Ver los {totalResults} resultado{totalResults !== 1 ? 's' : ''} encontrado{totalResults !== 1 ? 's' : ''}
                       </span>
                       <span className="text-accent-600 group-hover:text-accent-700 transition-colors">
                         →

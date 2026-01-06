@@ -10,6 +10,8 @@ export interface ISeccion extends Document {
   activo: boolean;
   fechaCreacion: Date;
   fechaActualizacion: Date;
+  // Fase 3: UUIDs
+  uuid?: string;
 }
 
 const SeccionSchema: Schema = new Schema({
@@ -55,11 +57,20 @@ const SeccionSchema: Schema = new Schema({
   fechaActualizacion: {
     type: Date,
     default: Date.now
+  },
+  // Fase 3: UUIDs
+  uuid: {
+    type: String,
+    unique: true,
+    sparse: true
   }
 });
 
 // Índice compuesto para slug único por obra
 SeccionSchema.index({ obra: 1, slug: 1 }, { unique: true });
+
+// Índice para UUID (Fase 3)
+SeccionSchema.index({ uuid: 1 }, { unique: true, sparse: true });
 
 // Middleware para actualizar fechaActualizacion
 SeccionSchema.pre('save', function(next) {

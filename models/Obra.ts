@@ -13,8 +13,13 @@ export interface IObra extends Document {
   contenido?: string;
   archivoDoc?: string;
   archivoPdf?: string;
+  archivoEpub?: string;
   fechaCreacion: Date;
   fechaActualizacion: Date;
+  // Fase 3: UUIDs y revisiones
+  uuid?: string;
+  revisionActual?: mongoose.Types.ObjectId;
+  revisiones?: mongoose.Types.ObjectId[];
 }
 
 const ObraSchema: Schema = new Schema({
@@ -67,6 +72,9 @@ const ObraSchema: Schema = new Schema({
   archivoPdf: {
     type: String
   },
+  archivoEpub: {
+    type: String
+  },
   fechaCreacion: {
     type: Date,
     default: Date.now
@@ -74,11 +82,29 @@ const ObraSchema: Schema = new Schema({
   fechaActualizacion: {
     type: Date,
     default: Date.now
-  }
+  },
+  // Fase 3: UUIDs y revisiones
+  uuid: {
+    type: String,
+    unique: true,
+    sparse: true
+  },
+  revisionActual: {
+    type: Schema.Types.ObjectId,
+    ref: 'RevisionObra',
+    default: null
+  },
+  revisiones: [{
+    type: Schema.Types.ObjectId,
+    ref: 'RevisionObra'
+  }]
 });
 
 // Índice compuesto para slug único por autor
 ObraSchema.index({ autor: 1, slug: 1 }, { unique: true });
+
+// Índice para UUID (Fase 3)
+ObraSchema.index({ uuid: 1 }, { unique: true, sparse: true });
 
 // Middleware para actualizar fechaActualizacion
 ObraSchema.pre('save', function(next) {

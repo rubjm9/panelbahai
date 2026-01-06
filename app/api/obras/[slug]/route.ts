@@ -80,7 +80,10 @@ export async function GET(
           descripcion: obra.descripcion,
           fechaPublicacion: obra.fechaPublicacion,
           autor: obra.autor,
-          esPublico: obra.esPublico
+          esPublico: obra.esPublico,
+          archivoDoc: obra.archivoDoc,
+          archivoPdf: obra.archivoPdf,
+          archivoEpub: obra.archivoEpub
         },
         secciones: seccionesRaiz,
         parrafos: parrafos.map(p => ({

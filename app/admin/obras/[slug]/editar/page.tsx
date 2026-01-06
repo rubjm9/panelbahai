@@ -9,6 +9,7 @@ import Parrafo from '@/models/Parrafo';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import EditObraForm from '@/components/admin/EditObraForm';
+import { requireAdminAuth } from '@/lib/auth-helpers';
 
 interface EditObraPageProps {
   params: {
@@ -17,6 +18,9 @@ interface EditObraPageProps {
 }
 
 export default async function EditObraPage({ params }: EditObraPageProps) {
+  // Verificar autenticación admin
+  await requireAdminAuth();
+  
   await dbConnect();
   
   const obra = await Obra.findOne({ slug: params.slug, activo: true })

@@ -4,6 +4,22 @@ import { NextRequest } from 'next/server';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-key-for-development';
 
+// Validar JWT_SECRET en producción
+if (process.env.NODE_ENV === 'production') {
+  if (!JWT_SECRET || JWT_SECRET.length < 32) {
+    throw new Error(
+      'JWT_SECRET debe tener al menos 32 caracteres en producción. ' +
+      'Genera uno seguro con: openssl rand -base64 32'
+    );
+  }
+  if (JWT_SECRET === 'fallback-secret-key-for-development') {
+    throw new Error(
+      'JWT_SECRET no puede ser el valor por defecto en producción. ' +
+      'Configura una variable de entorno segura.'
+    );
+  }
+}
+
 export interface AuthUser {
   id: string;
   email: string;
@@ -43,8 +59,24 @@ export function signJWT(user: AuthUser): string {
 // Verificar JWT token
 export function verifyJWT(token: string): JWTPayload | null {
   try {
-    return jwt.verify(token, JWT_SECRET) as JWTPayload;
+    const decoded = jwt.verify(token, JWT_SECRET) as JWTPayload;
+    
+    // Validación adicional de expiración
+    if (decoded.exp && decoded.exp < Date.now() / 1000) {
+      return null;
+    }
+    
+    // Validar que tenga los campos requeridos
+    if (!decoded.id || !decoded.email || !decoded.rol) {
+      return null;
+    }
+    
+    return decoded;
   } catch (error) {
+    // Log error en desarrollo para debugging
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Error verificando JWT:', error);
+    }
     return null;
   }
 }

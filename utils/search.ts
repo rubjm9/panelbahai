@@ -69,9 +69,9 @@ export class SearchEngine {
   }
 
   // Realizar búsqueda con soporte para sintaxis avanzada
-  search(query: string, limit: number = 50): SearchResult[] {
+  search(query: string, limit: number = 50): { results: SearchResult[]; total: number } {
     if (!this.index || query.length < 3) {
-      return [];
+      return { results: [], total: 0 };
     }
 
     try {
@@ -100,8 +100,11 @@ export class SearchEngine {
         });
       }
       
+      // Guardar el total antes de aplicar el límite
+      const total = results.length;
+      
       // Primero filtramos los documentos nulos y luego mapeamos para asegurar que el tipo sea correcto
-      return results
+      const searchResults = results
         .slice(0, limit)
         .map(result => {
           const doc = this.documents.get(result.ref);
@@ -126,10 +129,12 @@ export class SearchEngine {
         })
         .filter((result): result is SearchResult => result !== null)
         .sort(this.sortResults.bind(this));
+      
+      return { results: searchResults, total };
         
     } catch (error) {
       console.error('Error en búsqueda:', error);
-      return [];
+      return { results: [], total: 0 };
     }
   }
 
@@ -427,15 +432,42 @@ export class SearchEngine {
       // Escapar caracteres especiales para regex
       const escapedTerm = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       
-      // Crear regex que busca el término como palabra completa
-      const regex = new RegExp(`\\b(${escapedTerm})\\b`, 'gi');
+      // Función auxiliar para verificar si una posición está dentro de un tag HTML o mark
+      const isInsideHtmlTag = (text: string, pos: number): boolean => {
+        const before = text.substring(0, pos);
+        const lastOpenTag = before.lastIndexOf('<');
+        const lastCloseTag = before.lastIndexOf('>');
+        return lastOpenTag > lastCloseTag;
+      };
       
-      // Verificar si ya está resaltado para evitar anidamiento
-      const alreadyHighlighted = new RegExp(`<mark[^>]*>.*?${escapedTerm}.*?</mark>`, 'gi');
+      // Función auxiliar para verificar si una posición está dentro de un <mark>
+      const isInsideMark = (text: string, pos: number): boolean => {
+        const before = text.substring(0, pos);
+        const openMarks = (before.match(/<mark[^>]*>/gi) || []).length;
+        const closeMarks = (before.match(/<\/mark>/gi) || []).length;
+        return openMarks > closeMarks;
+      };
       
-      if (!alreadyHighlighted.test(highlightedText)) {
-        highlightedText = highlightedText.replace(regex, '<mark class="search-highlight">$1</mark>');
-      }
+      // Primero, buscar palabras completas (con límites de palabra)
+      const wordBoundaryRegex = new RegExp(`\\b(${escapedTerm})\\b`, 'gi');
+      highlightedText = highlightedText.replace(wordBoundaryRegex, (match, p1, offset) => {
+        // Si ya está dentro de un tag HTML o mark, no resaltar
+        if (isInsideHtmlTag(highlightedText, offset) || isInsideMark(highlightedText, offset)) {
+          return match;
+        }
+        return '<mark class="search-highlight">' + match + '</mark>';
+      });
+      
+      // Luego, buscar coincidencias parciales (sin límites de palabra)
+      // pero solo en texto que no esté dentro de tags HTML o marks
+      const partialRegex = new RegExp(`(${escapedTerm})`, 'gi');
+      highlightedText = highlightedText.replace(partialRegex, (match, p1, offset) => {
+        // Si ya está dentro de un tag HTML o mark, no resaltar
+        if (isInsideHtmlTag(highlightedText, offset) || isInsideMark(highlightedText, offset)) {
+          return match;
+        }
+        return '<mark class="search-highlight">' + match + '</mark>';
+      });
     });
 
     return highlightedText;

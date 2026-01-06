@@ -2,9 +2,33 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Usuario from '@/models/Usuario';
 import { verifyPassword, signJWT } from '@/lib/auth';
+import { loginRateLimit, getRateLimitIdentifier, checkRateLimit } from '@/lib/rateLimit';
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting: 5 intentos cada 15 minutos por IP
+    const identifier = getRateLimitIdentifier(request);
+    const rateLimitResult = await checkRateLimit(loginRateLimit, identifier);
+    
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: 'Demasiados intentos de inicio de sesión. Intenta de nuevo más tarde.',
+          retryAfter: Math.ceil((rateLimitResult.reset - Date.now()) / 1000)
+        },
+        { 
+          status: 429,
+          headers: {
+            'Retry-After': Math.ceil((rateLimitResult.reset - Date.now()) / 1000).toString(),
+            'X-RateLimit-Limit': rateLimitResult.limit.toString(),
+            'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
+            'X-RateLimit-Reset': rateLimitResult.reset.toString(),
+          }
+        }
+      );
+    }
+    
     await dbConnect();
     
     const body = await request.json();

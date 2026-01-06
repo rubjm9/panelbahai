@@ -9,6 +9,10 @@ export interface IParrafo extends Document {
   activo: boolean;
   fechaCreacion: Date;
   fechaActualizacion: Date;
+  // Fase 3: UUIDs y revisiones
+  uuid?: string;
+  revisionActual?: mongoose.Types.ObjectId;
+  revisiones?: mongoose.Types.ObjectId[];
 }
 
 const ParrafoSchema: Schema = new Schema({
@@ -47,7 +51,22 @@ const ParrafoSchema: Schema = new Schema({
   fechaActualizacion: {
     type: Date,
     default: Date.now
-  }
+  },
+  // Fase 3: UUIDs y revisiones
+  uuid: {
+    type: String,
+    unique: true,
+    sparse: true
+  },
+  revisionActual: {
+    type: Schema.Types.ObjectId,
+    ref: 'RevisionParrafo',
+    default: null
+  },
+  revisiones: [{
+    type: Schema.Types.ObjectId,
+    ref: 'RevisionParrafo'
+  }]
 });
 
 // Índice compuesto para número único por obra
@@ -55,6 +74,9 @@ ParrafoSchema.index({ obra: 1, numero: 1 }, { unique: true });
 
 // Índice para búsqueda de texto
 ParrafoSchema.index({ texto: 'text' });
+
+// Índice para UUID (Fase 3)
+ParrafoSchema.index({ uuid: 1 }, { unique: true, sparse: true });
 
 // Middleware para actualizar fechaActualizacion
 ParrafoSchema.pre('save', function(next) {

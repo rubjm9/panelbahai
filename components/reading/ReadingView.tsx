@@ -26,6 +26,9 @@ interface ReadingViewProps {
     autor: string;
     autorSlug: string;
     slug: string;
+    archivoDoc?: string;
+    archivoPdf?: string;
+    archivoEpub?: string;
   };
   parrafos: Paragraph[];
   secciones: Section[];
@@ -45,6 +48,39 @@ export default function ReadingView({
   const [showToc, setShowToc] = useState(false)
   const [tocOpen, setTocOpen] = useState(true)
   const [libraryOpen, setLibraryOpen] = useState(true)
+  const [windowWidth, setWindowWidth] = useState<number>(typeof window !== 'undefined' ? window.innerWidth : 1920)
+  
+  // Ocultar sidebars por defecto según el tamaño de pantalla
+  useEffect(() => {
+    const checkWindowSize = () => {
+      const width = window.innerWidth
+      setWindowWidth(width)
+      
+      if (width < 1024) {
+        // En pantallas menores a 1024px, ocultar ambos sidebars
+        setLibraryOpen(false)
+        setTocOpen(false)
+      } else if (width < 1200) {
+        // En pantallas menores a 1200px, ocultar solo el sidebar izquierdo
+        setLibraryOpen(false)
+        setTocOpen(true)
+      } else {
+        // En pantallas mayores, mostrar ambos
+        setLibraryOpen(true)
+        setTocOpen(true)
+      }
+    }
+    
+    // Verificar al cargar
+    checkWindowSize()
+    
+    // Escuchar cambios de tamaño
+    window.addEventListener('resize', checkWindowSize)
+    
+    return () => {
+      window.removeEventListener('resize', checkWindowSize)
+    }
+  }, [])
   const contentRef = useRef<HTMLDivElement>(null)
   const [highlightTerm, setHighlightTerm] = useState<string>(highlightQuery || '')
   const [occurrences, setOccurrences] = useState<number[]>([])
@@ -58,6 +94,7 @@ export default function ReadingView({
   const [showParagraphInput, setShowParagraphInput] = useState<boolean>(false)
   const sidebarRef = useRef<HTMLDivElement>(null)
   const sidebarScrollRef = useRef<HTMLDivElement>(null)
+  const isNavigatingToHash = useRef<boolean>(false)
 
   // Sincronizar término de resaltado desde props/URL/sessionStorage
   useEffect(() => {
@@ -224,14 +261,20 @@ export default function ReadingView({
     })
   }
 
-  // Scroll to paragraph on load
+  // Scroll to paragraph on load (solo si viene de props, no de hash)
   useEffect(() => {
+    // Si hay un hash en la URL, el handleHashChange se encargará de navegar
+    if (window.location.hash) {
+      return
+    }
+    
     if (currentParagraph) {
+      isNavigatingToHash.current = true
       // Pequeño delay para asegurar que el DOM esté renderizado
       setTimeout(() => {
         const element = document.getElementById(`p${currentParagraph}`)
         if (element) {
-          scrollToElement(element)
+          scrollToElement(element, false) // No centrar, solo scroll al inicio con offset
           setActiveParagraph(currentParagraph)
           
           // Agregar resaltado temporal después del scroll
@@ -241,10 +284,13 @@ export default function ReadingView({
             // Remover el resaltado después de 3 segundos
             setTimeout(() => {
               element.classList.remove('paragraph-highlight-temp')
+              isNavigatingToHash.current = false
             }, 3000)
           }, 300) // Delay adicional para que el scroll termine
+        } else {
+          isNavigatingToHash.current = false
         }
-      }, 100)
+      }, 200)
     }
     // Si no hay highlightQuery, intentar recuperar del sessionStorage
     try {
@@ -261,6 +307,25 @@ export default function ReadingView({
     } catch {}
   }, [currentParagraph, highlightQuery])
 
+  // Función para calcular la altura total del header + breadcrumb
+  const getHeaderOffset = (): number => {
+    if (focusMode) {
+      // En modo focus, solo hay breadcrumb fijo
+      const breadcrumb = document.getElementById('breadcrumb')
+      return breadcrumb ? breadcrumb.offsetHeight : 73
+    }
+    
+    // Calcular altura del header
+    const header = document.getElementById('header')
+    const headerHeight = header ? header.offsetHeight : 73
+    
+    // Calcular altura del breadcrumb
+    const breadcrumb = document.getElementById('breadcrumb')
+    const breadcrumbHeight = breadcrumb ? breadcrumb.offsetHeight : (isScrolled ? 57 : 73) // py-2 = ~57px, py-4 = ~73px
+    
+    return headerHeight + breadcrumbHeight
+  }
+
   // Detectar cambios en el hash de la URL para resaltado temporal
   useEffect(() => {
     const handleHashChange = () => {
@@ -268,31 +333,77 @@ export default function ReadingView({
       if (hash.startsWith('#p')) {
         const paragraphNum = parseInt(hash.substring(2))
         if (!isNaN(paragraphNum)) {
-          // Pequeño delay para asegurar que el DOM esté renderizado
+          isNavigatingToHash.current = true
+          
+          // Esperar a que el DOM esté completamente renderizado y los estilos aplicados
           setTimeout(() => {
             const element = document.getElementById(`p${paragraphNum}`)
             if (element) {
-              // Scroll suave al párrafo con centrado vertical
-              scrollToElement(element)
-              setActiveParagraph(paragraphNum)
+              // Calcular offset correcto
+              const headerOffset = getHeaderOffset()
+              const elementRect = element.getBoundingClientRect()
+              const absoluteElementTop = elementRect.top + window.pageYOffset
+              const finalPosition = absoluteElementTop - headerOffset - 16
               
-              // Agregar resaltado temporal después del scroll
+              // Usar scrollTo con behavior: 'auto' para evitar animaciones que interfieran
+              window.scrollTo({
+                top: Math.max(0, finalPosition),
+                behavior: 'auto'
+              })
+              
+              // Después del scroll inicial, hacer un scroll suave para el ajuste fino
               setTimeout(() => {
-                element.classList.add('paragraph-highlight-temp')
+                const newRect = element.getBoundingClientRect()
+                const newAbsoluteTop = newRect.top + window.pageYOffset
+                const newFinalPosition = newAbsoluteTop - headerOffset - 16
                 
-                // Remover el resaltado después de 3 segundos
+                window.scrollTo({
+                  top: Math.max(0, newFinalPosition),
+                  behavior: 'smooth'
+                })
+                
+                setActiveParagraph(paragraphNum)
+                
+                // Agregar resaltado temporal después del scroll
                 setTimeout(() => {
-                  element.classList.remove('paragraph-highlight-temp')
-                }, 3000)
-              }, 300) // Delay adicional para que el scroll termine
+                  element.classList.add('paragraph-highlight-temp')
+                  
+                  // Remover el resaltado después de 3 segundos
+                  setTimeout(() => {
+                    element.classList.remove('paragraph-highlight-temp')
+                  }, 3000)
+                  
+                  // Permitir que el scroll handler actualice la URL de nuevo
+                  setTimeout(() => {
+                    isNavigatingToHash.current = false
+                  }, 1000)
+                }, 300)
+              }, 50)
+            } else {
+              isNavigatingToHash.current = false
             }
-          }, 100)
+          }, 200) // Delay mayor para asegurar que todo esté renderizado
+        } else if (hash.startsWith('#section-')) {
+          // Manejar navegación a secciones por hash
+          const sectionId = hash.substring(1)
+          const sectionElement = document.getElementById(sectionId)
+          if (sectionElement) {
+            isNavigatingToHash.current = true
+            setTimeout(() => {
+              scrollToElement(sectionElement, false)
+              setTimeout(() => {
+                isNavigatingToHash.current = false
+              }, 1000)
+            }, 200)
+          }
         }
       }
     }
 
     // Ejecutar inmediatamente si hay hash en la URL
-    handleHashChange()
+    if (window.location.hash) {
+      handleHashChange()
+    }
 
     // Escuchar cambios en el hash
     window.addEventListener('hashchange', handleHashChange)
@@ -300,18 +411,49 @@ export default function ReadingView({
     return () => {
       window.removeEventListener('hashchange', handleHashChange)
     }
-  }, [focusMode]) // Agregar focusMode como dependencia para recalcular offset
+  }, [focusMode, isScrolled]) // Agregar dependencias para recalcular offset
 
-  // Detectar scroll para hacer el header más fino
+  // Detectar scroll para hacer el header más fino y actualizar scroll-margin-top
   useEffect(() => {
     const handleScroll = () => {
       const scrollTop = window.scrollY
       setIsScrolled(scrollTop > 20)
     }
+    
+    // Actualizar scroll-margin-top dinámicamente
+    const updateScrollMargin = () => {
+      // Calcular offset dinámicamente
+      let offset = 150 // Valor por defecto
+      if (typeof window !== 'undefined') {
+        if (focusMode) {
+          const breadcrumb = document.getElementById('breadcrumb')
+          offset = breadcrumb ? breadcrumb.offsetHeight + 16 : 89
+        } else {
+          const header = document.getElementById('header')
+          const breadcrumb = document.getElementById('breadcrumb')
+          const headerHeight = header ? header.offsetHeight : 73
+          const breadcrumbHeight = breadcrumb ? breadcrumb.offsetHeight : (isScrolled ? 57 : 73)
+          offset = headerHeight + breadcrumbHeight + 16
+        }
+      }
+      
+      // Aplicar a párrafos y secciones
+      document.querySelectorAll('.paragraph, .section-header').forEach((el) => {
+        (el as HTMLElement).style.scrollMarginTop = `${offset}px`
+      })
+    }
 
     window.addEventListener('scroll', handleScroll)
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
+    
+    // Actualizar scroll margin al cargar y cuando cambie el tamaño de la ventana o estado
+    updateScrollMargin()
+    window.addEventListener('resize', updateScrollMargin)
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll)
+      window.removeEventListener('resize', updateScrollMargin)
+    }
+  }, [focusMode, isScrolled])
 
   // Cerrar dropdown al hacer click fuera
   useEffect(() => {
@@ -366,19 +508,24 @@ export default function ReadingView({
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [activeParagraph, parrafos.length, tocOpen, focusMode])
 
-  // Helper function to scroll to element with proper centering
-  const scrollToElement = (element: HTMLElement) => {
-    const breadcrumbHeight = focusMode ? 73 : 0 // Altura del breadcrumb en modo focus
+  // Helper function to scroll to element with proper offset for fixed headers
+  const scrollToElement = (element: HTMLElement, center: boolean = true) => {
+    const headerOffset = getHeaderOffset()
     const elementRect = element.getBoundingClientRect()
     const absoluteElementTop = elementRect.top + window.pageYOffset
     const viewportHeight = window.innerHeight
     const elementHeight = elementRect.height
     
-    // Calcular posición para centrar verticalmente
-    const centerPosition = absoluteElementTop - (viewportHeight / 2) + (elementHeight / 2)
+    let finalPosition: number
     
-    // Ajustar por la altura del breadcrumb en modo focus
-    const finalPosition = centerPosition - breadcrumbHeight
+    if (center) {
+      // Calcular posición para centrar verticalmente
+      const centerPosition = absoluteElementTop - (viewportHeight / 2) + (elementHeight / 2)
+      finalPosition = centerPosition
+    } else {
+      // Scroll al inicio del elemento con offset para header
+      finalPosition = absoluteElementTop - headerOffset - 16 // 16px de margen adicional
+    }
     
     window.scrollTo({
       top: Math.max(0, finalPosition), // No permitir scroll negativo
@@ -406,35 +553,13 @@ export default function ReadingView({
     }
   }
 
-  // Handle paragraph input navigation
-  const handleParagraphInputSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    const paragraphNum = parseInt(paragraphInput)
-    if (!isNaN(paragraphNum) && paragraphNum >= 1 && paragraphNum <= parrafos.length) {
-      navigateToParagraph(paragraphNum)
-      setParagraphInput('')
-      setShowParagraphInput(false)
-    }
-  }
-
-  const handleParagraphInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value
-    // Solo permitir números
-    if (value === '' || /^\d+$/.test(value)) {
-      setParagraphInput(value)
-    }
-  }
-
-  const handleParagraphNumberClick = () => {
-    setShowParagraphInput(true)
-    setParagraphInput(activeParagraph.toString())
-  }
 
   // Navigate to section
   const navigateToSection = (sectionTitle: string) => {
     const sectionElement = document.getElementById(`section-${sectionTitle.toLowerCase().replace(/\s+/g, '-')}`)
     if (sectionElement) {
-      sectionElement.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      // Usar scrollToElement con offset para header
+      scrollToElement(sectionElement, false) // false = no centrar, solo scroll al inicio
       // No cerrar el sidebar automáticamente
       // setTocOpen(false)
       // Update active section
@@ -442,64 +567,78 @@ export default function ReadingView({
     }
   }
 
-  // Update active paragraph and section on scroll
+  // Update active paragraph and section usando IntersectionObserver
   useEffect(() => {
-    const handleScroll = () => {
-      const paragraphElements = document.querySelectorAll('.paragraph')
-      let currentActive = activeParagraph
-      let currentSection = activeSection
-
-      paragraphElements.forEach((element) => {
-        const rect = element.getBoundingClientRect()
-        if (rect.top <= window.innerHeight / 2 && rect.bottom >= window.innerHeight / 2) {
-          const paragraphNum = parseInt(element.id.replace('p', ''))
-          if (paragraphNum !== currentActive) {
-            currentActive = paragraphNum
-            // Update active section based on current paragraph
-            const paragraph = parrafos.find(p => p.numero === paragraphNum)
-            if (paragraph?.seccion) {
-              currentSection = paragraph.seccion
-            }
-          }
-        }
-      })
-
-      setActiveParagraph(currentActive)
-      setActiveSection(currentSection)
-
-      // Sincronizar scroll del sidebar
-      if (sidebarScrollRef.current && currentSection) {
-        const activeSectionElement = sidebarScrollRef.current.querySelector(`[data-section="${currentSection.toLowerCase().replace(/\s+/g, '-')}"]`)
-        if (activeSectionElement) {
-          const sidebarRect = sidebarScrollRef.current.getBoundingClientRect()
-          const elementRect = activeSectionElement.getBoundingClientRect()
-          
-          // Solo hacer scroll si el elemento no está visible en el sidebar
-          if (elementRect.top < sidebarRect.top || elementRect.bottom > sidebarRect.bottom) {
-            activeSectionElement.scrollIntoView({ 
-              behavior: 'smooth', 
-              block: 'center',
-              inline: 'nearest'
-            })
-          }
-        }
-      }
-
-      // Update URL without page reload
-      const url = new URL(window.location.href)
-      url.hash = `p${currentActive}`
-      if (highlightTerm && highlightTerm.length > 0) {
-        url.searchParams.set('q', highlightTerm)
-      } else {
-        url.searchParams.delete('q')
-      }
-      const newUrl = `${url.pathname}${url.search}${url.hash}`
-      window.history.replaceState({}, '', newUrl)
+    if (isNavigatingToHash.current) {
+      return
     }
 
-    window.addEventListener('scroll', handleScroll)
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [activeParagraph, activeSection, parrafos])
+    const paragraphElements = document.querySelectorAll('.paragraph')
+    const observers: IntersectionObserver[] = []
+
+    paragraphElements.forEach((element) => {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
+              const paragraphNum = parseInt(element.id.replace('p', ''))
+              if (paragraphNum !== activeParagraph) {
+                setActiveParagraph(paragraphNum)
+                
+                // Update active section based on current paragraph
+                const paragraph = parrafos.find(p => p.numero === paragraphNum)
+                if (paragraph?.seccion) {
+                  setActiveSection(paragraph.seccion)
+                }
+
+                // Update URL without page reload
+                const url = new URL(window.location.href)
+                url.hash = `p${paragraphNum}`
+                if (highlightTerm && highlightTerm.length > 0) {
+                  url.searchParams.set('q', highlightTerm)
+                } else {
+                  url.searchParams.delete('q')
+                }
+                const newUrl = `${url.pathname}${url.search}${url.hash}`
+                window.history.replaceState({}, '', newUrl)
+
+                // Sincronizar scroll del sidebar
+                if (sidebarScrollRef.current && paragraph?.seccion) {
+                  const activeSectionElement = sidebarScrollRef.current.querySelector(
+                    `[data-section="${paragraph.seccion.toLowerCase().replace(/\s+/g, '-')}"]`
+                  )
+                  if (activeSectionElement) {
+                    const sidebarRect = sidebarScrollRef.current.getBoundingClientRect()
+                    const elementRect = activeSectionElement.getBoundingClientRect()
+                    
+                    if (elementRect.top < sidebarRect.top || elementRect.bottom > sidebarRect.bottom) {
+                      activeSectionElement.scrollIntoView({ 
+                        behavior: 'smooth', 
+                        block: 'center',
+                        inline: 'nearest'
+                      })
+                    }
+                  }
+                }
+              }
+            }
+          })
+        },
+        {
+          root: null,
+          rootMargin: '-20% 0px -20% 0px', // Elemento debe estar en el 60% central del viewport
+          threshold: [0, 0.5, 1]
+        }
+      )
+
+      observer.observe(element)
+      observers.push(observer)
+    })
+
+    return () => {
+      observers.forEach(observer => observer.disconnect())
+    }
+  }, [parrafos, highlightTerm, activeParagraph])
 
   const renderTableOfContents = (sections: Section[], level: number = 0): JSX.Element[] => {
     return sections.map((section) => (
@@ -555,6 +694,30 @@ export default function ReadingView({
     } catch (error) {
       console.error('Error copying link:', error)
     }
+  }
+
+  // Handle paragraph input navigation
+  const handleParagraphInputSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    const paragraphNum = parseInt(paragraphInput)
+    if (!isNaN(paragraphNum) && paragraphNum >= 1 && paragraphNum <= parrafos.length) {
+      navigateToParagraph(paragraphNum)
+      setParagraphInput('')
+      setShowParagraphInput(false)
+    }
+  }
+
+  const handleParagraphInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    // Solo permitir números
+    if (value === '' || /^\d+$/.test(value)) {
+      setParagraphInput(value)
+    }
+  }
+
+  const handleParagraphNumberClick = () => {
+    setShowParagraphInput(true)
+    setParagraphInput(activeParagraph.toString())
   }
 
   // Aplicar clase al body cuando esté en modo lectura sin distracciones
@@ -707,7 +870,9 @@ export default function ReadingView({
       {/* Contenido principal con ancho fijo */}
       <main 
         ref={contentRef}
-        className="mx-auto max-w-4xl px-4 lg:px-8 min-h-screen"
+        className={`mx-auto max-w-4xl max-[1400px]:max-w-[700px] px-4 lg:px-8 min-h-screen ${
+          windowWidth < 1200 && windowWidth >= 1024 ? 'ml-4' : ''
+        }`}
       >
           <div className="reading-content px-4 lg:px-8">
             <header className="mb-16 text-center">
@@ -742,21 +907,18 @@ export default function ReadingView({
                     {/* Paragraph */}
                     <div
                       id={`p${parrafo.numero}`}
-                      className={`paragraph ${
-                        activeParagraph === parrafo.numero ? 'bg-primary-25' : ''
-                      }`}
+                      className="paragraph"
                     >
-                      <div className="relative flex items-center">
+                      <div className="relative">
                         <div 
-                          className={`paragraph-number transition-colors duration-300 w-8 h-8 flex items-center justify-center text-sm font-medium ${
+                          className={`paragraph-number transition-colors duration-300 w-5 h-5 flex items-center justify-center text-xs font-medium ${
                             activeParagraph === parrafo.numero 
-                              ? 'bg-accent-500 text-white rounded-sm' 
+                              ? 'paragraph-number-active' 
                               : ''
                           }`}
                           onClick={() => setShowCopyDropdown(showCopyDropdown === parrafo.numero ? null : parrafo.numero)}
                           style={{ cursor: 'pointer' }}
                         >
-                          {parrafo.numero}
                         </div>
                         
                         {/* Dropdown para copiar enlace */}
@@ -770,11 +932,11 @@ export default function ReadingView({
                             </button>
                           </div>
                         )}
+                        <div 
+                          className="paragraph-content"
+                          dangerouslySetInnerHTML={{ __html: highlightHtml(parrafo.texto, highlightTerm, parrafo.numero) }}
+                        />
                       </div>
-                      <div 
-                        className="paragraph-content"
-                        dangerouslySetInnerHTML={{ __html: highlightHtml(parrafo.texto, highlightTerm, parrafo.numero) }}
-                      />
                     </div>
                   </div>
                 )
@@ -862,31 +1024,51 @@ export default function ReadingView({
               )}
 
               {/* Sección de Descargas */}
-              <div className="mt-6 pt-4 border-t border-neutral-200">
-                <h4 className="font-medium text-primary-900 mb-3">Descargas</h4>
-                <div className="flex space-x-2">
-                  <button className="flex-1 flex items-center justify-center space-x-1 px-2 py-1.5 text-xs bg-neutral-100 hover:bg-neutral-200 text-neutral-700 border border-neutral-300 rounded transition-colors">
-                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
-                    </svg>
-                    <span className="font-medium">PDF</span>
-                  </button>
-                  
-                  <button className="flex-1 flex items-center justify-center space-x-1 px-2 py-1.5 text-xs bg-neutral-100 hover:bg-neutral-200 text-neutral-700 border border-neutral-300 rounded transition-colors">
-                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
-                    </svg>
-                    <span className="font-medium">DOC</span>
-                  </button>
-                  
-                  <button className="flex-1 flex items-center justify-center space-x-1 px-2 py-1.5 text-xs bg-neutral-100 hover:bg-neutral-200 text-neutral-700 border border-neutral-300 rounded transition-colors">
-                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
-                    </svg>
-                    <span className="font-medium">EPUB</span>
-                  </button>
+              {(obra.archivoPdf || obra.archivoDoc || obra.archivoEpub) && (
+                <div className="mt-6 pt-4 border-t border-neutral-200">
+                  <h4 className="font-medium text-primary-900 mb-3">Descargas</h4>
+                  <div className="flex space-x-2">
+                    {obra.archivoPdf && (
+                      <a
+                        href={`/api/files/${obra.archivoPdf}`}
+                        download
+                        className="flex-1 flex items-center justify-center space-x-1 px-2 py-1.5 text-xs bg-neutral-100 hover:bg-neutral-200 text-neutral-700 border border-neutral-300 rounded transition-colors"
+                      >
+                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+                        </svg>
+                        <span className="font-medium">PDF</span>
+                      </a>
+                    )}
+                    
+                    {obra.archivoDoc && (
+                      <a
+                        href={`/api/files/${obra.archivoDoc}`}
+                        download
+                        className="flex-1 flex items-center justify-center space-x-1 px-2 py-1.5 text-xs bg-neutral-100 hover:bg-neutral-200 text-neutral-700 border border-neutral-300 rounded transition-colors"
+                      >
+                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+                        </svg>
+                        <span className="font-medium">DOC</span>
+                      </a>
+                    )}
+                    
+                    {obra.archivoEpub && (
+                      <a
+                        href={`/api/files/${obra.archivoEpub}`}
+                        download
+                        className="flex-1 flex items-center justify-center space-x-1 px-2 py-1.5 text-xs bg-neutral-100 hover:bg-neutral-200 text-neutral-700 border border-neutral-300 rounded transition-colors"
+                      >
+                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+                        </svg>
+                        <span className="font-medium">EPUB</span>
+                      </a>
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div className="mt-6 pt-4 border-t border-neutral-200">
                 <h4 className="font-medium text-primary-900 mb-2">Navegación</h4>

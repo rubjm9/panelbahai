@@ -5,8 +5,12 @@ import Obra from '@/models/Obra';
 import Parrafo from '@/models/Parrafo';
 import Seccion from '@/models/Seccion';
 import ObrasList from '@/components/admin/ObrasList';
+import { requireAdminAuth } from '@/lib/auth-helpers';
 
 export default async function AdminObrasPage() {
+  // Verificar autenticación admin
+  await requireAdminAuth();
+  
   try {
     await dbConnect();
     

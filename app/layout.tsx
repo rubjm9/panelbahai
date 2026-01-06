@@ -2,6 +2,7 @@ import './globals.css'
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import ConditionalLayout from '@/components/layout/ConditionalLayout'
+import WebVitalsClient from '@/components/WebVitalsClient'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -22,6 +23,7 @@ export default function RootLayout({
         <ConditionalLayout>
           {children}
         </ConditionalLayout>
+        <WebVitalsClient />
       </body>
     </html>
   )

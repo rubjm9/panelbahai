@@ -5,8 +5,12 @@ import dbConnect from '@/lib/mongodb';
 import Usuario from '@/models/Usuario';
 import Link from 'next/link';
 import { Plus, Edit, Trash2, Eye, Users, Shield, UserCheck, UserX } from 'lucide-react';
+import { requireAdminAuth } from '@/lib/auth-helpers';
 
 export default async function AdminUsuariosPage() {
+  // Verificar autenticación admin
+  await requireAdminAuth();
+  
   await dbConnect();
   
   const usuarios = await Usuario.find({ activo: true })

@@ -1,11 +1,15 @@
-import { BarChart3, Users, BookOpen, FileText, TrendingUp } from 'lucide-react'
+import { BarChart3, Users, BookOpen, TrendingUp, FileText } from 'lucide-react'
+import Link from 'next/link'
+import { requireAdminAuth } from '@/lib/auth-helpers'
 
 export const metadata = {
   title: 'Dashboard - Admin Panel Bahá\'í',
   description: 'Panel de administración del sistema'
 }
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  // Verificar autenticación admin
+  await requireAdminAuth()
   // En una implementación real, estos datos vendrían de la base de datos
   const stats = [
     {
@@ -161,22 +165,18 @@ export default function DashboardPage() {
               Acciones Rápidas
             </h3>
             <div className="space-y-4">
-              <button className="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium py-3 px-4 transition-colors flex items-center justify-center">
+              <Link href="/admin/obras/nueva" className="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium py-3 px-4 transition-colors flex items-center justify-center">
                 <BookOpen className="w-5 h-5 mr-2" />
                 Agregar Nueva Obra
-              </button>
-              <button className="w-full bg-primary-50 hover:bg-primary-100 text-primary-800 font-medium py-3 px-4 transition-colors flex items-center justify-center">
+              </Link>
+              <Link href="/admin/autores" className="w-full bg-primary-50 hover:bg-primary-100 text-primary-800 font-medium py-3 px-4 transition-colors flex items-center justify-center">
                 <Users className="w-5 h-5 mr-2" />
                 Gestionar Autores
-              </button>
-              <button className="w-full bg-primary-50 hover:bg-primary-100 text-primary-800 font-medium py-3 px-4 transition-colors flex items-center justify-center">
+              </Link>
+              <Link href="/admin/busqueda" className="w-full bg-primary-50 hover:bg-primary-100 text-primary-800 font-medium py-3 px-4 transition-colors flex items-center justify-center">
                 <TrendingUp className="w-5 h-5 mr-2" />
                 Actualizar Índice de Búsqueda
-              </button>
-              <button className="w-full bg-primary-50 hover:bg-primary-100 text-primary-800 font-medium py-3 px-4 transition-colors flex items-center justify-center">
-                <FileText className="w-5 h-5 mr-2" />
-                Importar Documento Word
-              </button>
+              </Link>
             </div>
           </div>
         </div>

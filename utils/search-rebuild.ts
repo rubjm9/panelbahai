@@ -146,6 +146,22 @@ export async function rebuildSearchIndex(): Promise<RebuildResult> {
     // Agregar párrafos al índice
     for (const parrafo of parrafos) {
       if (parrafo.obra) {
+        // Extraer texto plano del HTML si el párrafo contiene HTML
+        let textoPlano = parrafo.texto;
+        if (parrafo.texto && parrafo.texto.includes('<')) {
+          // Es HTML, extraer texto plano
+          textoPlano = parrafo.texto
+            .replace(/<[^>]*>/g, '') // Remover tags HTML
+            .replace(/&nbsp;/g, ' ') // Reemplazar &nbsp; con espacio
+            .replace(/&amp;/g, '&') // Reemplazar entidades HTML
+            .replace(/&lt;/g, '<')
+            .replace(/&gt;/g, '>')
+            .replace(/&quot;/g, '"')
+            .replace(/&#39;/g, "'")
+            .replace(/\s+/g, ' ') // Normalizar espacios
+            .trim();
+        }
+        
         documents.push({
           id: `parrafo-${parrafo._id}`,
           titulo: (parrafo.obra as any).titulo,
@@ -153,7 +169,7 @@ export async function rebuildSearchIndex(): Promise<RebuildResult> {
           obraSlug: (parrafo.obra as any).slug,
           autorSlug: (parrafo.obra as any).autor.slug,
           seccion: parrafo.seccion ? (parrafo.seccion as any).titulo : undefined,
-          texto: parrafo.texto,
+          texto: textoPlano,
           numero: parrafo.numero,
           tipo: 'parrafo'
         });

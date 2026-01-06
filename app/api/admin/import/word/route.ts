@@ -2,190 +2,47 @@ export const dynamic = 'force-dynamic'
 
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
-import mammoth from 'mammoth';
-import multer from 'multer';
-import { Readable } from 'stream';
 import Autor from '@/models/Autor';
 import Obra from '@/models/Obra';
 import Seccion from '@/models/Seccion';
 import Parrafo from '@/models/Parrafo';
 import { rebuildSearchIndexAsync } from '@/utils/search-rebuild';
-
-// Configurar multer para manejar archivos en memoria
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB límite
-  },
-  fileFilter: (req, file, cb) => {
-    if (file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
-        file.mimetype === 'application/msword') {
-      cb(null, true);
-    } else {
-      cb(null, false);
-    }
-  }
-});
-
-// Función para parsear el contenido de Word
-function parseWordContent(html: string, titulo: string, autorId: string) {
-  const sections: Array<{titulo: string, contenido: string}> = [];
-  const paragraphs: Array<{numero: number, texto: string, seccion?: string}> = [];
-  
-  console.log('HTML original de Mammoth:', html); // Debug
-  
-  // Limpiar HTML pero mantener estructura básica
-  let cleanHtml = html
-    .replace(/<p[^>]*>/g, '<p>')
-    .replace(/<br[^>]*>/g, '\n')
-    .replace(/<\/p>/g, '\n\n')
-    .replace(/<h([1-6])[^>]*>/g, '\n<h$1>')
-    .replace(/<\/h([1-6])>/g, '</h$1>\n');
-  
-  console.log('HTML limpio:', cleanHtml); // Debug
-  
-  // Dividir por headers (h1, h2, h3, etc.) y también por párrafos con estilos de título
-  const headerRegex = /<h([1-6])[^>]*>(.*?)<\/h[1-6]>/gi;
-  const titleStyleRegex = /<p[^>]*style="[^"]*font-weight:\s*bold[^"]*"[^>]*>(.*?)<\/p>/gi;
-  
-  let lastIndex = 0;
-  let match;
-  let currentSection = '';
-  let paragraphNumber = 1;
-  
-  // Buscar headers HTML estándar
-  while ((match = headerRegex.exec(cleanHtml)) !== null) {
-    const [fullMatch, level, title] = match;
-    const headerIndex = match.index;
-    
-    // Extraer contenido entre headers
-    if (lastIndex < headerIndex) {
-      const content = cleanHtml.substring(lastIndex, headerIndex);
-      const cleanContent = content
-        .replace(/<[^>]*>/g, '') // Remover tags HTML
-        .replace(/\n\s*\n/g, '\n\n') // Normalizar saltos de línea
-        .trim();
-      
-      if (cleanContent) {
-        if (currentSection) {
-          sections.push({
-            titulo: currentSection,
-            contenido: cleanContent
-          });
-        }
-        
-        // Dividir en párrafos respetando saltos de línea
-        const paraTexts = cleanContent.split(/\n\s*\n/).filter(p => p.trim());
-        paraTexts.forEach(paraText => {
-          if (paraText.trim()) {
-            paragraphs.push({
-              numero: paragraphNumber++,
-              texto: paraText.trim(),
-              seccion: currentSection || undefined
-            });
-          }
-        });
-      }
-    }
-    
-    // Nuevo header encontrado
-    currentSection = title.replace(/<[^>]*>/g, '').trim();
-    lastIndex = headerIndex + fullMatch.length;
-  }
-  
-  // Si no encontramos headers HTML, buscar párrafos con estilos de título
-  if (sections.length === 0) {
-    console.log('No se encontraron headers HTML, buscando estilos de título...'); // Debug
-    
-    // Resetear para buscar por estilos
-    lastIndex = 0;
-    currentSection = '';
-    paragraphNumber = 1;
-    
-    // Buscar párrafos con estilos de título (bold, font-size grande, etc.)
-    const titleParagraphs = cleanHtml.match(/<p[^>]*style="[^"]*font-weight:\s*bold[^"]*"[^>]*>(.*?)<\/p>/gi) || [];
-    
-    if (titleParagraphs.length > 0) {
-      console.log('Títulos encontrados por estilo:', titleParagraphs); // Debug
-      
-      // Procesar cada título encontrado
-      titleParagraphs.forEach((titlePara, index) => {
-        const titleMatch = titlePara.match(/<p[^>]*style="[^"]*font-weight:\s*bold[^"]*"[^>]*>(.*?)<\/p>/i);
-        if (titleMatch) {
-          const titleText = titleMatch[1].replace(/<[^>]*>/g, '').trim();
-          if (titleText) {
-            currentSection = titleText;
-            console.log('Título detectado:', titleText); // Debug
-          }
-        }
-      });
-    }
-  }
-  
-  // Procesar contenido después del último header
-  if (lastIndex < cleanHtml.length) {
-    const content = cleanHtml.substring(lastIndex);
-    const cleanContent = content
-      .replace(/<[^>]*>/g, '') // Remover tags HTML
-      .replace(/\n\s*\n/g, '\n\n') // Normalizar saltos de línea
-      .trim();
-    
-    if (cleanContent) {
-      if (currentSection) {
-        sections.push({
-          titulo: currentSection,
-          contenido: cleanContent
-        });
-      }
-      
-      // Dividir en párrafos respetando saltos de línea
-      const paraTexts = cleanContent.split(/\n\s*\n/).filter(p => p.trim());
-      paraTexts.forEach(paraText => {
-        if (paraText.trim()) {
-          paragraphs.push({
-            numero: paragraphNumber++,
-            texto: paraText.trim(),
-            seccion: currentSection || undefined
-          });
-        }
-      });
-    }
-  }
-  
-  // Si no hay headers, tratar todo como una sección
-  if (sections.length === 0 && paragraphs.length === 0) {
-    const cleanContent = cleanHtml
-      .replace(/<[^>]*>/g, '') // Remover tags HTML
-      .replace(/\n\s*\n/g, '\n\n') // Normalizar saltos de línea
-      .trim();
-    
-    if (cleanContent) {
-      sections.push({
-        titulo: 'Contenido principal',
-        contenido: cleanContent
-      });
-      
-      const paraTexts = cleanContent.split(/\n\s*\n/).filter(p => p.trim());
-      paraTexts.forEach(paraText => {
-        if (paraText.trim()) {
-          paragraphs.push({
-            numero: paragraphNumber++,
-            texto: paraText.trim(),
-            seccion: 'Contenido principal'
-          });
-        }
-      });
-    }
-  }
-  
-  console.log('Secciones encontradas:', sections); // Debug
-  console.log('Párrafos encontrados:', paragraphs.length); // Debug
-  
-  return { sections, paragraphs, cleanHtml };
-}
+import { uploadFile } from '@/lib/gridfs';
+import { requireAdminAPI } from '@/lib/auth-helpers';
+import { adminAPIRateLimit, getRateLimitIdentifier, checkRateLimit } from '@/lib/rateLimit';
+import { parseWordDocument } from '@/lib/services/admin/wordParserService';
+import { validateWordFile } from '@/lib/utils/validation';
+import { v4 as uuidv4 } from 'uuid';
+import { createObraRevision, createParrafoRevision } from '@/lib/services/admin/revisionService';
 
 export async function POST(request: NextRequest) {
   try {
+    // Verificar autenticación admin (defensa en profundidad)
+    const user = await requireAdminAPI()
+    
+    // Rate limiting: 100 requests por minuto por usuario
+    const identifier = getRateLimitIdentifier(request, user.id);
+    const rateLimitResult = await checkRateLimit(adminAPIRateLimit, identifier);
+    
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: 'Demasiadas solicitudes. Intenta de nuevo más tarde.',
+          retryAfter: Math.ceil((rateLimitResult.reset - Date.now()) / 1000)
+        },
+        { 
+          status: 429,
+          headers: {
+            'Retry-After': Math.ceil((rateLimitResult.reset - Date.now()) / 1000).toString(),
+            'X-RateLimit-Limit': rateLimitResult.limit.toString(),
+            'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
+            'X-RateLimit-Reset': rateLimitResult.reset.toString(),
+          }
+        }
+      );
+    }
+    
     await dbConnect();
     
     const formData = await request.formData();
@@ -198,9 +55,19 @@ export async function POST(request: NextRequest) {
     const estado = formData.get('estado') as string || 'borrador';
     const esPublico = formData.get('esPublico') === 'true';
     
+    // Validar campos requeridos
     if (!file || !titulo || !autorId) {
       return NextResponse.json(
         { success: false, error: 'Archivo, título y autor son requeridos' },
+        { status: 400 }
+      );
+    }
+    
+    // Validar archivo usando utilidades de validación
+    const fileValidation = validateWordFile(file);
+    if (!fileValidation.valid) {
+      return NextResponse.json(
+        { success: false, error: fileValidation.errors.join('. ') },
         { status: 400 }
       );
     }
@@ -214,32 +81,25 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Convertir archivo a buffer
-    const arrayBuffer = await file.arrayBuffer();
+    // Parsear documento Word usando el servicio
+    let parsedResult;
+    try {
+      parsedResult = await parseWordDocument(file, {
+        titulo,
+        autorId,
+        validateMacros: true
+      });
+    } catch (parseError: any) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: parseError.message || 'Error al procesar el documento Word' 
+        },
+        { status: 400 }
+      );
+    }
     
-    // Convertir Word a HTML usando mammoth con configuración mejorada
-    const result = await mammoth.convertToHtml(arrayBuffer as any, {
-      styleMap: [
-        "p[style-name='Heading 1'] => h2:fresh",
-        "p[style-name='Heading 2'] => h3:fresh", 
-        "p[style-name='Heading 3'] => h4:fresh",
-        "p[style-name='Heading 4'] => h5:fresh",
-        "p[style-name='Heading 5'] => h6:fresh",
-        "p[style-name='Heading 6'] => h6:fresh",
-        "p[style-name='Título 1'] => h2:fresh",
-        "p[style-name='Título 2'] => h3:fresh",
-        "p[style-name='Título 3'] => h4:fresh",
-        "p[style-name='Título 4'] => h5:fresh",
-        "p[style-name='Título 5'] => h6:fresh",
-        "p[style-name='Título 6'] => h6:fresh"
-      ]
-    });
-    const html = result.value;
-    
-    console.log('HTML convertido por Mammoth:', html); // Debug
-    
-    // Parsear contenido
-    const { sections, paragraphs, cleanHtml } = parseWordContent(html, titulo, autorId);
+    const { sections, paragraphs, cleanHtml } = parsedResult;
     
     if (paragraphs.length === 0) {
       return NextResponse.json(
@@ -256,29 +116,54 @@ export async function POST(request: NextRequest) {
     
     let counter = 1;
     let originalSlug = slug;
-    while (await Obra.findOne({ slug })) {
+    while (await Obra.findOne({ autor: autorId, slug })) {
       slug = `${originalSlug}-${counter}`;
       counter++;
     }
+    
+    // Generar UUID para la obra
+    const obraUuid = uuidv4();
     
     // Crear la obra
     const obra = new Obra({
       titulo,
       slug,
+      uuid: obraUuid,
       autor: autorId,
       descripcion: descripcion || '',
       orden,
       fechaPublicacion: fechaPublicacion ? new Date(fechaPublicacion) : undefined,
       estado,
       esPublico,
-      contenido: cleanHtml, // Guardar el contenido HTML completo
-      archivoDoc: file.name, // Guardar el nombre del archivo original
+      contenido: cleanHtml,
       activo: true
     });
     
     await obra.save();
     
-    // Crear secciones
+    // Crear revisión inicial
+    try {
+      await createObraRevision(obra._id.toString(), user.id, 'Importación inicial desde Word');
+    } catch (revisionError) {
+      console.warn('Error creando revisión inicial:', revisionError);
+      // No fallar la importación si la revisión falla
+    }
+    
+    // Subir el archivo Word a GridFS
+    try {
+      const fileId = await uploadFile(file, {
+        obraId: obra._id.toString(),
+        tipo: 'doc',
+        filename: file.name
+      });
+      obra.archivoDoc = fileId;
+      await obra.save();
+    } catch (fileError) {
+      console.error('Error subiendo archivo Word a GridFS:', fileError);
+      // No fallar la importación si hay error con el archivo
+    }
+    
+    // Crear secciones con UUIDs
     const seccionesCreadas = [];
     for (const sectionData of sections) {
       const seccionSlug = sectionData.titulo.toLowerCase()
@@ -286,11 +171,12 @@ export async function POST(request: NextRequest) {
         .replace(/\s+/g, '-')
         .trim();
       
-      const seccion: any = new Seccion({
+      const seccion = new Seccion({
         titulo: sectionData.titulo,
         slug: seccionSlug,
+        uuid: uuidv4(),
         obra: obra._id,
-        nivel: 1,
+        nivel: sectionData.nivel || 1,
         orden: seccionesCreadas.length + 1,
         activo: true
       });
@@ -299,16 +185,18 @@ export async function POST(request: NextRequest) {
       seccionesCreadas.push(seccion);
     }
     
-    // Crear párrafos
+    // Crear párrafos con UUIDs y revisiones
     const parrafosCreados = [];
     for (const paraData of paragraphs) {
       const seccion = paraData.seccion ? 
         seccionesCreadas.find(s => s.titulo === paraData.seccion) : 
         null;
       
+      const parrafoUuid = uuidv4();
       const parrafo = new Parrafo({
         numero: paraData.numero,
         texto: paraData.texto,
+        uuid: parrafoUuid,
         obra: obra._id,
         seccion: seccion?._id,
         orden: paraData.numero,
@@ -316,6 +204,15 @@ export async function POST(request: NextRequest) {
       });
       
       await parrafo.save();
+      
+      // Crear revisión inicial del párrafo
+      try {
+        await createParrafoRevision(parrafo._id.toString(), user.id, 'Importación inicial desde Word');
+      } catch (revisionError) {
+        console.warn('Error creando revisión inicial del párrafo:', revisionError);
+        // No fallar la importación si la revisión falla
+      }
+      
       parrafosCreados.push(parrafo);
     }
     
@@ -328,7 +225,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: {
-        obra,
+        obra: {
+          _id: obra._id.toString(),
+          titulo: obra.titulo,
+          slug: obra.slug,
+          uuid: obra.uuid,
+          estado: obra.estado,
+          esPublico: obra.esPublico
+        },
         secciones: seccionesCreadas.length,
         parrafos: parrafosCreados.length,
         resumen: {
@@ -340,12 +244,14 @@ export async function POST(request: NextRequest) {
       }
     }, { status: 201 });
     
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error importing Word document:', error);
     return NextResponse.json(
-      { success: false, error: 'Error interno del servidor' },
+      { 
+        success: false, 
+        error: error.message || 'Error interno del servidor' 
+      },
       { status: 500 }
     );
   }
 }
-

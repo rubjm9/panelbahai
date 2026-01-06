@@ -1,39 +1,20 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { ChevronLeft, BookOpen, Calendar, Eye, ArrowRight } from 'lucide-react'
-import { headers } from 'next/headers'
+import { getCachedAutorBySlug } from '@/lib/services/public/autorService'
+import { listPublishedWorksByAutor } from '@/lib/services/public/obraService'
 
-// Esta función se ejecutaría en el servidor para obtener datos reales
+// Función para obtener datos del autor usando servicios
 async function getAutorData(slug: string) {
   try {
-    const headersList = headers()
-    const host = headersList.get('host') || 'localhost:3000'
-    const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http'
-    const baseUrl = `${protocol}://${host}`
-    
-    const response = await fetch(`${baseUrl}/api/autores`, {
-      cache: 'no-store'
-    });
-    
-    if (!response.ok) {
-      return null;
-    }
-    
-    const { data: autores } = await response.json();
-    const autor = autores.find((a: any) => a.slug === slug);
+    // Obtener autor y obras en paralelo usando servicios
+    const [autor, obras] = await Promise.all([
+      getCachedAutorBySlug(slug),
+      listPublishedWorksByAutor(slug)
+    ]);
     
     if (!autor) {
       return null;
-    }
-
-    const obrasResponse = await fetch(`${baseUrl}/api/obras?autor=${slug}`, {
-      cache: 'no-store'
-    });
-    
-    let obras = [];
-    if (obrasResponse.ok) {
-      const obrasData = await obrasResponse.json();
-      obras = obrasData.data || [];
     }
 
     return { autor, obras };

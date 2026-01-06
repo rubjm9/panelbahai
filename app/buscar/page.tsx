@@ -4,16 +4,18 @@ import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Search, BookOpen, FileText, Users, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
-import { searchEngine, SearchResult } from '@/utils/search'
+import { SearchResult } from '@/utils/search'
 import SidebarFilters from '@/components/search/SidebarFilters'
+import { useSearch } from '@/lib/hooks/useSearch'
 
 function SearchContent() {
   const searchParams = useSearchParams()
   const query = searchParams.get('q') || ''
   const router = useRouter()
   
+  const search = useSearch({ autoInitialize: true })
   const [results, setResults] = useState<SearchResult[]>([])
-  const [isLoading, setIsLoading] = useState(false)
+  const [totalResults, setTotalResults] = useState(0)
   const [filters, setFilters] = useState({
     tipo: 'todos',
     autor: '',
@@ -59,72 +61,36 @@ function SearchContent() {
     loadFilterData()
   }, [])
 
-  // Construir índice una sola vez - optimizado
-  const [indexReady, setIndexReady] = useState(false)
+  // Realizar búsqueda cuando índice esté listo
   useEffect(() => {
-    let cancelled = false
-    
-    // Verificar si el índice ya está construido
-    if ((searchEngine as any).index && (searchEngine as any).documents.size > 0) {
-      setIndexReady(true)
-      return
-    }
-    
-    async function initIndex() {
-      try {
-        setIsLoading(true)
-        const response = await fetch('/api/search?buildIndex=true')
-        const data = await response.json()
-        if (!cancelled && data?.success && Array.isArray(data.data) && data.data.length > 0) {
-          searchEngine.buildIndex(data.data)
-          setIndexReady(true)
-        }
-      } catch (e) {
-        console.error('Error inicializando índice en /buscar:', e)
-      } finally {
-        if (!cancelled) {
-          setIsLoading(false)
-        }
-      }
-    }
-    
-    initIndex()
-    return () => { cancelled = true }
-  }, [])
-
-  // Realizar búsqueda cuando índice esté listo - optimizado
-  useEffect(() => {
-    if (!indexReady) return
+    if (!search.isInitialized) return
     
     if (query.length >= 3) {
-      // Usar setTimeout para evitar bloqueos de UI
-      const searchTimeout = setTimeout(() => {
-        setIsLoading(true)
-        try {
-          let searchResults = searchEngine.search(query, 100)
-          if (filters.tipo !== 'todos') {
-            searchResults = searchResults.filter(result => result.tipo === filters.tipo)
-          }
-          if (filters.autor) {
-            searchResults = searchResults.filter(result => result.autorSlug === filters.autor)
-          }
-          if (filters.obra) {
-            searchResults = searchResults.filter(result => result.obraSlug === filters.obra)
-          }
-          setResults(searchResults)
-        } catch (error) {
-          console.error('Error searching:', error)
-          setResults([])
-        } finally {
-          setIsLoading(false)
+      const performSearch = async () => {
+        const { results: searchResults, total } = await search.search(query, 100)
+        
+        // Aplicar filtros
+        let filteredResults = searchResults
+        if (filters.tipo !== 'todos') {
+          filteredResults = filteredResults.filter(result => result.tipo === filters.tipo)
         }
-      }, 50) // Pequeño delay para permitir que la UI se actualice
+        if (filters.autor) {
+          filteredResults = filteredResults.filter(result => result.autorSlug === filters.autor)
+        }
+        if (filters.obra) {
+          filteredResults = filteredResults.filter(result => result.obraSlug === filters.obra)
+        }
+        
+        setResults(filteredResults)
+        setTotalResults(total)
+      }
       
-      return () => clearTimeout(searchTimeout)
+      performSearch()
     } else {
       setResults([])
+      setTotalResults(0)
     }
-  }, [query, filters, indexReady])
+  }, [query, filters, search])
 
   const getResultUrl = (result: SearchResult): string => {
     try {
@@ -191,7 +157,7 @@ function SearchContent() {
             </div>
             
             <div className="text-sm text-primary-600">
-              {results.length} resultado{results.length !== 1 ? 's' : ''}
+              {totalResults} resultado{totalResults !== 1 ? 's' : ''}
             </div>
           </div>
         </div>
@@ -210,13 +176,13 @@ function SearchContent() {
               <p className="text-primary-600">
                 {query ? `Buscando: "${query}"` : 'No hay término de búsqueda'}
               </p>
-              {isLoading && (
+              {search.isLoading && (
                 <p className="text-primary-500 mt-2">Buscando...</p>
               )}
             </div>
 
             {/* Resultados */}
-            {isLoading ? (
+            {search.isLoading ? (
               <div className="text-center py-16">
                 <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-accent-600 mx-auto mb-4"></div>
                 <h3 className="text-xl font-medium text-primary-800 mb-2">
@@ -230,7 +196,7 @@ function SearchContent() {
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
                   <p className="text-sm text-primary-600">
-                    {results.length} resultado{results.length !== 1 ? 's' : ''} encontrado{results.length !== 1 ? 's' : ''}
+                    {totalResults} resultado{totalResults !== 1 ? 's' : ''} encontrado{totalResults !== 1 ? 's' : ''}
                   </p>
                 </div>
                 
@@ -275,7 +241,7 @@ function SearchContent() {
                             <div 
                               className="text-primary-700 leading-relaxed"
                               dangerouslySetInnerHTML={{
-                                __html: searchEngine.highlightTerms(result.fragmento, query)
+                                __html: result.fragmento
                               }}
                             />
                           </div>
@@ -342,7 +308,7 @@ function SearchContent() {
                     <span className="font-medium">Término:</span> "{query}"
                   </div>
                   <div>
-                    <span className="font-medium">Resultados:</span> {results.length}
+                    <span className="font-medium">Resultados:</span> {totalResults}
                   </div>
                   {filters.tipo !== 'todos' && (
                     <div>

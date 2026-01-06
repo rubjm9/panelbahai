@@ -8,8 +8,12 @@ import Parrafo from '@/models/Parrafo';
 import Seccion from '@/models/Seccion';
 import Link from 'next/link';
 import { Plus, Edit, Trash2, Eye, Users, BookOpen, FileText, Settings } from 'lucide-react';
+import { requireAdminAuth } from '@/lib/auth-helpers';
 
 export default async function AdminAutoresPage() {
+  // Verificar autenticación admin
+  await requireAdminAuth();
+  
   await dbConnect();
   
   const autores = await Autor.find({ activo: true })

@@ -1,6 +1,9 @@
 import { Settings, Database, Search, Mail, Shield, Globe, RefreshCw, Trash2 } from 'lucide-react';
+import { requireAdminAuth } from '@/lib/auth-helpers';
 
-export default function AdminConfiguracionPage() {
+export default async function AdminConfiguracionPage() {
+  // Verificar autenticación admin
+  await requireAdminAuth();
   return (
     <div>
       <div className="mb-8">

@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap');
+@import url('https://fonts.cdnfonts.com/css/linux-libertine-o');
 
 @tailwind base;
 @tailwind components;
@@ -29,7 +30,7 @@
   /* Tipografía elegante para lectura */
   .reading-content {
     @apply max-w-4xl mx-auto px-8 py-12;
-    font-family: 'Crimson Text', Georgia, serif;
+    font-family: 'Linux Libertine O', 'Crimson Text', Georgia, serif;
     line-height: 1.8;
     font-size: 1.125rem;
   }
@@ -54,19 +55,123 @@
   /* Párrafos numerados elegantes */
   .paragraph {
     @apply mb-6 relative;
+    /* Scroll margin para compensar header fijo - se ajusta dinámicamente en JS */
+    scroll-margin-top: 150px; /* Valor por defecto, se ajusta en JS */
+  }
+  
+  /* Headers de sección con scroll margin */
+  .section-header {
+    scroll-margin-top: 150px; /* Valor por defecto, se ajusta en JS */
   }
   
   .paragraph-number {
-    @apply absolute -left-16 top-0 text-sm text-accent-600 font-medium;
-    width: 3rem;
-    text-align: right;
+    @apply absolute text-accent-600 font-medium;
+    left: -2.5rem; /* -40px, más cerca del párrafo que antes */
+    width: 1.25rem; /* 20px */
+    height: 1.25rem; /* 20px */
+    text-align: center;
     font-family: 'Inter', sans-serif;
     font-weight: 500;
+    top: 0.5rem; /* 8px más abajo */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%; /* Siempre redondo, incluso cuando no está activo */
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+  
+  .paragraph-number-active {
+    background-color: #eae4d1;
+    color: #1e293b;
   }
   
   .paragraph-content {
     @apply text-primary-800 leading-relaxed;
     font-size: 1.125rem;
+    line-height: 1.8;
+    margin: 0;
+    padding: 0;
+    display: block;
+  }
+
+  /* Accesibilidad: Focus visible */
+  *:focus-visible {
+    outline: 2px solid #eab30a;
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  /* Skip links para accesibilidad */
+  .skip-link {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: #1e293b;
+    color: #fff;
+    padding: 8px 16px;
+    text-decoration: none;
+    z-index: 100;
+    border-radius: 4px;
+  }
+
+  .skip-link:focus {
+    top: 0;
+  }
+
+  /* Mejoras de contraste y focus en elementos interactivos */
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible {
+    outline: 2px solid #eab30a;
+    outline-offset: 2px;
+  }
+
+  /* Enlaces con underline en hover/focus para mejor visibilidad */
+  a:hover,
+  a:focus-visible {
+    text-decoration: underline;
+  }
+
+  /* Resaltado temporal para anchors */
+  .anchor-highlight {
+    background-color: rgba(234, 179, 10, 0.2);
+    transition: background-color 2s ease-out;
+  }
+  
+  /* Ajustar el cuadro para que se alinee con la línea base del texto */
+  .paragraph .paragraph-number {
+    /* El texto tiene font-size 1.125rem (18px) con line-height 1.8 (32.4px) */
+    /* El cuadro tiene 32px de altura (h-8) */
+    /* Ajustar para alinear el centro del cuadro con la línea base del texto */
+    top: 0.125rem; /* Pequeño ajuste para alinear con la primera línea */
+  }
+  
+  /* Estilos para citas y blockquotes */
+  .paragraph-content blockquote,
+  .paragraph-content .cita,
+  blockquote.cita {
+    @apply border-l-4 border-primary-300 pl-6 pr-4 py-2 my-4;
+    margin-left: 1.5rem;
+    margin-right: 0;
+    font-style: italic;
+    color: theme('colors.primary.700');
+    background-color: theme('colors.primary.50');
+    border-radius: 0.125rem;
+  }
+  
+  .paragraph-content blockquote p,
+  .paragraph-content .cita p {
+    margin: 0;
+    padding: 0;
+  }
+  
+  .paragraph-content blockquote strong,
+  .paragraph-content .cita strong,
+  .paragraph-content blockquote b,
+  .paragraph-content .cita b {
+    font-weight: 600;
   }
   
   /* Headers de secciones elegantes */
@@ -104,28 +209,24 @@
 
   /* Resaltado temporal de párrafo cuando se accede por ancla */
   .paragraph.paragraph-highlight-temp {
-    background-color: #fef3c7 !important; /* Amarillo suave */
+    background-color: #fef3c7; /* Amarillo suave */
     animation: paragraphHighlightFade 3s ease-out forwards;
     border-radius: 0.25rem;
-    padding: 0.5rem;
-    margin: -0.5rem;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    margin-left: -0.5rem;
+    margin-right: -0.5rem;
+    /* No cambiar padding/margin vertical para evitar desplazamiento */
     position: relative;
     z-index: 1;
   }
 
-  /* Asegurar que el resaltado temporal sobrescriba el estado activo */
-  .paragraph.paragraph-highlight-temp.bg-primary-25 {
-    background-color: #fef3c7 !important;
-  }
-
   @keyframes paragraphHighlightFade {
     0% {
-      background-color: #fef3c7 !important;
-      opacity: 1;
+      background-color: rgba(254, 243, 199, 1); /* #fef3c7 con opacidad completa */
     }
     100% {
-      background-color: transparent !important;
-      opacity: 0;
+      background-color: rgba(254, 243, 199, 0); /* Mismo color pero transparente */
     }
   }
 
