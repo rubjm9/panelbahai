@@ -40,7 +40,8 @@ export async function GET(
     }
 
     // Retornar el archivo con headers apropiados
-    return new NextResponse(buffer, {
+    // Convertir Buffer a Uint8Array para compatibilidad con NextResponse
+    return new NextResponse(new Uint8Array(buffer), {
       headers: {
         'Content-Type': mimeType,
         'Content-Disposition': `attachment; filename="${encodeURIComponent(filename)}"`,
