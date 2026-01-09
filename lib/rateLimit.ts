@@ -1,44 +1,46 @@
 import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
 
-// Configuración de Redis (Upstash) o memoria para desarrollo
-let redis: Redis | null = null;
-let useMemory = false;
+// Configuración de Redis (Upstash) - solo crear si las variables están configuradas
+const redis = process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
+  ? new Redis({
+      url: process.env.UPSTASH_REDIS_REST_URL,
+      token: process.env.UPSTASH_REDIS_REST_TOKEN,
+    })
+  : null;
 
-if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
-  redis = new Redis({
-    url: process.env.UPSTASH_REDIS_REST_URL,
-    token: process.env.UPSTASH_REDIS_REST_TOKEN,
-  });
-} else {
-  // En desarrollo, usar memoria si no hay Redis configurado
-  useMemory = true;
-  console.warn('⚠️  Rate limiting usando memoria (solo desarrollo). Configura Upstash Redis para producción.');
+// En desarrollo sin Redis, mostrar advertencia
+if (!redis && process.env.NODE_ENV === 'development') {
+  console.warn('⚠️  Rate limiting deshabilitado (Redis no configurado). Configura Upstash Redis para producción.');
 }
 
-// Rate limiter para login: 5 intentos cada 15 minutos por IP
-export const loginRateLimit = new Ratelimit({
-  redis: redis || undefined,
-  limiter: Ratelimit.slidingWindow(5, '15 m'),
-  analytics: true,
-  prefix: '@upstash/ratelimit/login',
-});
+// Rate limiters (solo se crean si Redis está disponible)
+export const loginRateLimit = redis 
+  ? new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(5, '15 m'),
+      analytics: true,
+      prefix: '@upstash/ratelimit/login',
+    })
+  : null;
 
-// Rate limiter para APIs admin: 100 requests por minuto por usuario
-export const adminAPIRateLimit = new Ratelimit({
-  redis: redis || undefined,
-  limiter: Ratelimit.slidingWindow(100, '1 m'),
-  analytics: true,
-  prefix: '@upstash/ratelimit/admin-api',
-});
+export const adminAPIRateLimit = redis
+  ? new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(100, '1 m'),
+      analytics: true,
+      prefix: '@upstash/ratelimit/admin-api',
+    })
+  : null;
 
-// Rate limiter para APIs públicas: 30 requests por minuto por IP
-export const publicAPIRateLimit = new Ratelimit({
-  redis: redis || undefined,
-  limiter: Ratelimit.slidingWindow(30, '1 m'),
-  analytics: true,
-  prefix: '@upstash/ratelimit/public-api',
-});
+export const publicAPIRateLimit = redis
+  ? new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(30, '1 m'),
+      analytics: true,
+      prefix: '@upstash/ratelimit/public-api',
+    })
+  : null;
 
 /**
  * Obtener identificador para rate limiting
@@ -66,12 +68,11 @@ export function getRateLimitIdentifier(
  * Verificar rate limit y retornar resultado
  */
 export async function checkRateLimit(
-  limiter: Ratelimit,
+  limiter: Ratelimit | null,
   identifier: string
 ): Promise<{ success: boolean; limit: number; remaining: number; reset: number }> {
-  if (useMemory) {
-    // Implementación simple en memoria para desarrollo
-    // En producción, esto no se usará si Redis está configurado
+  // Si no hay limiter (Redis no configurado), permitir siempre
+  if (!limiter) {
     return {
       success: true,
       limit: 100,
