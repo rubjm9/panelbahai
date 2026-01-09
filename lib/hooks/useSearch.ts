@@ -153,7 +153,7 @@ export function useSearch(options: UseSearchOptions = {}) {
         documents = fetchedDocuments;
 
         // Guardar en IndexedDB para próxima vez
-        if (indexedDBStorage.isAvailable()) {
+        if (indexedDBStorage.isAvailable() && documents) {
           try {
             const version = lastUpdated ? new Date(lastUpdated).getTime().toString() : Date.now().toString();
             await indexedDBStorage.saveIndex(documents, version);
@@ -163,6 +163,11 @@ export function useSearch(options: UseSearchOptions = {}) {
             // Continuar aunque falle el guardado
           }
         }
+      }
+
+      // Verificar que documents no sea null antes de continuar
+      if (!documents) {
+        throw new Error('No se pudieron obtener documentos para indexar');
       }
 
       // Crear chunks
@@ -236,7 +241,8 @@ export function useSearch(options: UseSearchOptions = {}) {
       
       // 2. Buscar por prefijo (si la query es más corta que alguna en cache)
       if (query.length >= 3) {
-        for (const [cachedQuery, cached] of resultsCacheRef.current.entries()) {
+        // Convertir MapIterator a array para compatibilidad con TypeScript
+        for (const [cachedQuery, cached] of Array.from(resultsCacheRef.current.entries())) {
           if (cachedQuery.toLowerCase().startsWith(query.toLowerCase()) ||
               query.toLowerCase().startsWith(cachedQuery.toLowerCase())) {
             const age = Date.now() - cached.timestamp;
@@ -245,7 +251,7 @@ export function useSearch(options: UseSearchOptions = {}) {
               cached.lastAccess = Date.now();
               // Filtrar resultados para que coincidan con la query más corta
               const filteredResults = query.length < cachedQuery.length
-                ? cached.results.filter(r => 
+                ? cached.results.filter((r: SearchResult) => 
                     r.texto.toLowerCase().includes(query.toLowerCase()) ||
                     r.titulo.toLowerCase().includes(query.toLowerCase())
                   )
