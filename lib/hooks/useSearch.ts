@@ -66,7 +66,8 @@ function findSimilarCachedQuery(
   let bestMatch: string | null = null;
   let bestDistance = Infinity;
   
-  for (const cachedQuery of cache.keys()) {
+  // Convertir MapIterator a array para compatibilidad con TypeScript
+  for (const cachedQuery of Array.from(cache.keys())) {
     // Verificar si es prefijo
     if (cachedQuery.toLowerCase().startsWith(query.toLowerCase()) || 
         query.toLowerCase().startsWith(cachedQuery.toLowerCase())) {
