@@ -140,12 +140,16 @@ export async function GET(request: NextRequest) {
     if (buildIndex) {
       // Si la conexión está deshabilitada durante el build, usar fallback
       if (connection && connection.connected === false) {
-        return NextResponse.json({
+        const response = NextResponse.json({
           success: true,
           data: fallbackSearchDocuments,
           count: fallbackSearchDocuments.length,
           source: 'fallback'
         });
+        
+        // Headers de cache para fallback
+        response.headers.set('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
+        return response;
       }
 
       // Primero intentar obtener el índice de la base de datos
@@ -153,7 +157,23 @@ export async function GET(request: NextRequest) {
       
       if (existingIndex && existingIndex.documents.length > 0) {
         console.log(`📚 Usando índice existente con ${existingIndex.documents.length} documentos`);
-        return NextResponse.json({
+        
+        // Generar ETag basado en lastUpdated y count
+        const etag = `"${existingIndex.lastUpdated?.getTime() || Date.now()}-${existingIndex.count}"`;
+        
+        // Verificar If-None-Match header para cache del cliente
+        const ifNoneMatch = request.headers.get('if-none-match');
+        if (ifNoneMatch === etag) {
+          return new NextResponse(null, {
+            status: 304,
+            headers: {
+              'ETag': etag,
+              'Cache-Control': 'public, max-age=3600, stale-while-revalidate=86400'
+            }
+          });
+        }
+        
+        const response = NextResponse.json({
           success: true,
           data: existingIndex.documents,
           count: existingIndex.count,
@@ -163,6 +183,13 @@ export async function GET(request: NextRequest) {
           lastUpdated: existingIndex.lastUpdated,
           source: 'database'
         });
+        
+        // Headers de cache y ETag
+        response.headers.set('ETag', etag);
+        response.headers.set('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
+        response.headers.set('Content-Type', 'application/json; charset=utf-8');
+        
+        return response;
       }
 
       console.log('🔄 Índice no encontrado en BD, construyendo nuevo índice...');
@@ -263,15 +290,27 @@ export async function GET(request: NextRequest) {
 
       console.log(`💾 Nuevo índice guardado con ${documents.length} documentos`);
 
-      return NextResponse.json({
+      // Generar ETag para el nuevo índice
+      const lastUpdated = new Date();
+      const etag = `"${lastUpdated.getTime()}-${documents.length}"`;
+      
+      const response = NextResponse.json({
         success: true,
         data: documents,
         count: documents.length,
         obras: obras.length,
         secciones: secciones.length,
         parrafos: parrafos.length,
+        lastUpdated,
         source: 'database'
       });
+      
+      // Headers de cache y ETag
+      response.headers.set('ETag', etag);
+      response.headers.set('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
+      response.headers.set('Content-Type', 'application/json; charset=utf-8');
+      
+      return response;
     }
 
     return NextResponse.json({
@@ -287,12 +326,16 @@ export async function GET(request: NextRequest) {
     const buildIndex = searchParams.get('buildIndex') === 'true';
     
     if (buildIndex) {
-      return NextResponse.json({
+      const response = NextResponse.json({
         success: true,
         data: fallbackSearchDocuments,
         count: fallbackSearchDocuments.length,
         source: 'fallback'
       });
+      
+      // Headers de cache para fallback
+      response.headers.set('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
+      return response;
     }
     
     return NextResponse.json({

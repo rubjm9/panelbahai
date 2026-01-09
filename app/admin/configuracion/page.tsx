@@ -34,11 +34,11 @@ export default async function AdminConfiguracionPage() {
             </button>
             <button className="btn-secondary w-full">
               <Database className="w-4 h-4 mr-2" />
-              Optimizar Base de Datos
+              Optimizar base de datos
             </button>
             <button className="btn-outline w-full text-red-600 hover:text-red-800">
               <Trash2 className="w-4 h-4 mr-2" />
-              Limpiar Datos de Prueba
+              Limpiar datos de prueba
             </button>
           </div>
         </div>
@@ -65,7 +65,7 @@ export default async function AdminConfiguracionPage() {
             </button>
             <button className="btn-outline w-full">
               <Settings className="w-4 h-4 mr-2" />
-              Configurar Pesos
+              Configurar pesos
             </button>
           </div>
         </div>
@@ -92,7 +92,7 @@ export default async function AdminConfiguracionPage() {
             </button>
             <button className="btn-outline w-full">
               <RefreshCw className="w-4 h-4 mr-2" />
-              Resetear Configuración
+              Resetear configuración
             </button>
           </div>
         </div>
@@ -115,11 +115,11 @@ export default async function AdminConfiguracionPage() {
             </button>
             <button className="btn-secondary w-full">
               <RefreshCw className="w-4 h-4 mr-2" />
-              Regenerar Tokens
+              Regenerar tokens
             </button>
             <button className="btn-outline w-full text-red-600 hover:text-red-800">
               <Shield className="w-4 h-4 mr-2" />
-              Cerrar Sesiones Activas
+              Cerrar sesiones activas
             </button>
           </div>
         </div>
@@ -138,7 +138,7 @@ export default async function AdminConfiguracionPage() {
           <div className="space-y-3">
             <button className="btn-secondary w-full">
               <Globe className="w-4 h-4 mr-2" />
-              Configurar Dominio
+              Configurar dominio
             </button>
             <button className="btn-secondary w-full">
               <Settings className="w-4 h-4 mr-2" />
@@ -146,7 +146,7 @@ export default async function AdminConfiguracionPage() {
             </button>
             <button className="btn-outline w-full">
               <RefreshCw className="w-4 h-4 mr-2" />
-              Limpiar Caché
+              Limpiar caché
             </button>
           </div>
         </div>

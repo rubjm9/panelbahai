@@ -3,6 +3,14 @@ const nextConfig = {
   images: {
     domains: ['localhost', 'panel-bahai.local'],
   },
+  // Configuración de webpack para Web Workers
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      // Configurar para Web Workers
+      config.output.globalObject = 'self';
+    }
+    return config;
+  },
   // Configuración para desarrollo local
   async rewrites() {
     return [

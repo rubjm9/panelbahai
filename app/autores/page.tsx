@@ -55,16 +55,15 @@ export default function AutoresPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-neutral-50">
+    <div className="min-h-screen bg-neutral-50 dark:bg-midnight-900 transition-colors duration-200">
       {/* Header elegante */}
-      <header className="bg-primary-900 text-white">
+      <header className="bg-primary-900 dark:bg-midnight-900 text-white">
         <div className="container-elegant">
           <div className="section-elegant">
             <div className="text-center">
               <h1 className="display-title text-white mb-6">Autores</h1>
               <p className="text-xl text-primary-200 max-w-3xl mx-auto leading-relaxed">
-                Explora las obras de los principales autores de la literatura bahá'í, 
-                traducidas al español por el Panel de Traducción oficial.
+                Explora las obras de los principales autores de la literatura bahá'í
               </p>
             </div>
           </div>
@@ -75,11 +74,11 @@ export default function AutoresPage() {
       <nav className="header-elegant">
         <div className="container-elegant">
           <div className="flex items-center py-4">
-            <Link href="/" className="text-primary-600 hover:text-primary-800 transition-colors">
+            <Link href="/" className="text-primary-600 dark:text-neutral-400 hover:text-primary-800 dark:hover:text-neutral-200 transition-colors">
               Inicio
             </Link>
-            <span className="mx-2 text-primary-400">/</span>
-            <span className="text-primary-900 font-medium">Autores</span>
+            <span className="mx-2 text-primary-400 dark:text-neutral-600">/</span>
+            <span className="text-primary-900 dark:text-neutral-100 font-medium">Autores</span>
           </div>
         </div>
       </nav>
@@ -102,31 +101,6 @@ export default function AutoresPage() {
               );
             })}
           </div>
-
-          {/* Información adicional elegante */}
-          <div className="mt-20">
-            <div className="card">
-              <h2 className="text-2xl font-normal text-primary-900 mb-8 text-center">
-                Acerca de Estos Autores
-              </h2>
-              <div className="prose prose-lg max-w-4xl mx-auto text-primary-700">
-                <p className="text-lg leading-relaxed mb-6">
-                  La literatura bahá'í incluye los escritos de Bahá'u'lláh, el Fundador de la Fe Bahá'í, 
-                  así como los de Su precursor, el Báb, y los de Su hijo, 'Abdu'l-Bahá, quien fue 
-                  designado como el intérprete autorizado de Sus enseñanzas.
-                </p>
-                <p className="text-lg leading-relaxed mb-6">
-                  También se incluyen los escritos de Shoghi Effendi, quien fue el Guardián de la Fe Bahá'í, 
-                  y las cartas y declaraciones de la Casa Universal de Justicia, el cuerpo administrativo 
-                  supremo de la Fe Bahá'í.
-                </p>
-                <p className="text-lg leading-relaxed">
-                  Las compilaciones son selecciones temáticas de pasajes extraídos de estos diversos autores, 
-                  organizadas para facilitar el estudio de temas específicos de las enseñanzas bahá'ís.
-                </p>
-              </div>
-            </div>
-          </div>
         </div>
       </main>
     </div>
@@ -142,28 +116,31 @@ function AuthorCard({ nombre, slug, biografia, icono: IconoComponente, obras }: 
   obras: number;
 }) {
   return (
-    <Link href={`/autores/${slug}`} className="group">
-      <div className="card hover:shadow-elegant-xl transition-all duration-300 group-hover:border-primary-200">
+    <Link 
+      href={`/autores/${slug}`} 
+      className="group author-card-link"
+    >
+      <div className="card hover:shadow-elegant-xl transition-all duration-300 group-hover:border-primary-200 dark:group-hover:border-neutral-600 group-hover:-translate-y-1">
         <div className="flex items-start mb-6">
-          <div className="w-12 h-12 bg-primary-100 rounded-sm flex items-center justify-center mr-4 group-hover:bg-primary-200 transition-colors">
-            <IconoComponente className="w-6 h-6 text-primary-700" />
+          <div className="w-12 h-12 bg-primary-100 dark:bg-slate-800 rounded-sm flex items-center justify-center mr-4 group-hover:bg-primary-200 dark:group-hover:bg-slate-700 transition-colors">
+            <IconoComponente className="w-6 h-6 text-primary-700 dark:text-neutral-300" />
           </div>
           <div className="flex-1">
-            <h2 className="text-xl font-medium text-primary-900 mb-3 group-hover:text-primary-800 transition-colors">
+            <h2 className="text-xl font-medium text-primary-900 dark:text-neutral-100 mb-3 group-hover:text-primary-800 dark:group-hover:text-neutral-200 transition-colors">
               {nombre}
             </h2>
-            <p className="text-primary-600 leading-relaxed text-sm mb-4">
+            <p className="text-primary-600 dark:text-neutral-400 leading-relaxed text-sm mb-4">
               {biografia}
             </p>
           </div>
         </div>
         
         <div className="flex items-center justify-between">
-          <div className="flex items-center text-primary-500 text-sm">
+          <div className="flex items-center text-primary-500 dark:text-neutral-400 text-sm">
             <BookOpen className="w-4 h-4 mr-2" />
             <span>{obras} obra{obras !== 1 ? 's' : ''}</span>
           </div>
-          <div className="flex items-center text-primary-500 text-sm font-medium group-hover:text-primary-700 transition-colors">
+          <div className="flex items-center text-primary-500 dark:text-neutral-400 text-sm font-medium group-hover:text-primary-700 dark:group-hover:text-neutral-300 transition-colors">
             <span>Explorar</span>
             <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
           </div>

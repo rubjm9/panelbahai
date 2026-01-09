@@ -107,7 +107,7 @@ export default async function EditObraPage({ params }: EditObraPageProps) {
           </Link>
           <div>
             <h1 className="text-3xl font-display font-bold text-primary-900 mb-2">
-              Editar Obra
+              Editar obra
             </h1>
             <p className="text-primary-600 font-reading">
               Modifica los detalles de "{obra.titulo}"

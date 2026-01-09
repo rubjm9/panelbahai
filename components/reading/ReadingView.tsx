@@ -45,6 +45,11 @@ export default function ReadingView({
 }: ReadingViewProps) {
   const [activeSection, setActiveSection] = useState<string>('')
   const [activeParagraph, setActiveParagraph] = useState<number>(currentParagraph || 1)
+  
+  // Ref para acceder al valor actual sin causar recreaciones del observer
+  useEffect(() => {
+    activeParagraphRef.current = activeParagraph
+  }, [activeParagraph])
   const [showToc, setShowToc] = useState(false)
   const [tocOpen, setTocOpen] = useState(true)
   const [libraryOpen, setLibraryOpen] = useState(true)
@@ -95,6 +100,9 @@ export default function ReadingView({
   const sidebarRef = useRef<HTMLDivElement>(null)
   const sidebarScrollRef = useRef<HTMLDivElement>(null)
   const isNavigatingToHash = useRef<boolean>(false)
+  const activeParagraphRef = useRef<number>(activeParagraph)
+  const isUserScrolling = useRef<boolean>(false)
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // Sincronizar término de resaltado desde props/URL/sessionStorage
   useEffect(() => {
@@ -418,6 +426,19 @@ export default function ReadingView({
     const handleScroll = () => {
       const scrollTop = window.scrollY
       setIsScrolled(scrollTop > 20)
+      
+      // Marcar que el usuario está haciendo scroll
+      isUserScrolling.current = true
+      
+      // Limpiar timeout anterior
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current)
+      }
+      
+      // Después de 300ms sin scroll, considerar que el usuario terminó de hacer scroll
+      scrollTimeoutRef.current = setTimeout(() => {
+        isUserScrolling.current = false
+      }, 300)
     }
     
     // Actualizar scroll-margin-top dinámicamente
@@ -452,6 +473,9 @@ export default function ReadingView({
     return () => {
       window.removeEventListener('scroll', handleScroll)
       window.removeEventListener('resize', updateScrollMargin)
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current)
+      }
     }
   }, [focusMode, isScrolled])
 
@@ -575,59 +599,103 @@ export default function ReadingView({
 
     const paragraphElements = document.querySelectorAll('.paragraph')
     const observers: IntersectionObserver[] = []
+    
+    // Map para rastrear todos los párrafos visibles y sus ratios
+    const visibleParagraphs = new Map<number, number>()
+    let updateTimeout: NodeJS.Timeout | null = null
+
+    const updateActiveParagraph = () => {
+      // No actualizar si el usuario está haciendo scroll manualmente
+      if (isUserScrolling.current) {
+        return
+      }
+
+      // No actualizar si estamos cerca de la parte superior (scrollTop < 200px)
+      // Esto evita que se actualice cuando el usuario hace scroll hacia arriba
+      if (window.scrollY < 200) {
+        return
+      }
+
+      // Encontrar el párrafo con mayor intersección
+      let maxRatio = 0
+      let bestParagraph = activeParagraphRef.current
+
+      visibleParagraphs.forEach((ratio, paragraphNum) => {
+        if (ratio > maxRatio) {
+          maxRatio = ratio
+          bestParagraph = paragraphNum
+        }
+      })
+
+      // Si encontramos un párrafo mejor y es diferente al actual, actualizar
+      if (bestParagraph !== activeParagraphRef.current && maxRatio > 0.3) {
+        setActiveParagraph(bestParagraph)
+        
+        // Update active section based on current paragraph
+        const paragraph = parrafos.find(p => p.numero === bestParagraph)
+        if (paragraph?.seccion) {
+          setActiveSection(paragraph.seccion)
+        }
+
+        // Update URL without page reload (solo si no estamos cerca del top)
+        const url = new URL(window.location.href)
+        url.hash = `p${bestParagraph}`
+        if (highlightTerm && highlightTerm.length > 0) {
+          url.searchParams.set('q', highlightTerm)
+        } else {
+          url.searchParams.delete('q')
+        }
+        const newUrl = `${url.pathname}${url.search}${url.hash}`
+        window.history.replaceState({}, '', newUrl)
+
+        // Sincronizar scroll del sidebar
+        if (sidebarScrollRef.current && paragraph?.seccion) {
+          const activeSectionElement = sidebarScrollRef.current.querySelector(
+            `[data-section="${paragraph.seccion.toLowerCase().replace(/\s+/g, '-')}"]`
+          )
+          if (activeSectionElement) {
+            const sidebarRect = sidebarScrollRef.current.getBoundingClientRect()
+            const elementRect = activeSectionElement.getBoundingClientRect()
+            
+            if (elementRect.top < sidebarRect.top || elementRect.bottom > sidebarRect.bottom) {
+              activeSectionElement.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'center',
+                inline: 'nearest'
+              })
+            }
+          }
+        }
+      }
+    }
 
     paragraphElements.forEach((element) => {
       const observer = new IntersectionObserver(
         (entries) => {
           entries.forEach((entry) => {
-            if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
-              const paragraphNum = parseInt(element.id.replace('p', ''))
-              if (paragraphNum !== activeParagraph) {
-                setActiveParagraph(paragraphNum)
-                
-                // Update active section based on current paragraph
-                const paragraph = parrafos.find(p => p.numero === paragraphNum)
-                if (paragraph?.seccion) {
-                  setActiveSection(paragraph.seccion)
-                }
-
-                // Update URL without page reload
-                const url = new URL(window.location.href)
-                url.hash = `p${paragraphNum}`
-                if (highlightTerm && highlightTerm.length > 0) {
-                  url.searchParams.set('q', highlightTerm)
-                } else {
-                  url.searchParams.delete('q')
-                }
-                const newUrl = `${url.pathname}${url.search}${url.hash}`
-                window.history.replaceState({}, '', newUrl)
-
-                // Sincronizar scroll del sidebar
-                if (sidebarScrollRef.current && paragraph?.seccion) {
-                  const activeSectionElement = sidebarScrollRef.current.querySelector(
-                    `[data-section="${paragraph.seccion.toLowerCase().replace(/\s+/g, '-')}"]`
-                  )
-                  if (activeSectionElement) {
-                    const sidebarRect = sidebarScrollRef.current.getBoundingClientRect()
-                    const elementRect = activeSectionElement.getBoundingClientRect()
-                    
-                    if (elementRect.top < sidebarRect.top || elementRect.bottom > sidebarRect.bottom) {
-                      activeSectionElement.scrollIntoView({ 
-                        behavior: 'smooth', 
-                        block: 'center',
-                        inline: 'nearest'
-                      })
-                    }
-                  }
-                }
-              }
+            const paragraphNum = parseInt((entry.target as HTMLElement).id.replace('p', ''))
+            
+            if (entry.isIntersecting && entry.intersectionRatio > 0.1) {
+              // Actualizar el ratio de intersección para este párrafo
+              visibleParagraphs.set(paragraphNum, entry.intersectionRatio)
+            } else {
+              // Remover el párrafo si ya no es visible
+              visibleParagraphs.delete(paragraphNum)
             }
+
+            // Debounce: esperar 150ms después del último cambio antes de actualizar
+            if (updateTimeout) {
+              clearTimeout(updateTimeout)
+            }
+            updateTimeout = setTimeout(() => {
+              updateActiveParagraph()
+            }, 150)
           })
         },
         {
           root: null,
           rootMargin: '-20% 0px -20% 0px', // Elemento debe estar en el 60% central del viewport
-          threshold: [0, 0.5, 1]
+          threshold: [0, 0.1, 0.3, 0.5, 0.7, 1] // Más thresholds para mejor detección
         }
       )
 
@@ -636,9 +704,13 @@ export default function ReadingView({
     })
 
     return () => {
+      if (updateTimeout) {
+        clearTimeout(updateTimeout)
+      }
       observers.forEach(observer => observer.disconnect())
+      visibleParagraphs.clear()
     }
-  }, [parrafos, highlightTerm, activeParagraph])
+  }, [parrafos, highlightTerm]) // Removido activeParagraph de dependencias para evitar recrear el observer
 
   const renderTableOfContents = (sections: Section[], level: number = 0): JSX.Element[] => {
     return sections.map((section) => (
@@ -646,13 +718,15 @@ export default function ReadingView({
         <button
           onClick={() => navigateToSection(section.titulo)}
           data-section={section.titulo.toLowerCase().replace(/\s+/g, '-')}
-          className={`w-full text-left py-1 px-2 text-xs hover:text-primary-800 transition-colors rounded-sm ${
-            activeSection === section.titulo ? 'text-primary-900 font-medium bg-neutral-200' : 'text-primary-600'
+          className={`w-full text-left py-1 px-2 text-xs hover:text-primary-800 dark:hover:text-neutral-100 transition-colors rounded-sm ${
+            activeSection === section.titulo 
+              ? 'text-primary-900 dark:text-neutral-100 font-medium bg-neutral-200 dark:bg-slate-700 dark:text-white' 
+              : 'text-primary-600 dark:text-neutral-300'
           }`}
         >
           <div className="flex items-center justify-between">
             <span className="truncate">{section.titulo}</span>
-            <span className="text-xs text-primary-500 ml-1 flex-shrink-0">
+            <span className="text-xs text-primary-500 dark:text-neutral-500 ml-1 flex-shrink-0">
               {getSectionStartParagraph(section.titulo)}
             </span>
           </div>
@@ -799,7 +873,7 @@ export default function ReadingView({
   return (
     <>
       {/* Breadcrumb fijo con altura reducida al hacer scroll - FUERA del contenedor principal */}
-      <div id={`breadcrumb`} className={`${focusMode ? 'fixed left-0 right-0' : 'sticky'} z-30 bg-white border-b border-neutral-200 transition-all duration-300 ${
+      <div id={`breadcrumb`} className={`${focusMode ? 'fixed left-0 right-0' : 'sticky'} z-30 bg-white dark:bg-midnight-900 border-b border-neutral-200 dark:border-slate-800 transition-all duration-300 ${
         focusMode 
           ? 'top-0 py-2' 
           : isScrolled 
@@ -815,15 +889,15 @@ export default function ReadingView({
                 {obra.autor}
               </Link>
               <span className="mx-2">/</span>
-              <span className="text-primary-900 font-medium">{obra.titulo}</span>
+              <span className="text-primary-900 dark:text-neutral-100 font-medium">{obra.titulo}</span>
               {getCurrentSectionTitle() && (
                 <>
                   <span className="mx-2">/</span>
-                  <span className="text-primary-600">{getCurrentSectionTitle()}</span>
+                  <span className="text-primary-600 dark:text-neutral-400">{getCurrentSectionTitle()}</span>
                 </>
               )}
               <span className="mx-2">•</span>
-              <span className="text-primary-500">Párrafo {activeParagraph}</span>
+              <span className="text-primary-500 dark:text-neutral-500">Párrafo {activeParagraph}</span>
             </nav>
             
             <div className="flex items-center space-x-2">
@@ -831,8 +905,8 @@ export default function ReadingView({
                 onClick={() => setLibraryOpen(!libraryOpen)}
                 className={`p-2 transition-colors ${
                   libraryOpen 
-                    ? 'text-accent-600 hover:text-accent-800' 
-                    : 'text-primary-600 hover:text-primary-800'
+                    ? 'text-accent-600 hover:text-accent-800 dark:text-accent-500 dark:hover:text-accent-400' 
+                    : 'text-primary-600 hover:text-primary-800 dark:text-neutral-400 dark:hover:text-neutral-200'
                 }`}
                 data-tooltip={libraryOpen ? 'Ocultar biblioteca' : 'Mostrar biblioteca'}
               >
@@ -865,7 +939,7 @@ export default function ReadingView({
         </div>
       </div>
 
-      <div className="bg-neutral-50">
+      <div className="bg-neutral-50 dark:bg-midnight-900 transition-colors duration-200">
 
       {/* Contenido principal con ancho fijo */}
       <main 
@@ -879,7 +953,7 @@ export default function ReadingView({
               <h1 className="display-title mb-4">
                 {obra.titulo}
               </h1>
-              <p className="text-xl text-primary-600">
+              <p className="text-xl text-primary-600 dark:text-neutral-400">
                 por {obra.autor}
               </p>
             </header>
@@ -898,7 +972,7 @@ export default function ReadingView({
                         id={`section-${parrafo.seccion.toLowerCase().replace(/\s+/g, '-')}`}
                         className="section-header mb-8 mt-12 first:mt-0"
                       >
-                        <h2 className="text-2xl font-display font-semibold text-primary-800 border-b border-primary-200 pb-2">
+                        <h2 className="text-2xl font-display font-semibold text-primary-800 dark:text-neutral-200 border-b border-primary-200 dark:border-slate-700 pb-2">
                           {parrafo.seccion}
                         </h2>
                       </div>
@@ -923,10 +997,10 @@ export default function ReadingView({
                         
                         {/* Dropdown para copiar enlace */}
                         {showCopyDropdown === parrafo.numero && (
-                          <div className="absolute left-0 -top-1.5 z-50 bg-white border border-primary-200 rounded-sm shadow-lg py-1 min-w-48">
+                          <div className="absolute left-0 -top-1.5 z-50 bg-white dark:bg-slate-800 border border-primary-200 dark:border-slate-700 rounded-sm shadow-lg py-1 min-w-48">
                             <button
                               onClick={() => copyParagraphLink(parrafo.numero)}
-                              className="w-full text-left px-3 py-2 text-xs text-primary-700 hover:bg-primary-50 transition-colors font-sans font-semibold"
+                              className="w-full text-left px-3 py-2 text-xs text-primary-700 dark:text-neutral-300 hover:bg-primary-50 dark:hover:bg-slate-700 transition-colors font-sans font-semibold"
                             >
                               Copiar enlace a este párrafo
                             </button>
@@ -948,8 +1022,8 @@ export default function ReadingView({
       {/* Sidebar izquierdo flotante - Biblioteca */}
       <aside 
         className={`
-          fixed left-0 w-64 bg-white lg:bg-gradient-to-l lg:from-neutral-100 lg:to-neutral-50
-          border-r border-neutral-200 transition-all duration-300 z-30
+          fixed left-0 w-64 bg-white dark:bg-midnight-900 lg:bg-gradient-to-l lg:from-neutral-100 lg:to-neutral-50 dark:lg:from-slate-800 dark:lg:to-midnight-900
+          border-r border-neutral-200 dark:border-slate-800 transition-all duration-300 z-30
           ${libraryOpen && !focusMode ? 'translate-x-0' : '-translate-x-full'}
           ${isScrolled ? 'top-[126px]' : 'top-[142px]'}
         `}
@@ -959,14 +1033,14 @@ export default function ReadingView({
       >
         <div className="h-full overflow-y-auto">
           {/* Header del sidebar izquierdo */}
-          <div className="flex items-center justify-between p-3 border-b border-neutral-200">
+          <div className="flex items-center justify-between p-3 border-b border-neutral-200 dark:border-slate-800">
             <div className="flex items-center space-x-2">
-              <Library className="w-4 h-4 text-primary-700" />
-              <h3 className="font-medium text-primary-900 text-base">Biblioteca</h3>
+              <Library className="w-4 h-4 text-primary-700 dark:text-neutral-300" />
+              <h3 className="font-medium text-primary-900 dark:text-neutral-100 text-base">Biblioteca</h3>
             </div>
             <button
               onClick={() => setLibraryOpen(false)}
-              className="p-1 text-primary-500 hover:text-primary-700"
+              className="p-1 text-primary-500 dark:text-neutral-400 hover:text-primary-700 dark:hover:text-neutral-200"
             >
               <X className="w-4 h-4" />
             </button>
@@ -984,8 +1058,8 @@ export default function ReadingView({
       <aside 
         ref={sidebarRef}
         className={`
-          fixed right-0 w-64 bg-white lg:bg-gradient-to-r lg:from-neutral-100 lg:to-neutral-50
-          border-l border-neutral-200 transition-all duration-300 z-30
+          fixed right-0 w-64 bg-white dark:bg-midnight-900 lg:bg-gradient-to-r lg:from-neutral-100 lg:to-neutral-50 dark:lg:from-slate-800 dark:lg:to-midnight-900
+          border-l border-neutral-200 dark:border-slate-800 transition-all duration-300 z-30
           ${tocOpen && !focusMode ? 'translate-x-0' : 'translate-x-full'}
           ${isScrolled ? 'top-[126px]' : 'top-[142px]'}
         `}
@@ -995,14 +1069,14 @@ export default function ReadingView({
       >
           <div ref={sidebarScrollRef} className="h-full overflow-y-auto lg:overflow-y-auto">
             {/* Header del sidebar derecho */}
-            <div className="flex items-center justify-between p-3 border-b border-neutral-200">
+            <div className="flex items-center justify-between p-3 border-b border-neutral-200 dark:border-slate-800">
               <div className="flex items-center space-x-2">
-                <BookOpen className="w-4 h-4 text-primary-700" />
-                <h3 className="font-medium text-primary-900 text-base">Índice</h3>
+                <BookOpen className="w-4 h-4 text-primary-700 dark:text-neutral-300" />
+                <h3 className="font-medium text-primary-900 dark:text-neutral-100 text-base">Índice</h3>
               </div>
               <button
                 onClick={() => setTocOpen(false)}
-                className="p-1 text-primary-500 hover:text-primary-700"
+                className="p-1 text-primary-500 dark:text-neutral-400 hover:text-primary-700 dark:hover:text-neutral-200"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1016,8 +1090,8 @@ export default function ReadingView({
                 </nav>
               ) : (
                 <div className="text-center py-8">
-                  <BookOpen className="w-8 h-8 text-primary-400 mx-auto mb-3" />
-                  <p className="text-sm text-primary-500">
+                  <BookOpen className="w-8 h-8 text-primary-400 dark:text-neutral-600 mx-auto mb-3" />
+                  <p className="text-sm text-primary-500 dark:text-neutral-500">
                     Esta obra no tiene secciones definidas.
                   </p>
                 </div>
@@ -1025,14 +1099,14 @@ export default function ReadingView({
 
               {/* Sección de Descargas */}
               {(obra.archivoPdf || obra.archivoDoc || obra.archivoEpub) && (
-                <div className="mt-6 pt-4 border-t border-neutral-200">
-                  <h4 className="font-medium text-primary-900 mb-3">Descargas</h4>
+                <div className="mt-6 pt-4 border-t border-neutral-200 dark:border-slate-800">
+                  <h4 className="font-medium text-primary-900 dark:text-neutral-100 mb-3">Descargas</h4>
                   <div className="flex space-x-2">
                     {obra.archivoPdf && (
                       <a
                         href={`/api/files/${obra.archivoPdf}`}
                         download
-                        className="flex-1 flex items-center justify-center space-x-1 px-2 py-1.5 text-xs bg-neutral-100 hover:bg-neutral-200 text-neutral-700 border border-neutral-300 rounded transition-colors"
+                        className="flex-1 flex items-center justify-center space-x-1 px-2 py-1.5 text-xs bg-neutral-100 dark:bg-slate-800 hover:bg-neutral-200 dark:hover:bg-slate-700 text-neutral-700 dark:text-neutral-300 border border-neutral-300 dark:border-slate-700 rounded transition-colors"
                       >
                         <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -1070,8 +1144,8 @@ export default function ReadingView({
                 </div>
               )}
 
-              <div className="mt-6 pt-4 border-t border-neutral-200">
-                <h4 className="font-medium text-primary-900 mb-2">Navegación</h4>
+              <div className="mt-6 pt-4 border-t border-neutral-200 dark:border-slate-800">
+                <h4 className="font-medium text-primary-900 dark:text-neutral-100 mb-2">Navegación</h4>
                 <p className="text-xs text-neutral-600 mb-4">
                   Para navegar a un párrafo en concreto, introduzca el número a continuación.
                 </p>

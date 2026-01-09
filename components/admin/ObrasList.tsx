@@ -81,7 +81,7 @@ export default function ObrasList({ obras: initialObras }: ObrasListProps) {
         </div>
         <Link href="/admin/obras/nueva" className="btn-primary">
           <Plus className="w-5 h-5 mr-2" />
-          Nueva Obra
+          Nueva obra
         </Link>
       </div>
 
@@ -177,7 +177,7 @@ export default function ObrasList({ obras: initialObras }: ObrasListProps) {
             </p>
             <Link href="/admin/obras/nueva" className="btn-primary">
               <Plus className="w-5 h-5 mr-2" />
-              Crear Primera Obra
+              Crear primera obra
             </Link>
           </div>
         )}

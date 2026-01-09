@@ -116,7 +116,7 @@ export default async function DashboardPage() {
         <div className="bg-white shadow">
           <div className="px-4 py-5 sm:p-6">
             <h3 className="text-lg leading-6 font-display font-semibold text-primary-900 mb-4">
-              Actividad Reciente
+              Actividad reciente
             </h3>
             <div className="flow-root">
               <ul className="-mb-8">
@@ -162,12 +162,12 @@ export default async function DashboardPage() {
         <div className="bg-white shadow">
           <div className="px-4 py-5 sm:p-6">
             <h3 className="text-lg leading-6 font-display font-semibold text-primary-900 mb-4">
-              Acciones Rápidas
+              Acciones rápidas
             </h3>
             <div className="space-y-4">
               <Link href="/admin/obras/nueva" className="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium py-3 px-4 transition-colors flex items-center justify-center">
                 <BookOpen className="w-5 h-5 mr-2" />
-                Agregar Nueva Obra
+                Agregar nueva obra
               </Link>
               <Link href="/admin/autores" className="w-full bg-primary-50 hover:bg-primary-100 text-primary-800 font-medium py-3 px-4 transition-colors flex items-center justify-center">
                 <Users className="w-5 h-5 mr-2" />

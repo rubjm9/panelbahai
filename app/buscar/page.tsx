@@ -17,7 +17,6 @@ function SearchContent() {
   const [results, setResults] = useState<SearchResult[]>([])
   const [totalResults, setTotalResults] = useState(0)
   const [filters, setFilters] = useState({
-    tipo: 'todos',
     autor: '',
     obra: ''
   })
@@ -32,27 +31,17 @@ function SearchContent() {
     setSearchQuery(query)
   }, [query])
 
-  // Cargar datos para filtros
+  // Cargar datos para filtros desde cache compartido
   useEffect(() => {
     const loadFilterData = async () => {
       try {
-        const [autoresRes, obrasRes] = await Promise.all([
-          fetch('/api/autores'),
-          fetch('/api/obras')
+        const { filterDataCache } = await import('@/lib/services/search/filterDataCache')
+        const [autoresData, obrasData] = await Promise.all([
+          filterDataCache.getAutores(),
+          filterDataCache.getObras()
         ])
-        
-        const autoresData = await autoresRes.json()
-        const obrasData = await obrasRes.json()
-        
-        setAutores(autoresData.data?.map((autor: any) => ({
-          value: autor.slug,
-          label: autor.nombre
-        })) || [])
-        
-        setObras(obrasData.data?.map((obra: any) => ({
-          value: obra.slug,
-          label: obra.titulo
-        })) || [])
+        setAutores(autoresData)
+        setObras(obrasData)
       } catch (error) {
         console.error('Error loading filter data:', error)
       }
@@ -71,9 +60,6 @@ function SearchContent() {
         
         // Aplicar filtros
         let filteredResults = searchResults
-        if (filters.tipo !== 'todos') {
-          filteredResults = filteredResults.filter(result => result.tipo === filters.tipo)
-        }
         if (filters.autor) {
           filteredResults = filteredResults.filter(result => result.autorSlug === filters.autor)
         }
@@ -125,9 +111,9 @@ function SearchContent() {
   }
 
   return (
-    <div className="min-h-screen bg-primary-50">
+    <div className="min-h-screen bg-primary-50 dark:bg-midnight-900 transition-colors duration-200">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-primary-100">
+      <header className="bg-white dark:bg-midnight-900 shadow-sm border-b border-primary-100 dark:border-slate-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <Link 
@@ -150,13 +136,13 @@ function SearchContent() {
                       router.push(`/buscar?q=${encodeURIComponent(searchQuery)}`)
                     }
                   }}
-                  className="w-full pl-10 pr-4 py-3 border border-primary-200 rounded-sm bg-white text-primary-900 focus:ring-2 focus:ring-accent-600 focus:border-accent-600"
+                  className="w-full pl-10 pr-4 py-3 border border-primary-200 dark:border-slate-700 rounded-sm bg-white dark:bg-slate-800 text-primary-900 dark:text-neutral-100 focus:ring-2 focus:ring-accent-600 focus:border-accent-600"
                   placeholder="Buscar en toda la biblioteca..."
                 />
               </div>
             </div>
             
-            <div className="text-sm text-primary-600">
+            <div className="text-sm text-primary-600 dark:text-neutral-400">
               {totalResults} resultado{totalResults !== 1 ? 's' : ''}
             </div>
           </div>
@@ -170,14 +156,14 @@ function SearchContent() {
           <div className="flex-1">
             {/* Información de búsqueda */}
             <div className="mb-8">
-              <h1 className="text-3xl font-display font-bold text-primary-900 mb-2">
+              <h1 className="text-3xl font-display font-bold text-primary-900 dark:text-neutral-100 mb-2">
                 Resultados de búsqueda
               </h1>
-              <p className="text-primary-600">
+              <p className="text-primary-600 dark:text-neutral-400">
                 {query ? `Buscando: "${query}"` : 'No hay término de búsqueda'}
               </p>
               {search.isLoading && (
-                <p className="text-primary-500 mt-2">Buscando...</p>
+                <p className="text-primary-500 dark:text-neutral-500 mt-2">Buscando...</p>
               )}
             </div>
 
@@ -185,17 +171,17 @@ function SearchContent() {
             {search.isLoading ? (
               <div className="text-center py-16">
                 <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-accent-600 mx-auto mb-4"></div>
-                <h3 className="text-xl font-medium text-primary-800 mb-2">
+                <h3 className="text-xl font-medium text-primary-800 dark:text-neutral-200 mb-2">
                   Cargando los resultados de la búsqueda
                 </h3>
-                <p className="text-primary-500">
+                <p className="text-primary-500 dark:text-neutral-500">
                   Buscando "{query}" en toda la biblioteca...
                 </p>
               </div>
             ) : results.length > 0 ? (
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
-                  <p className="text-sm text-primary-600">
+                  <p className="text-sm text-primary-600 dark:text-neutral-400">
                     {totalResults} resultado{totalResults !== 1 ? 's' : ''} encontrado{totalResults !== 1 ? 's' : ''}
                   </p>
                 </div>
@@ -218,19 +204,19 @@ function SearchContent() {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between mb-3">
                               <div className="flex-1">
-                                <h3 className="text-lg font-display font-semibold text-primary-900 mb-1">
+                                <h3 className="text-lg font-display font-semibold text-primary-900 dark:text-neutral-100 mb-1">
                                   {result.titulo}
                                 </h3>
-                                <div className="flex items-center space-x-4 text-sm text-primary-600 mb-2">
+                                <div className="flex items-center space-x-4 text-sm text-primary-600 dark:text-neutral-400 mb-2">
                                   <span className="flex items-center">
                                     <Users className="w-4 h-4 mr-1" />
                                     {result.autor}
                                   </span>
-                                  <span className="px-2 py-1 bg-primary-100 text-primary-700 rounded-sm text-xs">
+                                  <span className="px-2 py-1 bg-primary-100 dark:bg-slate-800 text-primary-700 dark:text-neutral-300 rounded-sm text-xs">
                                     {getResultTypeLabel(result.tipo)}
                                   </span>
                                   {result.numero && (
-                                    <span className="text-primary-500">
+                                    <span className="text-primary-500 dark:text-neutral-500">
                                       Párrafo {result.numero}
                                     </span>
                                   )}
@@ -239,7 +225,7 @@ function SearchContent() {
                             </div>
                             
                             <div 
-                              className="text-primary-700 leading-relaxed"
+                              className="text-primary-700 dark:text-neutral-300 leading-relaxed"
                               dangerouslySetInnerHTML={{
                                 __html: result.fragmento
                               }}
@@ -253,11 +239,11 @@ function SearchContent() {
               </div>
             ) : query.length >= 3 ? (
               <div className="text-center py-16">
-                <Search className="w-16 h-16 text-primary-400 mx-auto mb-4" />
-                <h3 className="text-xl font-medium text-primary-800 mb-2">
+                <Search className="w-16 h-16 text-primary-400 dark:text-neutral-600 mx-auto mb-4" />
+                <h3 className="text-xl font-medium text-primary-800 dark:text-neutral-200 mb-2">
                   No se encontraron resultados
                 </h3>
-                <p className="text-primary-500 mb-6">
+                <p className="text-primary-500 dark:text-neutral-500 mb-6">
                   No se encontraron resultados para "{query}". Intenta con otros términos o ajusta los filtros.
                 </p>
                 <Link href="/" className="btn-primary">
@@ -290,7 +276,6 @@ function SearchContent() {
               <SidebarFilters
                 onFilterChange={(newFilters) => {
                   setFilters({
-                    tipo: newFilters.tipo,
                     autor: newFilters.autor || '',
                     obra: newFilters.obra || ''
                   })
@@ -310,11 +295,6 @@ function SearchContent() {
                   <div>
                     <span className="font-medium">Resultados:</span> {totalResults}
                   </div>
-                  {filters.tipo !== 'todos' && (
-                    <div>
-                      <span className="font-medium">Tipo:</span> {filters.tipo}
-                    </div>
-                  )}
                   {filters.autor && (
                     <div>
                       <span className="font-medium">Autor:</span> {autores.find(a => a.value === filters.autor)?.label}

@@ -62,7 +62,7 @@ export default async function AdminUsuariosPage() {
         </div>
         <Link href="/admin/usuarios/nuevo" className="btn-primary">
           <Plus className="w-5 h-5 mr-2" />
-          Nuevo Usuario
+          Nuevo usuario
         </Link>
       </div>
 
@@ -128,7 +128,7 @@ export default async function AdminUsuariosPage() {
             </p>
             <Link href="/admin/usuarios/nuevo" className="btn-primary">
               <Plus className="w-5 h-5 mr-2" />
-              Crear Primer Usuario
+              Crear primer usuario
             </Link>
           </div>
         )}

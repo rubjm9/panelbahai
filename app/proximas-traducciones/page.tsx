@@ -87,9 +87,9 @@ export default function ProximasTraduccionesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white dark:bg-midnight-900 transition-colors duration-200">
       {/* Hero azul unificado */}
-      <section className="bg-primary-900 text-white">
+      <section className="bg-primary-900 dark:bg-midnight-900 text-white">
         <div className="container-elegant">
           <div className="section-elegant text-center">
             <h1 className="display-title text-white mb-4">Próximas Traducciones</h1>
@@ -102,9 +102,9 @@ export default function ProximasTraduccionesPage() {
       <nav className="header-elegant">
         <div className="container-elegant">
           <div className="flex items-center py-4">
-            <Link href="/" className="text-primary-600 hover:text-primary-800 transition-colors">Inicio</Link>
-            <span className="mx-2 text-primary-400">/</span>
-            <span className="text-primary-900 font-medium">Próximas Traducciones</span>
+            <Link href="/" className="text-primary-600 dark:text-neutral-400 hover:text-primary-800 dark:hover:text-neutral-200 transition-colors">Inicio</Link>
+            <span className="mx-2 text-primary-400 dark:text-neutral-600">/</span>
+            <span className="text-primary-900 dark:text-neutral-100 font-medium">Próximas Traducciones</span>
           </div>
         </div>
       </nav>
@@ -112,21 +112,21 @@ export default function ProximasTraduccionesPage() {
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Introducción */}
         <section className="mb-16">
-          <div className="bg-gradient-to-r from-primary-50 to-white rounded-lg p-8 border border-primary-100">
+          <div className="bg-gradient-to-r from-primary-50 to-white dark:from-slate-800 dark:to-midnight-900 rounded-lg p-8 border border-primary-100 dark:border-slate-700">
             <div className="flex items-center mb-6">
               <div className="w-12 h-12 bg-accent-500 rounded-lg flex items-center justify-center mr-4">
                 <Clock className="w-6 h-6 text-white" />
               </div>
-              <h2 className="text-3xl font-display font-bold text-primary-900">
-                Trabajo en Progreso
+              <h2 className="text-3xl font-display font-bold text-primary-900 dark:text-neutral-100">
+                Trabajo en progreso
               </h2>
             </div>
-            <p className="text-lg text-primary-700 leading-relaxed mb-6">
+            <p className="text-lg text-primary-700 dark:text-neutral-300 leading-relaxed mb-6">
               El Panel Internacional de Traducción trabaja continuamente en nuevos proyectos para ampliar 
               la biblioteca de literatura bahá'í disponible en español. Nuestro compromiso es hacer accesibles 
               los textos sagrados y escritos de autoridad a las comunidades de habla hispana en todo el mundo.
             </p>
-            <p className="text-lg text-primary-700 leading-relaxed">
+            <p className="text-lg text-primary-700 dark:text-neutral-300 leading-relaxed">
               Aquí puedes seguir el progreso de nuestras próximas publicaciones y conocer qué obras están 
               siendo preparadas para la comunidad bahá'í internacional.
             </p>
@@ -136,57 +136,57 @@ export default function ProximasTraduccionesPage() {
         {/* Estadísticas generales */}
         <section className="mb-16">
           <div className="grid md:grid-cols-4 gap-6 mb-8">
-            <div className="bg-white border border-primary-200 rounded-lg p-6 text-center">
+            <div className="bg-white dark:bg-slate-800 border border-primary-200 dark:border-slate-700 rounded-lg p-6 text-center">
               <div className="w-12 h-12 bg-accent-500 rounded-lg flex items-center justify-center mx-auto mb-3">
                 <BookOpen className="w-6 h-6 text-white" />
               </div>
-              <h3 className="text-2xl font-bold text-primary-900 mb-1">{proximasObras.length}</h3>
-              <p className="text-primary-600">Proyectos Activos</p>
+              <h3 className="text-2xl font-bold text-primary-900 dark:text-neutral-100 mb-1">{proximasObras.length}</h3>
+              <p className="text-primary-600 dark:text-neutral-400">Proyectos activos</p>
             </div>
             <div className="bg-white border border-primary-200 rounded-lg p-6 text-center">
               <div className="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center mx-auto mb-3">
                 <CheckCircle className="w-6 h-6 text-white" />
               </div>
               <h3 className="text-2xl font-bold text-primary-900 mb-1">1</h3>
-              <p className="text-primary-600">En Revisión Final</p>
+              <p className="text-primary-600">En revisión final</p>
             </div>
             <div className="bg-white border border-primary-200 rounded-lg p-6 text-center">
               <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center mx-auto mb-3">
                 <Users className="w-6 h-6 text-white" />
               </div>
               <h3 className="text-2xl font-bold text-primary-900 mb-1">1</h3>
-              <p className="text-primary-600">En Traducción</p>
+              <p className="text-primary-600">En traducción</p>
             </div>
             <div className="bg-white border border-primary-200 rounded-lg p-6 text-center">
               <div className="w-12 h-12 bg-yellow-500 rounded-lg flex items-center justify-center mx-auto mb-3">
                 <Calendar className="w-6 h-6 text-white" />
               </div>
               <h3 className="text-2xl font-bold text-primary-900 mb-1">3</h3>
-              <p className="text-primary-600">En Planificación</p>
+              <p className="text-primary-600">En planificación</p>
             </div>
           </div>
         </section>
 
         {/* Lista de próximas obras */}
         <section className="mb-16">
-          <h2 className="text-2xl font-display font-bold text-primary-900 mb-8">Proyectos Actuales</h2>
+          <h2 className="text-2xl font-display font-bold text-primary-900 dark:text-neutral-100 mb-8">Proyectos actuales</h2>
           <div className="space-y-8">
             {proximasObras.map((obra, index) => (
-              <div key={index} className="bg-white border border-primary-200 rounded-lg p-8 hover:shadow-lg transition-shadow">
+              <div key={index} className="bg-white dark:bg-slate-800 border border-primary-200 dark:border-slate-700 rounded-lg p-8 hover:shadow-lg transition-shadow">
                 <div className="flex flex-col lg:flex-row lg:items-start justify-between mb-6">
                   <div className="flex-1">
                     <div className="flex items-center mb-3">
-                      <h3 className="text-2xl font-display font-bold text-primary-900 mr-4">
+                      <h3 className="text-2xl font-display font-bold text-primary-900 dark:text-neutral-100 mr-4">
                         {obra.titulo}
                       </h3>
                       <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getPrioridadColor(obra.prioridad)}`}>
                         {obra.prioridad}
                       </span>
                     </div>
-                    <p className="text-accent-600 font-medium text-lg mb-3">
+                    <p className="text-accent-600 dark:text-accent-400 font-medium text-lg mb-3">
                       por {obra.autor}
                     </p>
-                    <p className="text-primary-700 leading-relaxed text-lg">
+                    <p className="text-primary-700 dark:text-neutral-300 leading-relaxed text-lg">
                       {obra.descripcion}
                     </p>
                   </div>
@@ -199,19 +199,19 @@ export default function ProximasTraduccionesPage() {
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="flex items-center">
-                    <Calendar className="w-5 h-5 text-primary-500 mr-3" />
+                    <div className="flex items-center">
+                    <Calendar className="w-5 h-5 text-primary-500 dark:text-neutral-400 mr-3" />
                     <div>
-                      <span className="text-sm text-primary-500 block">Fecha Estimada</span>
-                      <span className="text-lg font-medium text-primary-900">{obra.fechaEstimada}</span>
+                      <span className="text-sm text-primary-500 dark:text-neutral-400 block">Fecha Estimada</span>
+                      <span className="text-lg font-medium text-primary-900 dark:text-neutral-100">{obra.fechaEstimada}</span>
                     </div>
                   </div>
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-primary-500">Progreso</span>
-                      <span className="text-lg font-bold text-primary-900">{obra.progreso}%</span>
+                      <span className="text-sm text-primary-500 dark:text-neutral-400">Progreso</span>
+                      <span className="text-lg font-bold text-primary-900 dark:text-neutral-100">{obra.progreso}%</span>
                     </div>
-                    <div className="w-full bg-primary-100 rounded-full h-3">
+                    <div className="w-full bg-primary-100 dark:bg-slate-700 rounded-full h-3">
                       <div 
                         className="bg-gradient-to-r from-accent-500 to-accent-600 h-3 rounded-full transition-all duration-500"
                         style={{ width: `${obra.progreso}%` }}
@@ -226,16 +226,16 @@ export default function ProximasTraduccionesPage() {
 
         {/* Proceso y metodología */}
         <section className="mb-16">
-          <h2 className="text-2xl font-display font-bold text-primary-900 mb-8 text-center">
-            Nuestro Proceso de Desarrollo
+          <h2 className="text-2xl font-display font-bold text-primary-900 dark:text-neutral-100 mb-8 text-center">
+            Nuestro proceso de desarrollo
           </h2>
           <div className="grid md:grid-cols-4 gap-8">
             <div className="text-center">
               <div className="w-16 h-16 bg-accent-500 rounded-lg flex items-center justify-center mx-auto mb-4">
                 <BookOpen className="w-8 h-8 text-white" />
               </div>
-              <h3 className="text-xl font-display font-semibold text-primary-900 mb-3">Preparación</h3>
-              <p className="text-primary-700">
+              <h3 className="text-xl font-display font-semibold text-primary-900 dark:text-neutral-100 mb-3">Preparación</h3>
+              <p className="text-primary-700 dark:text-neutral-300">
                 Investigación exhaustiva del texto original y preparación de materiales de referencia especializados.
               </p>
             </div>
@@ -270,9 +270,9 @@ export default function ProximasTraduccionesPage() {
         </section>
 
         {/* Llamada a la colaboración */}
-        <section className="bg-primary-900 text-white rounded-lg p-8 text-center">
-          <h2 className="text-2xl font-display font-bold mb-4">Únete a Nuestro Trabajo</h2>
-          <p className="text-primary-200 mb-6 max-w-2xl mx-auto">
+        <section className="bg-primary-900 dark:bg-midnight-900 text-white rounded-lg p-8 text-center">
+          <h2 className="text-2xl font-display font-bold mb-4">Únete a nuestro trabajo</h2>
+          <p className="text-primary-200 dark:text-neutral-300 mb-6 max-w-2xl mx-auto">
             Si tienes habilidades en traducción, revisión, o edición y deseas contribuir 
             a estos importantes proyectos, nos encantaría conocer tu interés en formar parte 
             de este noble esfuerzo.

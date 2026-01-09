@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { ChevronLeft, BookOpen, Calendar, Eye, ArrowRight } from 'lucide-react'
+import { ChevronLeft, BookOpen, Calendar, ArrowRight } from 'lucide-react'
 import { getCachedAutorBySlug } from '@/lib/services/public/autorService'
 import { listPublishedWorksByAutor } from '@/lib/services/public/obraService'
 
@@ -153,9 +153,9 @@ export default async function AutorPage({ params }: { params: { autorSlug: strin
   const { autor, obras } = data;
 
   return (
-    <div className="min-h-screen bg-neutral-50">
+    <div className="min-h-screen bg-neutral-50 dark:bg-midnight-900 transition-colors duration-200">
       {/* Hero azul unificado */}
-      <section className="bg-primary-900 text-white">
+      <section className="bg-primary-900 dark:bg-midnight-900 text-white">
         <div className="container-elegant">
           <div className="section-elegant text-center">
             <h1 className="display-title text-white mb-4">{autor.nombre}</h1>
@@ -169,21 +169,21 @@ export default async function AutorPage({ params }: { params: { autorSlug: strin
       <nav className="header-elegant">
         <div className="container-elegant">
           <div className="flex items-center py-4">
-            <Link href="/" className="text-primary-600 hover:text-primary-800 transition-colors">Inicio</Link>
-            <span className="mx-2 text-primary-400">/</span>
-            <Link href="/autores" className="text-primary-600 hover:text-primary-800 transition-colors">Autores</Link>
-            <span className="mx-2 text-primary-400">/</span>
-            <span className="text-primary-900 font-medium">{autor.nombre}</span>
+            <Link href="/" className="text-primary-600 dark:text-neutral-400 hover:text-primary-800 dark:hover:text-neutral-200 transition-colors">Inicio</Link>
+            <span className="mx-2 text-primary-400 dark:text-neutral-600">/</span>
+            <Link href="/autores" className="text-primary-600 dark:text-neutral-400 hover:text-primary-800 dark:hover:text-neutral-200 transition-colors">Autores</Link>
+            <span className="mx-2 text-primary-400 dark:text-neutral-600">/</span>
+            <span className="text-primary-900 dark:text-neutral-100 font-medium">{autor.nombre}</span>
           </div>
         </div>
       </nav>
 
       {/* Hero Section elegante */}
-      <section className="section-elegant bg-white">
+      <section className="section-elegant bg-white dark:bg-midnight-900 transition-colors duration-200">
         <div className="container-elegant">
           <div className="text-center mb-16">
             <div className="max-w-4xl mx-auto">
-              <p className="text-lg text-primary-700 leading-relaxed">
+              <p className="text-lg text-primary-700 dark:text-neutral-300 leading-relaxed">
                 {autor.biografia}
               </p>
             </div>
@@ -195,10 +195,10 @@ export default async function AutorPage({ params }: { params: { autorSlug: strin
       <section className="section-elegant">
         <div className="container-elegant">
           <div className="mb-12">
-            <h2 className="text-2xl font-normal text-primary-900 mb-4 text-center">
+            <h2 className="text-2xl font-normal text-primary-900 dark:text-neutral-100 mb-4 text-center">
               Obras Disponibles
             </h2>
-            <p className="text-primary-600 text-center">
+            <p className="text-primary-600 dark:text-neutral-400 text-center">
               {obras.length > 0 
                 ? `${obras.length} obra${obras.length !== 1 ? 's' : ''} disponible${obras.length !== 1 ? 's' : ''}`
                 : 'No hay obras disponibles actualmente'
@@ -207,20 +207,22 @@ export default async function AutorPage({ params }: { params: { autorSlug: strin
           </div>
 
           {obras.length > 0 ? (
-            <div className="grid-elegant md:grid-cols-2 lg:grid-cols-3">
-              {obras.map((obra: any) => (
-                <ObraCard key={obra.slug} obra={obra} autor={autor} />
-              ))}
+            <div className="max-w-4xl mx-auto">
+              <div className="bg-white dark:bg-slate-800 border border-primary-200 dark:border-slate-700 rounded-lg divide-y divide-primary-100 dark:divide-slate-700">
+                {obras.map((obra: any) => (
+                  <ObraListItem key={obra.slug} obra={obra} autor={autor} />
+                ))}
+              </div>
             </div>
           ) : (
             <div className="text-center py-20">
-              <div className="w-20 h-20 bg-primary-100 rounded-sm flex items-center justify-center mx-auto mb-6">
-                <BookOpen className="w-10 h-10 text-primary-600" />
+              <div className="w-20 h-20 bg-primary-100 dark:bg-slate-800 rounded-sm flex items-center justify-center mx-auto mb-6">
+                <BookOpen className="w-10 h-10 text-primary-600 dark:text-neutral-400" />
               </div>
-              <h3 className="text-xl font-medium text-primary-900 mb-3">
+              <h3 className="text-xl font-medium text-primary-900 dark:text-neutral-100 mb-3">
                 No hay obras disponibles
               </h3>
-              <p className="text-primary-600">
+              <p className="text-primary-600 dark:text-neutral-400">
                 Las obras de este autor están siendo preparadas para su publicación.
               </p>
             </div>
@@ -231,38 +233,45 @@ export default async function AutorPage({ params }: { params: { autorSlug: strin
   )
 }
 
-// Componente para tarjetas de obra
-function ObraCard({ obra, autor }: { obra: any; autor: any }) {
+// Componente para lista de obras (formato visual mejorado)
+function ObraListItem({ obra, autor }: { obra: any; autor: any }) {
   return (
-    <Link href={`/autores/${autor.slug}/${obra.slug}`} className="group">
-      <div className="card hover:shadow-elegant-xl transition-all duration-300 group-hover:border-primary-200">
-        <div className="mb-6">
-          <h3 className="text-lg font-medium text-primary-900 mb-3 group-hover:text-primary-800 transition-colors">
-            {obra.titulo}
-          </h3>
-          <p className="text-primary-600 text-sm leading-relaxed mb-4">
-            {obra.descripcion}
-          </p>
-        </div>
-
-        <div className="flex items-center justify-between text-xs text-primary-500 mb-6">
-          {obra.fechaPublicacion && (
-            <div className="flex items-center">
-              <Calendar className="w-4 h-4 mr-2" />
-              {obra.fechaPublicacion}
+    <Link 
+      href={`/autores/${autor.slug}/${obra.slug}`} 
+      className="group block hover:bg-primary-50 dark:hover:bg-slate-700 transition-colors duration-200 block-link"
+    >
+      <div className="p-6">
+        <div className="flex items-start justify-between gap-6">
+          {/* Contenido principal */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start gap-4 mb-3">
+              <div className="w-10 h-10 bg-primary-100 dark:bg-neutral-700 rounded-sm flex items-center justify-center flex-shrink-0 group-hover:bg-primary-200 dark:group-hover:bg-neutral-600 transition-colors">
+                <BookOpen className="w-5 h-5 text-primary-700 dark:text-neutral-300" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-xl font-medium text-primary-900 dark:text-neutral-100 mb-2 group-hover:text-primary-800 dark:group-hover:text-neutral-200 transition-colors">
+                  {obra.titulo}
+                </h3>
+                <p className="text-primary-600 dark:text-neutral-400 text-sm leading-relaxed mb-3">
+                  {obra.descripcion}
+                </p>
+                {/* Metadatos compactos */}
+                {obra.fechaPublicacion && (
+                  <div className="flex items-center gap-4 text-xs text-primary-500 dark:text-neutral-500">
+                    <div className="flex items-center">
+                      <Calendar className="w-3.5 h-3.5 mr-1.5" />
+                      <span>{obra.fechaPublicacion}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
-          )}
-          <div className="flex items-center">
-            <Eye className="w-4 h-4 mr-2" />
-            {obra.esPublico ? 'Público' : 'Borrador'}
           </div>
-        </div>
-
-        <div className="flex items-center justify-between">
-          <span className="text-primary-600 text-sm font-medium group-hover:text-primary-700 transition-colors">
-            Leer obra
-          </span>
-          <ArrowRight className="w-4 h-4 text-primary-500 group-hover:text-primary-700 group-hover:translate-x-1 transition-all" />
+          
+          {/* Acción */}
+          <div className="flex items-center text-primary-500 dark:text-neutral-400 group-hover:text-primary-700 dark:group-hover:text-neutral-300 transition-colors flex-shrink-0">
+            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+          </div>
         </div>
       </div>
     </Link>

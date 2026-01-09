@@ -35,21 +35,28 @@
     font-size: 1.125rem;
   }
   
-  .reading-content h1 {
-    @apply text-4xl font-normal mb-8 text-primary-900;
-    font-family: 'Playfair Display', serif;
-    letter-spacing: -0.02em;
+  /* H1 y línea del autor con Crimson Text */
+  .reading-content h1,
+  .reading-content header h1.display-title {
+    @apply text-4xl font-normal mb-8 text-primary-900 dark:text-neutral-100;
+    font-family: 'Crimson Text', Georgia, serif;
+    letter-spacing: -0.01em;
   }
   
+  .reading-content header p {
+    font-family: 'Crimson Text', Georgia, serif;
+  }
+  
+  /* Resto de títulos y párrafos con Linux Libertine O */
   .reading-content h2 {
-    @apply text-2xl font-normal mb-6 mt-12 text-primary-900;
-    font-family: 'Playfair Display', serif;
+    @apply text-2xl font-normal mb-6 mt-12 text-primary-900 dark:text-neutral-100;
+    font-family: 'Linux Libertine O', 'Crimson Text', Georgia, serif;
     letter-spacing: -0.01em;
   }
   
   .reading-content h3 {
-    @apply text-xl font-normal mb-4 mt-8 text-primary-800;
-    font-family: 'Playfair Display', serif;
+    @apply text-xl font-normal mb-4 mt-8 text-primary-800 dark:text-neutral-200;
+    font-family: 'Linux Libertine O', 'Crimson Text', Georgia, serif;
   }
   
   /* Párrafos numerados elegantes */
@@ -86,12 +93,13 @@
   }
   
   .paragraph-content {
-    @apply text-primary-800 leading-relaxed;
+    @apply text-primary-800 dark:text-neutral-200 leading-relaxed;
     font-size: 1.125rem;
     line-height: 1.8;
     margin: 0;
     padding: 0;
     display: block;
+    font-family: 'Linux Libertine O', 'Crimson Text', Georgia, serif;
   }
 
   /* Accesibilidad: Focus visible */
@@ -132,6 +140,16 @@
   a:hover,
   a:focus-visible {
     text-decoration: underline;
+  }
+
+  /* Excepción para bloques clickeables - sin subrayado */
+  .author-card-link,
+  .author-card-link:hover,
+  .author-card-link:focus-visible,
+  .block-link,
+  .block-link:hover,
+  .block-link:focus-visible {
+    text-decoration: none !important;
   }
 
   /* Resaltado temporal para anchors */
@@ -180,8 +198,8 @@
   }
   
   .section-header h2 {
-    @apply text-2xl font-display font-semibold text-primary-800 mb-2;
-    font-family: 'Playfair Display', serif;
+    @apply text-2xl font-display font-semibold text-primary-800 dark:text-neutral-200 mb-2;
+    font-family: 'Linux Libertine O', 'Crimson Text', Georgia, serif;
   }
   
   /* Resaltado de búsqueda sutil */
@@ -427,9 +445,9 @@ body.focus-mode h1.display-title {
   /* Hero diagonal subtle gradient */
   .bg-hero-gradient {
     background: linear-gradient(150deg,
-      rgb(15 23 42) 0%,          /* slate-900-ish */
+      rgb(5 8 16) 0%,            /* midnight-900 más oscuro */
       rgb(48 60 101) 75%,        /* indigo-slate mid */
-      rgb(12 15 23) 100%
+      rgb(5 8 16) 100%           /* midnight-900 más oscuro */
     );
   }
 
@@ -627,6 +645,173 @@ body.focus-mode h1.display-title {
   @screen lg {
     .reading-content {
       @apply px-16;
+    }
+  }
+
+  /* Dark Mode Styles - Midnight theme */
+  @layer base {
+    body.dark,
+    .dark body {
+      background-color: #050810; /* Midnight más oscuro */
+      @apply text-neutral-100;
+    }
+
+    /* Dark mode para selección de texto */
+    .dark ::selection {
+      background-color: #eab30a;
+      color: #0f172a;
+    }
+
+    .dark ::-moz-selection {
+      background-color: #eab30a;
+      color: #0f172a;
+    }
+
+    /* Dark mode para reading content */
+    .dark .reading-content {
+      @apply text-neutral-200;
+    }
+
+    .dark .reading-content h1 {
+      @apply text-neutral-100;
+    }
+
+    .dark .reading-content h2 {
+      @apply text-neutral-100;
+    }
+
+    .dark .reading-content h3 {
+      @apply text-neutral-200;
+    }
+
+    /* Dark mode para párrafos */
+    .dark .paragraph-number {
+      @apply text-accent-500;
+    }
+
+    .dark .paragraph-number-active {
+      background-color: #475569;
+      color: #f1f5f9;
+    }
+
+    .dark .paragraph-content {
+      @apply text-neutral-300;
+    }
+
+    /* Dark mode para section headers */
+    .dark .section-header {
+      @apply border-accent-500;
+    }
+
+    .dark .section-header h2 {
+      @apply text-neutral-100;
+    }
+
+    /* Dark mode para table of contents */
+    .dark .table-of-contents a {
+      @apply text-neutral-300 hover:bg-neutral-800 hover:text-neutral-100;
+    }
+
+    .dark .table-of-contents a.active {
+      @apply bg-neutral-800 text-neutral-100;
+    }
+
+    /* Dark mode para hero gradient */
+    .dark .bg-hero-gradient {
+      background: linear-gradient(150deg,
+        rgb(5 8 16) 0%,            /* midnight-900 más oscuro */
+        rgb(30 41 59) 75%,
+        rgb(5 8 16) 100%           /* midnight-900 más oscuro */
+      );
+    }
+
+    /* Dark mode para nav-link */
+    .dark .nav-link {
+      @apply text-neutral-300 hover:text-neutral-100;
+    }
+
+    /* Dark mode para search input */
+    .dark .search-input {
+      @apply bg-slate-800 border-slate-700 text-neutral-100;
+    }
+
+    .dark .search-input::placeholder {
+      @apply text-neutral-400;
+    }
+
+    .dark .search-input-regular {
+      @apply bg-slate-800 border-slate-700 text-neutral-100;
+    }
+
+    .dark .search-input-regular::placeholder {
+      @apply text-neutral-400;
+    }
+
+    .dark .search-results {
+      @apply bg-slate-800 border-slate-700;
+    }
+
+    /* Dark mode para cards */
+    .dark .card {
+      @apply bg-slate-800 border-slate-700;
+    }
+
+    /* Dark mode para form inputs */
+    .dark .form-input {
+      @apply bg-slate-800 border-slate-700 text-neutral-100;
+    }
+
+    .dark .form-input::placeholder {
+      @apply text-neutral-400;
+    }
+
+    .dark .form-label {
+      @apply text-neutral-200;
+    }
+
+    /* Dark mode para breadcrumb */
+    .dark .breadcrumb {
+      @apply text-neutral-400;
+    }
+
+    .dark .breadcrumb a {
+      @apply hover:text-neutral-200;
+    }
+
+    /* Dark mode para search results */
+    .dark .search-result-item {
+      @apply hover:bg-slate-800 border-slate-700;
+    }
+
+    .dark .search-result-item.selected {
+      @apply bg-slate-800;
+    }
+
+    /* Dark mode para blockquotes */
+    .dark .paragraph-content blockquote,
+    .dark .paragraph-content .cita,
+    .dark blockquote.cita {
+      @apply border-neutral-600 bg-neutral-800 text-neutral-300;
+    }
+
+    /* Dark mode para search highlight */
+    .dark .search-highlight {
+      background-color: rgba(234, 179, 10, 0.3);
+      color: #fef9c3;
+    }
+
+    /* Dark mode para header elegant */
+    .dark .header-elegant {
+      @apply bg-neutral-900 border-neutral-800;
+    }
+
+    /* Dark mode para display title */
+    .dark .display-title {
+      @apply text-neutral-100;
+    }
+
+    .dark .display-subtitle {
+      @apply text-neutral-300;
     }
   }
 }

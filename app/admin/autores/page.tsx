@@ -43,7 +43,7 @@ export default async function AdminAutoresPage() {
         </div>
         <Link href="/admin/autores/nuevo" className="btn-primary">
           <Plus className="w-5 h-5 mr-2" />
-          Nuevo Autor
+          Nuevo autor
         </Link>
       </div>
 
@@ -104,7 +104,7 @@ export default async function AdminAutoresPage() {
             </p>
             <Link href="/admin/autores/nuevo" className="btn-primary">
               <Plus className="w-5 h-5 mr-2" />
-              Crear Primer Autor
+              Crear primer autor
             </Link>
           </div>
         )}

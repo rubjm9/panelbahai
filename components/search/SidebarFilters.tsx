@@ -10,7 +10,6 @@ interface FilterOption {
 
 interface SidebarFiltersProps {
   onFilterChange: (filters: {
-    tipo: string
     autor?: string
     obra?: string
   }) => void
@@ -26,7 +25,6 @@ export default function SidebarFilters({
   className = "" 
 }: SidebarFiltersProps) {
   const [filters, setFilters] = useState({
-    tipo: 'todos',
     autor: '',
     obra: ''
   })
@@ -55,35 +53,18 @@ export default function SidebarFilters({
   }
 
   const clearFilters = () => {
-    setFilters({ tipo: 'todos', autor: '', obra: '' })
+    setFilters({ autor: '', obra: '' })
     setAutorSearch('')
     setObraSearch('')
   }
 
-  const hasActiveFilters = filters.tipo !== 'todos' || filters.autor || filters.obra
+  const hasActiveFilters = filters.autor || filters.obra
 
   return (
     <div className={`space-y-4 ${className}`}>
-      {/* Tipo de contenido */}
-      <div>
-        <label className="block text-sm font-medium text-primary-700 mb-2">
-          Tipo de contenido
-        </label>
-        <select
-          value={filters.tipo}
-          onChange={(e) => handleFilterChange('tipo', e.target.value)}
-          className="w-full px-3 py-2 border border-primary-200 rounded-sm text-sm focus:ring-2 focus:ring-accent-600 focus:border-accent-600"
-        >
-          <option value="todos">Todos</option>
-          <option value="titulo">Títulos de obras</option>
-          <option value="seccion">Secciones</option>
-          <option value="parrafo">Párrafos</option>
-        </select>
-      </div>
-      
       {/* Autor */}
       <div className="relative">
-        <label className="block text-sm font-medium text-primary-700 mb-2">
+        <label className="block text-sm font-medium text-primary-700 dark:text-neutral-300 mb-2">
           Autor
         </label>
         <div className="relative">
@@ -96,7 +77,7 @@ export default function SidebarFilters({
             }}
             onFocus={() => setShowAutorDropdown(true)}
             placeholder="Buscar autor..."
-            className="w-full px-3 py-2 border border-primary-200 rounded-sm text-sm focus:ring-2 focus:ring-accent-600 focus:border-accent-600"
+            className="w-full px-3 py-2 border border-primary-200 dark:border-slate-700 rounded-sm text-sm focus:ring-2 focus:ring-accent-600 focus:border-accent-600 bg-white dark:bg-slate-800 text-primary-900 dark:text-neutral-100"
           />
           {filters.autor && (
             <button
@@ -104,7 +85,7 @@ export default function SidebarFilters({
                 handleFilterChange('autor', '')
                 setAutorSearch('')
               }}
-              className="absolute right-2 top-1/2 transform -translate-y-1/2 text-primary-400 hover:text-primary-600"
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 text-primary-400 dark:text-neutral-500 hover:text-primary-600 dark:hover:text-neutral-300"
             >
               <X className="w-4 h-4" />
             </button>
@@ -112,7 +93,7 @@ export default function SidebarFilters({
           
           {/* Dropdown de autores */}
           {showAutorDropdown && (
-            <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-primary-200 rounded-sm shadow-lg max-h-48 overflow-y-auto z-10">
+            <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-slate-800 border border-primary-200 dark:border-slate-700 rounded-sm shadow-lg max-h-48 overflow-y-auto z-10">
               {filteredAutores.length > 0 ? (
                 filteredAutores.map((autor) => (
                   <button
@@ -122,15 +103,15 @@ export default function SidebarFilters({
                       setAutorSearch(autor.label)
                       setShowAutorDropdown(false)
                     }}
-                    className={`w-full text-left px-3 py-2 text-sm hover:bg-primary-50 ${
-                      filters.autor === autor.value ? 'bg-accent-50 text-accent-700' : 'text-primary-700'
+                    className={`w-full text-left px-3 py-2 text-sm hover:bg-primary-50 dark:hover:bg-slate-700 ${
+                      filters.autor === autor.value ? 'bg-accent-50 dark:bg-accent-900/20 text-accent-700 dark:text-accent-400' : 'text-primary-700 dark:text-neutral-300'
                     }`}
                   >
                     {autor.label}
                   </button>
                 ))
               ) : (
-                <div className="px-3 py-2 text-sm text-primary-500">
+                <div className="px-3 py-2 text-sm text-primary-500 dark:text-neutral-500">
                   No se encontraron autores
                 </div>
               )}
@@ -141,7 +122,7 @@ export default function SidebarFilters({
       
       {/* Obra */}
       <div className="relative">
-        <label className="block text-sm font-medium text-primary-700 mb-2">
+        <label className="block text-sm font-medium text-primary-700 dark:text-neutral-300 mb-2">
           Obra
         </label>
         <div className="relative">
@@ -154,7 +135,7 @@ export default function SidebarFilters({
             }}
             onFocus={() => setShowObraDropdown(true)}
             placeholder="Buscar obra..."
-            className="w-full px-3 py-2 border border-primary-200 rounded-sm text-sm focus:ring-2 focus:ring-accent-600 focus:border-accent-600"
+            className="w-full px-3 py-2 border border-primary-200 dark:border-slate-700 rounded-sm text-sm focus:ring-2 focus:ring-accent-600 focus:border-accent-600 bg-white dark:bg-slate-800 text-primary-900 dark:text-neutral-100"
           />
           {filters.obra && (
             <button
@@ -162,7 +143,7 @@ export default function SidebarFilters({
                 handleFilterChange('obra', '')
                 setObraSearch('')
               }}
-              className="absolute right-2 top-1/2 transform -translate-y-1/2 text-primary-400 hover:text-primary-600"
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 text-primary-400 dark:text-neutral-500 hover:text-primary-600 dark:hover:text-neutral-300"
             >
               <X className="w-4 h-4" />
             </button>
@@ -170,7 +151,7 @@ export default function SidebarFilters({
           
           {/* Dropdown de obras */}
           {showObraDropdown && (
-            <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-primary-200 rounded-sm shadow-lg max-h-48 overflow-y-auto z-10">
+            <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-slate-800 border border-primary-200 dark:border-slate-700 rounded-sm shadow-lg max-h-48 overflow-y-auto z-10">
               {filteredObras.length > 0 ? (
                 filteredObras.map((obra) => (
                   <button
@@ -180,15 +161,15 @@ export default function SidebarFilters({
                       setObraSearch(obra.label)
                       setShowObraDropdown(false)
                     }}
-                    className={`w-full text-left px-3 py-2 text-sm hover:bg-primary-50 ${
-                      filters.obra === obra.value ? 'bg-accent-50 text-accent-700' : 'text-primary-700'
+                    className={`w-full text-left px-3 py-2 text-sm hover:bg-primary-50 dark:hover:bg-slate-700 ${
+                      filters.obra === obra.value ? 'bg-accent-50 dark:bg-accent-900/20 text-accent-700 dark:text-accent-400' : 'text-primary-700 dark:text-neutral-300'
                     }`}
                   >
                     {obra.label}
                   </button>
                 ))
               ) : (
-                <div className="px-3 py-2 text-sm text-primary-500">
+                <div className="px-3 py-2 text-sm text-primary-500 dark:text-neutral-500">
                   No se encontraron obras
                 </div>
               )}
@@ -201,7 +182,7 @@ export default function SidebarFilters({
       {hasActiveFilters && (
         <button
           onClick={clearFilters}
-          className="w-full text-sm text-primary-500 hover:text-primary-700 py-2 border-t border-primary-200"
+          className="w-full text-sm text-primary-500 dark:text-neutral-400 hover:text-primary-700 dark:hover:text-neutral-200 py-2 border-t border-primary-200 dark:border-slate-700"
         >
           Limpiar filtros
         </button>

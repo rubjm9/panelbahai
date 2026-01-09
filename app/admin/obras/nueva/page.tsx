@@ -30,7 +30,7 @@ export default async function NewObraPage() {
             </Link>
             <div>
               <h1 className="text-3xl font-display font-bold text-primary-900 mb-2">
-                Nueva Obra
+                Nueva obra
               </h1>
             </div>
           </div>
@@ -65,9 +65,9 @@ export default async function NewObraPage() {
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
-            <h1 className="text-3xl font-display font-bold text-primary-900 mb-2">
-              Nueva Obra
-            </h1>
+              <h1 className="text-3xl font-display font-bold text-primary-900 mb-2">
+                Nueva obra
+              </h1>
             <p className="text-primary-600 font-reading">
               Crea una nueva obra para la biblioteca bahá'í
             </p>

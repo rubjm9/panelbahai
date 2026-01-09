@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useState } from 'react'
 import { BookOpen, ChevronDown, Menu, X } from 'lucide-react'
+import ThemeToggle from '@/components/ui/ThemeToggle'
 
 const authors = [
   { name: "Bahá'u'lláh", slug: 'bahaullah' },
@@ -18,7 +19,7 @@ export default function SiteHeader() {
   const [mobileOpen, setMobileOpen] = useState(false)
 
   return (
-    <header id={`header`} className="bg-white shadow-sm border-b border-primary-100 sticky top-0 z-50">
+    <header id={`header`} className="bg-white dark:bg-midnight-900 shadow-sm border-b border-primary-100 dark:border-slate-800 sticky top-0 z-50 transition-colors duration-200">
       <div className="container-elegant">
         <div className="flex justify-between items-center py-4">
           {/* Logo */}
@@ -27,17 +28,13 @@ export default function SiteHeader() {
               <BookOpen className="w-5 h-5 text-white" />
             </span>
             <div>
-              <span className="text-lg font-semibold text-primary-900">Panel Bahá'í</span>
-              <p className="text-xs text-primary-600 leading-none">Literatura en Español</p>
+              <span className="text-lg font-semibold text-primary-900 dark:text-neutral-100">Panel de Traducción</span>
+              <p className="text-xs text-primary-600 dark:text-neutral-400 leading-none">Literatura Bahá'í en Español</p>
             </div>
           </Link>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8 relative">
-            <Link href="/acerca" className="nav-link">Acerca del Panel</Link>
-            <Link href="/proximas-traducciones" className="nav-link">Próximas Traducciones</Link>
-            <Link href="/contacto" className="nav-link">Contacto</Link>
-
             {/* Autores dropdown */}
             <div className="relative"
                  onMouseEnter={() => setOpenAuthors(true)}
@@ -47,13 +44,13 @@ export default function SiteHeader() {
                 <ChevronDown className={`w-4 h-4 ml-1 transition-transform ${openAuthors ? 'rotate-180' : ''}`} />
               </Link>
               {openAuthors && (
-                <div className="absolute right-0 top-full w-64 bg-white border border-primary-200 rounded-sm shadow-lg p-2"
+                <div className="absolute right-0 top-full w-64 bg-white dark:bg-slate-800 border border-primary-200 dark:border-slate-700 rounded-sm shadow-lg p-2"
                      onMouseEnter={() => setOpenAuthors(true)}
                      onMouseLeave={() => setOpenAuthors(false)}>
                   <ul className="max-h-72 overflow-y-auto">
                     {authors.map(a => (
                       <li key={a.slug}>
-                        <Link href={`/autores/${a.slug}`} className="block px-3 py-2 text-sm text-primary-700 hover:bg-primary-50 rounded-sm">
+                        <Link href={`/autores/${a.slug}`} className="block px-3 py-2 text-sm text-primary-700 dark:text-neutral-300 hover:bg-primary-50 dark:hover:bg-slate-700 rounded-sm transition-colors">
                           {a.name}
                         </Link>
                       </li>
@@ -63,41 +60,51 @@ export default function SiteHeader() {
               )}
             </div>
 
+            <Link href="/proximas-traducciones" className="nav-link">Próximas traducciones</Link>
+            <Link href="/acerca" className="nav-link">Sobre el Panel</Link>
+            <Link href="/contacto" className="nav-link">Contacto</Link>
+
             {/* Dashboard */}
-            <Link href="/admin" className="nav-link text-accent-700 hover:text-accent-800">Dashboard</Link>
+            <Link href="/admin" className="nav-link text-accent-700 hover:text-accent-800 dark:text-accent-500 dark:hover:text-accent-400">Dashboard</Link>
+            
+            {/* Theme Toggle */}
+            <ThemeToggle size="md" />
           </nav>
 
-          {/* Mobile menu button */}
-          <button
-            className="md:hidden p-2 text-primary-700"
-            aria-label="Abrir menú"
-            onClick={() => setMobileOpen(prev => !prev)}
-          >
-            {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
+          {/* Mobile menu button and theme toggle */}
+          <div className="md:hidden flex items-center space-x-2">
+            <ThemeToggle size="sm" />
+            <button
+              className="p-2 text-primary-700 dark:text-neutral-300"
+              aria-label="Abrir menú"
+              onClick={() => setMobileOpen(prev => !prev)}
+            >
+              {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+          </div>
         </div>
 
         {/* Mobile Navigation Panel */}
         {mobileOpen && (
-          <div className="md:hidden border-t border-primary-100 py-3">
+          <div className="md:hidden border-t border-primary-100 dark:border-slate-800 py-3">
             <nav className="flex flex-col space-y-2">
-              <Link href="/acerca" className="nav-link" onClick={() => setMobileOpen(false)}>Acerca del Panel</Link>
-              <Link href="/proximas" className="nav-link" onClick={() => setMobileOpen(false)}>Próximas Traducciones</Link>
-              <Link href="/contacto" className="nav-link" onClick={() => setMobileOpen(false)}>Contacto</Link>
               <Link href="/autores" className="nav-link" onClick={() => setMobileOpen(false)}>Autores</Link>
               <div>
-                <div className="text-sm font-medium text-primary-700 mt-2 mb-1">Autores principales</div>
+                <div className="text-sm font-medium text-primary-700 dark:text-neutral-300 mt-2 mb-1">Autores principales</div>
                 <ul className="grid grid-cols-1 gap-1">
                   {authors.map(a => (
                     <li key={a.slug}>
-                      <Link href={`/autores/${a.slug}`} className="block px-3 py-2 text-sm text-primary-700 hover:bg-primary-50 rounded-sm" onClick={() => setMobileOpen(false)}>
+                      <Link href={`/autores/${a.slug}`} className="block px-3 py-2 text-sm text-primary-700 dark:text-neutral-300 hover:bg-primary-50 dark:hover:bg-slate-800 rounded-sm transition-colors" onClick={() => setMobileOpen(false)}>
                         {a.name}
                       </Link>
                     </li>
                   ))}
                 </ul>
               </div>
-              <Link href="/admin" className="nav-link text-accent-700" onClick={() => setMobileOpen(false)}>Dashboard</Link>
+              <Link href="/proximas-traducciones" className="nav-link" onClick={() => setMobileOpen(false)}>Próximas traducciones</Link>
+              <Link href="/acerca" className="nav-link" onClick={() => setMobileOpen(false)}>Sobre el Panel</Link>
+              <Link href="/contacto" className="nav-link" onClick={() => setMobileOpen(false)}>Contacto</Link>
+              <Link href="/admin" className="nav-link text-accent-700 dark:text-accent-500" onClick={() => setMobileOpen(false)}>Dashboard</Link>
             </nav>
           </div>
         )}

@@ -107,8 +107,8 @@ export default function WorksTree({ currentObraSlug, currentAutorSlug }: WorksTr
   if (loading) {
     return (
       <div className="p-4">
-        <div className="flex items-center space-x-2 text-primary-600">
-          <div className="animate-spin rounded-full h-3 w-3 border-2 border-primary-300 border-t-primary-600"></div>
+        <div className="flex items-center space-x-2 text-primary-600 dark:text-neutral-400">
+          <div className="animate-spin rounded-full h-3 w-3 border-2 border-primary-300 dark:border-slate-600 border-t-primary-600 dark:border-t-neutral-400"></div>
           <span className="text-xs">Cargando obras...</span>
         </div>
       </div>
@@ -131,32 +131,32 @@ export default function WorksTree({ currentObraSlug, currentAutorSlug }: WorksTr
                 className={`
                   flex items-center space-x-2 py-2 px-3 rounded-sm cursor-pointer transition-colors
                   ${isCurrentAutor 
-                    ? 'bg-primary-100 text-primary-900 font-medium' 
-                    : 'text-primary-700 hover:bg-primary-50'
+                    ? 'bg-primary-100 dark:bg-slate-700 text-primary-900 dark:text-white font-medium' 
+                    : 'text-primary-700 dark:text-neutral-300 hover:bg-primary-50 dark:hover:bg-slate-800'
                   }
                 `}
                 onClick={() => toggleAutor(autor._id)}
               >
                 {obras.length > 0 ? (
                   isExpanded ? (
-                    <ChevronDown className="w-4 h-4 flex-shrink-0" />
+                    <ChevronDown className="w-4 h-4 flex-shrink-0 text-primary-600 dark:text-neutral-400" />
                   ) : (
-                    <ChevronRight className="w-4 h-4 flex-shrink-0" />
+                    <ChevronRight className="w-4 h-4 flex-shrink-0 text-primary-600 dark:text-neutral-400" />
                   )
                 ) : (
                   <div className="w-4 h-4 flex-shrink-0" />
                 )}
                 
                 {isExpanded ? (
-                  <FolderOpen className="w-4 h-4 flex-shrink-0" />
+                  <FolderOpen className="w-4 h-4 flex-shrink-0 text-primary-600 dark:text-neutral-400" />
                 ) : (
-                  <Folder className="w-4 h-4 flex-shrink-0" />
+                  <Folder className="w-4 h-4 flex-shrink-0 text-primary-600 dark:text-neutral-400" />
                 )}
                 
                 <span className="text-xs truncate">{autor.nombre}</span>
                 
                 {obras.length > 0 && (
-                  <span className="text-xs text-primary-500 ml-auto">
+                  <span className="text-xs text-primary-500 dark:text-neutral-400 ml-auto">
                     {obras.length}
                   </span>
                 )}
@@ -175,12 +175,12 @@ export default function WorksTree({ currentObraSlug, currentAutorSlug }: WorksTr
                         className={`
                           flex items-center space-x-2 py-1.5 px-3 rounded-sm transition-colors
                           ${isCurrentObra 
-                            ? 'text-primary-900 font-medium bg-neutral-200' 
-                            : 'text-primary-600 hover:bg-primary-50'
+                            ? 'text-primary-900 dark:text-white font-medium bg-neutral-200 dark:bg-slate-700' 
+                            : 'text-primary-600 dark:text-neutral-300 hover:bg-primary-50 dark:hover:bg-slate-800'
                           }
                         `}
                       >
-                        <BookOpen className="w-3 h-3 flex-shrink-0" />
+                        <BookOpen className="w-3 h-3 flex-shrink-0 text-primary-500 dark:text-neutral-500" />
                         <span className="text-xs truncate">{obra.titulo}</span>
                       </Link>
                     )
@@ -190,7 +190,7 @@ export default function WorksTree({ currentObraSlug, currentAutorSlug }: WorksTr
 
               {/* Mensaje si no hay obras */}
               {isExpanded && obras.length === 0 && (
-                <div className="ml-6 py-1 px-3 text-xs text-primary-500">
+                <div className="ml-6 py-1 px-3 text-xs text-primary-500 dark:text-neutral-500">
                   No hay obras públicas disponibles
                 </div>
               )}
@@ -200,10 +200,10 @@ export default function WorksTree({ currentObraSlug, currentAutorSlug }: WorksTr
       </div>
 
       {/* Información adicional */}
-      <div className="mt-4 pt-3 border-t border-primary-200">
-        <div className="text-xs text-primary-500 space-y-1">
-          <p><strong>Autores:</strong> {autores.length}</p>
-          <p><strong>Obras:</strong> {Object.values(obrasPorAutor).reduce((sum, obras) => sum + obras.length, 0)}</p>
+      <div className="mt-4 pt-3 border-t border-primary-200 dark:border-slate-700">
+        <div className="text-xs text-primary-500 dark:text-neutral-400 space-y-1">
+          <p><strong className="text-primary-700 dark:text-neutral-300">Autores:</strong> {autores.length}</p>
+          <p><strong className="text-primary-700 dark:text-neutral-300">Obras:</strong> {Object.values(obrasPorAutor).reduce((sum, obras) => sum + obras.length, 0)}</p>
         </div>
       </div>
     </div>

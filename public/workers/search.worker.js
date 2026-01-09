@@ -1,23 +1,26 @@
 /**
  * Web Worker para búsqueda con Lunr.js
  * Este archivo se carga directamente en el navegador
- * 
- * NOTA: Este worker requiere que Lunr.js esté disponible.
- * Por ahora, deshabilitamos el worker y usamos fallback al main thread.
- * Para habilitarlo, necesitarías usar un bundler como webpack o vite para incluir lunr.
  */
 
-// Deshabilitado temporalmente - usar fallback al main thread
-// importScripts('https://unpkg.com/lunr@2.3.9/lunr.js');
-
-// Por ahora, el worker no hace nada y retorna errores para forzar fallback
-self.postMessage({
-  type: 'ERROR',
-  error: 'Web Worker deshabilitado. Usando fallback al main thread.'
-});
-
-// Configurar Lunr para español
-lunr.tokenizer.separator = /[\s\-\.]+/;
+// Cargar Lunr desde CDN
+try {
+  importScripts('https://unpkg.com/lunr@2.3.9/lunr.js');
+  
+  // Configurar Lunr para español
+  if (typeof lunr !== 'undefined') {
+    lunr.tokenizer.separator = /[\s\-\.]+/;
+  } else {
+    throw new Error('Lunr no se cargó correctamente');
+  }
+} catch (error) {
+  console.error('Error cargando Lunr en worker:', error);
+  // Enviar error al main thread
+  self.postMessage({
+    type: 'ERROR',
+    error: 'No se pudo cargar Lunr en el worker'
+  });
+}
 
 let index = null;
 let documents = new Map();
@@ -50,15 +53,108 @@ function buildIndex(docs) {
 }
 
 /**
+ * Procesar query avanzada (similar a searchEngine)
+ */
+function processAdvancedQuery(query) {
+  // Detectar búsquedas exactas con comillas
+  const exactMatches = query.match(/"([^"]+)"/g);
+  if (exactMatches) {
+    let processedQuery = query;
+    exactMatches.forEach(match => {
+      const cleanTerm = match.replace(/"/g, '');
+      const terms = cleanTerm.split(/\s+/).filter(t => t.length > 0);
+      const requiredTerms = terms.map(term => `+${term}`).join(' ');
+      processedQuery = processedQuery.replace(match, requiredTerms);
+    });
+    return processedQuery;
+  }
+
+  // Detectar términos con + (requeridos)
+  if (query.includes('+')) {
+    const terms = query.split(/\s+/);
+    const processedTerms = terms.map(term => {
+      if (term.startsWith('+')) {
+        const cleanTerm = term.substring(1);
+        return `${cleanTerm}* ${cleanTerm}~1`;
+      }
+      return `${term}* ${term}~1`;
+    });
+    return processedTerms.join(' ');
+  }
+
+  // Detectar términos con - (excluidos)
+  if (query.includes('-')) {
+    const terms = query.split(/\s+/);
+    const includedTerms = [];
+    const excludedTerms = [];
+    
+    terms.forEach(term => {
+      if (term.startsWith('-')) {
+        excludedTerms.push(term.substring(1));
+      } else {
+        includedTerms.push(term);
+      }
+    });
+
+    const includedQuery = includedTerms.map(term => `${term}* ${term}~1`).join(' ');
+    const excludedQuery = excludedTerms.map(term => `-${term}`).join(' ');
+    
+    return `${includedQuery} ${excludedQuery}`.trim();
+  }
+
+  // Búsqueda normal con mejoras
+  const terms = query.split(/\s+/);
+  const processedTerms = terms.map(term => {
+    const cleanTerm = term.toLowerCase().replace(/[^\wáéíóúñü]/g, '');
+    if (cleanTerm.length < 2) return '';
+    return `${cleanTerm}* ${cleanTerm}~1`;
+  }).filter(term => term.length > 0);
+  
+  return processedTerms.join(' ');
+}
+
+/**
+ * Extraer frases exactas de la consulta
+ */
+function extractExactPhrases(query) {
+  const matches = query.match(/"([^"]+)"/g);
+  if (!matches) return [];
+  return matches.map(match => match.replace(/"/g, ''));
+}
+
+/**
  * Realizar búsqueda
  */
 function search(query, limit = 50) {
   if (!index || query.length < 3) {
-    return [];
+    return { results: [], total: 0 };
   }
 
   try {
-    const results = index.search(query);
+    // Extraer frases exactas
+    const exactPhrases = extractExactPhrases(query);
+    
+    // Procesar la consulta
+    const processedQuery = processAdvancedQuery(query);
+    
+    let results = index.search(processedQuery);
+    
+    // Filtrar resultados si hay búsquedas exactas con comillas
+    if (exactPhrases.length > 0) {
+      results = results.filter(result => {
+        const doc = documents.get(result.ref);
+        if (!doc) return false;
+        
+        const searchableText = `${doc.titulo} ${doc.autor} ${doc.seccion || ''} ${doc.texto}`.toLowerCase();
+        
+        return exactPhrases.every(phrase => {
+          const phraseLower = phrase.toLowerCase();
+          return searchableText.includes(phraseLower);
+        });
+      });
+    }
+    
+    const total = results.length;
     const searchResults = [];
 
     for (let i = 0; i < Math.min(results.length, limit); i++) {
@@ -82,10 +178,34 @@ function search(query, limit = 50) {
       });
     }
 
-    return searchResults;
+    // Ordenar resultados (similar a searchEngine.sortResults)
+    searchResults.sort((a, b) => {
+      const autorOrder = {
+        'bahaullah': 1,
+        'el-bab': 2,
+        'abdul-baha': 3,
+        'shoghi-effendi': 4,
+        'casa-justicia': 5,
+        'declaraciones-oficiales': 6,
+        'compilaciones': 7
+      };
+
+      const autorA = autorOrder[a.autorSlug] || 8;
+      const autorB = autorOrder[b.autorSlug] || 8;
+
+      const tipoOrder = { 'titulo': 1, 'seccion': 2, 'parrafo': 3 };
+      const tipoA = tipoOrder[a.tipo];
+      const tipoB = tipoOrder[b.tipo];
+
+      if (tipoA !== tipoB) return tipoA - tipoB;
+      if (autorA !== autorB) return autorA - autorB;
+      return b.score - a.score;
+    });
+
+    return { results: searchResults, total };
   } catch (error) {
     console.error('Error en búsqueda del worker:', error);
-    return [];
+    return { results: [], total: 0 };
   }
 }
 
@@ -162,11 +282,11 @@ self.addEventListener('message', (event) => {
 
       case 'SEARCH': {
         const { query, limit } = payload;
-        const results = search(query, limit);
+        const { results, total } = search(query, limit);
         const response = {
           type: 'SEARCH_RESULTS',
           id,
-          payload: { results, total: results.length }
+          payload: { results, total }
         };
         self.postMessage(response);
         break;

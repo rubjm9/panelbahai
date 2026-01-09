@@ -636,7 +636,7 @@ export default function EditObraForm({ obra, autores }: EditObraFormProps) {
             className="btn-primary flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Save className="w-4 h-4 mr-2" />
-            {isSubmitting ? 'Guardando...' : 'Guardar Cambios'}
+            {isSubmitting ? 'Guardando...' : 'Guardar cambios'}
           </button>
           <Link
             href="/admin/obras"

@@ -62,18 +62,20 @@ export async function listPublishedAutores(): Promise<PublicAutor[]> {
  * 
  * Usa revalidateTag para invalidación selectiva:
  * - revalidateTag('autores') - invalida todos
- * - revalidateTag(`autor-${slug}`) - invalida uno específico
+ * - revalidateTag(`autor-${slug}`) - invalida uno específico (usar revalidateTag manualmente)
  */
-export const getCachedAutorBySlug = unstable_cache(
-  async (slug: string): Promise<PublicAutor | null> => {
-    return getAutorBySlug(slug);
-  },
-  ['autor-by-slug'],
-  {
-    tags: ['autores', `autor-${slug}`],
-    revalidate: 3600, // 1 hora
-  }
-);
+export function getCachedAutorBySlug(slug: string): Promise<PublicAutor | null> {
+  return unstable_cache(
+    async () => {
+      return getAutorBySlug(slug);
+    },
+    [`autor-by-slug-${slug}`],
+    {
+      tags: ['autores'],
+      revalidate: 3600, // 1 hora
+    }
+  )();
+}
 
 /**
  * Versión con caché de listPublishedAutores

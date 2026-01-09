@@ -7,7 +7,6 @@ import { searchEngine, SearchResult } from '@/utils/search'
 import Link from 'next/link'
 import AdvancedFilters from './AdvancedFilters'
 import { useSearch } from '@/components/search/SearchProvider'
-import SearchHelp from './SearchHelp'
 
 interface SearchBoxProps {
   onResultClick?: () => void;
@@ -26,7 +25,7 @@ export default function SearchBox({
   context,
   autoFocus = false
 }: SearchBoxProps) {
-  const { isInitialized } = useSearch()
+  const { isInitialized, isLoading: searchIsLoading } = useSearch()
   const router = useRouter()
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<SearchResult[]>([])
@@ -35,10 +34,8 @@ export default function SearchBox({
   const [isLoading, setIsLoading] = useState(false)
   const [selectedIndex, setSelectedIndex] = useState(-1)
   const [showFiltersPanel, setShowFiltersPanel] = useState(false)
-  const loadingIndexRef = useRef(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const [filters, setFilters] = useState({
-    tipo: 'todos',
     autor: '' as string | undefined,
     obra: '' as string | undefined
   })
@@ -56,29 +53,17 @@ export default function SearchBox({
     }
   }, [autoFocus])
 
-  // Cargar datos para filtros
+  // Cargar datos para filtros desde cache compartido
   useEffect(() => {
     const loadFilterData = async () => {
       try {
-        // Cargar autores
-        const autoresRes = await fetch('/api/autores')
-        if (autoresRes.ok) {
-          const autoresData = await autoresRes.json()
-          setAutores(autoresData.data?.map((autor: any) => ({
-            value: autor.slug,
-            label: autor.nombre
-          })) || [])
-        }
-        
-        // Cargar obras
-        const obrasRes = await fetch('/api/obras')
-        if (obrasRes.ok) {
-          const obrasData = await obrasRes.json()
-          setObras(obrasData.data?.map((obra: any) => ({
-            value: obra.slug,
-            label: obra.titulo
-          })) || [])
-        }
+        const { filterDataCache } = await import('@/lib/services/search/filterDataCache')
+        const [autoresData, obrasData] = await Promise.all([
+          filterDataCache.getAutores(),
+          filterDataCache.getObras()
+        ])
+        setAutores(autoresData)
+        setObras(obrasData)
       } catch (error) {
         console.error('Error loading filter data:', error)
       }
@@ -88,9 +73,8 @@ export default function SearchBox({
   }, [])
 
   // Memoized handler to avoid creating a new function each render (prevents effect loops in children)
-  const handleAdvancedFiltersChange = useCallback((newFilters: { tipo: string; autor?: string; obra?: string }) => {
+  const handleAdvancedFiltersChange = useCallback((newFilters: { autor?: string; obra?: string }) => {
     setFilters({
-      tipo: newFilters.tipo,
       autor: newFilters.autor || '',
       obra: newFilters.obra || ''
     });
@@ -108,39 +92,40 @@ export default function SearchBox({
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  // Realizar búsqueda con debounce y filtros
+  // Realizar búsqueda con debounce adaptativo y filtros
   useEffect(() => {
+    // Calcular debounce según longitud de query
+    const getDebounceTime = (queryLength: number): number => {
+      if (queryLength < 5) return 200; // Queries cortas: 200ms
+      if (queryLength <= 10) return 300; // Queries medias: 300ms
+      return 500; // Queries largas: 500ms
+    };
+
+    const debounceTime = query.length >= 3 ? getDebounceTime(query.length) : 0;
+    
     const timeoutId = setTimeout(async () => {
       if (query.length >= 3) {
-        setIsLoading(true)
-
-        // Asegurar que el índice esté construido si el provider aún no lo hizo
-        if (!isInitialized && !loadingIndexRef.current) {
-          try {
-            loadingIndexRef.current = true
-            const res = await fetch('/api/search?buildIndex=true')
-            if (res.ok) {
-              const { data } = await res.json()
-              if (Array.isArray(data) && data.length > 0) {
-                searchEngine.buildIndex(data)
-              }
-            }
-          } catch (e) {
-            console.error('No se pudo construir el índice de búsqueda on-demand:', e)
-          } finally {
-            loadingIndexRef.current = false
-          }
+        // Solo buscar si el índice está inicializado
+        if (!isInitialized) {
+          setIsLoading(true)
+          // Esperar a que el índice se inicialice (el SearchProvider lo hace)
+          return
         }
 
+        // Mostrar loading si el índice aún se está inicializando
+        if (searchIsLoading) {
+          setIsLoading(true)
+          return
+        }
+
+        setIsLoading(true)
+
+        // Usar searchEngine directamente (el worker se maneja en useSearch)
         let searchResponse = searchEngine.search(query, 20)
         let searchResults = searchResponse.results
         let total = searchResponse.total
 
         // Aplicar filtros
-        if (filters.tipo !== 'todos') {
-          searchResults = searchResults.filter(result => result.tipo === filters.tipo)
-        }
-
         if (filters.autor) {
           searchResults = searchResults.filter(result =>
             result.autorSlug === filters.autor
@@ -167,10 +152,10 @@ export default function SearchBox({
         setTotalResults(0)
         setIsOpen(false)
       }
-    }, 300)
+    }, debounceTime)
 
     return () => clearTimeout(timeoutId)
-  }, [query, filters, context, isInitialized])
+  }, [query, filters, context, isInitialized, searchIsLoading])
 
   // If ArrowDown was pressed before results were ready, select first item when results arrive
   useEffect(() => {
@@ -362,7 +347,6 @@ export default function SearchBox({
                 <X className="w-4 h-4" />
               </button>
             )}
-            <SearchHelp className={`${context === 'homepage' ? 'text-gray-300 hover:text-white' : 'text-gray-400 hover:text-gray-600'}`} />
           </div>
         </div>
         
@@ -405,10 +389,10 @@ export default function SearchBox({
       {/* Resultados - aparecen debajo de filtros si están abiertos */}
       {isOpen && (
         <div ref={resultsContainerRef} className={`search-results ${showFiltersPanel ? 'mt-4' : 'mt-1'}`}>
-          {isLoading ? (
+          {(isLoading || searchIsLoading || !isInitialized) ? (
             <div className="flex items-center justify-center py-8">
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-accent-600 mr-3"></div>
-              <span className="text-primary-600">Buscando...</span>
+              <span className="text-primary-600 dark:text-neutral-400">Buscando...</span>
             </div>
           ) : (
             <>
@@ -444,7 +428,7 @@ export default function SearchBox({
                           >
                             <div className="flex items-start justify-between mb-2">
                               <div className="flex-1">
-                                <h4 className="font-medium text-primary-900 text-sm mb-1 group-hover:text-primary-800 transition-colors">
+                                <h4 className="font-medium text-primary-900 dark:text-neutral-100 text-sm mb-1 group-hover:text-primary-800 dark:group-hover:text-neutral-200 transition-colors">
                                   {result.titulo}
                                 </h4>
                                 <p className="text-xs text-accent-600">
@@ -454,7 +438,7 @@ export default function SearchBox({
                               </div>
                             </div>
                             <p
-                              className="text-sm text-primary-600 leading-relaxed"
+                              className="text-sm text-primary-600 dark:text-neutral-400 leading-relaxed"
                               dangerouslySetInnerHTML={{ __html: searchEngine.highlightTerms(result.fragmento, query) }}
                             />
                           </Link>
@@ -466,7 +450,7 @@ export default function SearchBox({
                   {/* Contador siempre visible en la parte inferior */}
                   <button 
                     onClick={handleSearchClick} 
-                    className="px-6 py-3 bg-gradient-to-r from-neutral-100 to-neutral-200 text-sm text-primary-600 text-center border-t border-neutral-200 flex-shrink-0 hover:from-neutral-200 hover:to-neutral-300 hover:text-primary-800 transition-all duration-200 cursor-pointer w-full group"
+                    className="px-6 py-3 bg-gradient-to-r from-neutral-100 to-neutral-200 dark:from-slate-800 dark:to-slate-700 text-sm text-primary-600 dark:text-neutral-300 text-center border-t border-neutral-200 dark:border-slate-700 flex-shrink-0 hover:from-neutral-200 hover:to-neutral-300 dark:hover:from-slate-700 dark:hover:to-slate-600 hover:text-primary-800 dark:hover:text-neutral-100 transition-all duration-200 cursor-pointer w-full group"
                   >
                     <div className="flex items-center justify-center space-x-2">
                       <span className="font-medium">
@@ -480,14 +464,14 @@ export default function SearchBox({
                 </div>
               ) : (
                 query.length >= 3 && (
-                  <div className="px-6 py-8 text-center text-primary-500">
+                  <div className="px-6 py-8 text-center text-primary-500 dark:text-neutral-400">
                     <div className="mb-4">
-                      <Search className="w-8 h-8 mx-auto mb-2 text-primary-400" />
+                      <Search className="w-8 h-8 mx-auto mb-2 text-primary-400 dark:text-neutral-600" />
                       <p>No se encontraron resultados para "{query}"</p>
                     </div>
                     {searchHistory.length > 0 && (
-                      <div className="mt-6 pt-4 border-t border-primary-200">
-                        <h5 className="text-sm font-medium text-primary-700 mb-3 flex items-center">
+                      <div className="mt-6 pt-4 border-t border-primary-200 dark:border-slate-700">
+                        <h5 className="text-sm font-medium text-primary-700 dark:text-neutral-300 mb-3 flex items-center">
                           <Clock className="w-4 h-4 mr-1" />
                           Búsquedas recientes
                         </h5>
@@ -496,7 +480,7 @@ export default function SearchBox({
                             <button
                               key={index}
                               onClick={() => setQuery(term)}
-                              className="px-3 py-1 bg-primary-100 text-primary-700 rounded-full text-sm hover:bg-primary-200 transition-colors"
+                              className="px-3 py-1 bg-primary-100 dark:bg-slate-800 text-primary-700 dark:text-neutral-300 rounded-full text-sm hover:bg-primary-200 dark:hover:bg-slate-700 transition-colors"
                             >
                               {term}
                             </button>

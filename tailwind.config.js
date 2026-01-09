@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
+  darkMode: 'class',
   content: [
     './pages/**/*.{js,ts,jsx,tsx,mdx}',
     './components/**/*.{js,ts,jsx,tsx,mdx}',
@@ -44,6 +45,18 @@ module.exports = {
           700: '#334155',
           800: '#1e293b',
           900: '#0f172a',
+        },
+        midnight: {
+          50: '#1a1f2e',
+          100: '#1e2332',
+          200: '#222736',
+          300: '#262b3a',
+          400: '#2a2f3e',
+          500: '#2e3342',
+          600: '#323746',
+          700: '#363b4a',
+          800: '#3a3f4e',
+          900: '#050810', // Midnight más oscuro
         },
         'bahai-navy': '#1e3a8a',
         'bahai-gold': '#d97706',
