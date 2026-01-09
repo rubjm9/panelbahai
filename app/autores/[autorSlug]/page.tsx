@@ -159,9 +159,6 @@ export default async function AutorPage({ params }: { params: { autorSlug: strin
         <div className="container-elegant">
           <div className="section-elegant text-center">
             <h1 className="display-title text-white mb-4">{autor.nombre}</h1>
-            {autor.fechas && (
-              <p className="text-xl text-primary-200 max-w-3xl mx-auto">{autor.fechas}</p>
-            )}
           </div>
         </div>
       </section>
