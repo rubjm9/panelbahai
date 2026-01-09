@@ -51,8 +51,9 @@ export default function ReadingView({
     activeParagraphRef.current = activeParagraph
   }, [activeParagraph])
   const [showToc, setShowToc] = useState(false)
-  const [tocOpen, setTocOpen] = useState(true)
-  const [libraryOpen, setLibraryOpen] = useState(true)
+  // Inicializar sidebars cerrados por defecto (se abrirán según el tamaño de pantalla)
+  const [tocOpen, setTocOpen] = useState(false)
+  const [libraryOpen, setLibraryOpen] = useState(false)
   const [windowWidth, setWindowWidth] = useState<number>(typeof window !== 'undefined' ? window.innerWidth : 1920)
   
   // Ocultar sidebars por defecto según el tamaño de pantalla
@@ -62,15 +63,15 @@ export default function ReadingView({
       setWindowWidth(width)
       
       if (width < 1024) {
-        // En pantallas menores a 1024px, ocultar ambos sidebars
+        // En pantallas menores a 1024px (móvil), ocultar ambos sidebars
         setLibraryOpen(false)
         setTocOpen(false)
       } else if (width < 1200) {
-        // En pantallas menores a 1200px, ocultar solo el sidebar izquierdo
+        // En pantallas menores a 1200px (tablet), ocultar solo el sidebar izquierdo
         setLibraryOpen(false)
         setTocOpen(true)
       } else {
-        // En pantallas mayores, mostrar ambos
+        // En pantallas mayores (desktop), mostrar ambos
         setLibraryOpen(true)
         setTocOpen(true)
       }

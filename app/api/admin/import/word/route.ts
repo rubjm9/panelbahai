@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Autor from '@/models/Autor';
 import Obra from '@/models/Obra';
-import Seccion from '@/models/Seccion';
+import Seccion, { ISeccion } from '@/models/Seccion';
 import Parrafo from '@/models/Parrafo';
 import { rebuildSearchIndexAsync } from '@/utils/search-rebuild';
 import { uploadFile } from '@/lib/gridfs';
@@ -171,7 +171,7 @@ export async function POST(request: NextRequest) {
         .replace(/\s+/g, '-')
         .trim();
       
-      const seccion = new Seccion({
+      const seccion: ISeccion = new Seccion({
         titulo: sectionData.titulo,
         slug: seccionSlug,
         uuid: uuidv4(),
