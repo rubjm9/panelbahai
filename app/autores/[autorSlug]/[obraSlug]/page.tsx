@@ -214,6 +214,11 @@ export default async function ReadingPage({ params, searchParams }: ReadingPageP
     data = obraData;
   }
 
+  // Verificar que data no sea null (TypeScript type guard)
+  if (!data) {
+    notFound();
+  }
+
   const { obra, secciones, parrafos } = data;
 
   // Verificar que el autor coincida
