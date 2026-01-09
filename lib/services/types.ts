@@ -67,7 +67,7 @@ export type CreateObraInput = {
 
 export type UpdateObraInput = Partial<Pick<
   IObra,
-  'titulo' | 'descripcion' | 'fechaPublicacion' | 'esPublico' | 'orden' | 'estado'
+  'titulo' | 'descripcion' | 'fechaPublicacion' | 'esPublico' | 'orden' | 'estado' | 'contenido'
 >>;
 
 export type UpdateParrafoInput = Partial<Pick<
