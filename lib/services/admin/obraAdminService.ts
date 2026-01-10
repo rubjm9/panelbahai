@@ -24,7 +24,7 @@ import { createObraRevision } from './revisionService';
  */
 export async function createObra(data: CreateObraInput, userId?: string) {
   await dbConnect();
-  
+
   // Validar que el autor existe
   const autor = await Autor.findById(data.autor);
   if (!autor) {
@@ -106,7 +106,7 @@ export async function updateObra(
   userId?: string
 ) {
   await dbConnect();
-  
+
   // Obtener obra actual antes de actualizar
   const obraActual = await Obra.findById(obraId);
   if (!obraActual) {
@@ -177,7 +177,7 @@ export async function updateObra(
  */
 export async function deleteObra(obraId: string): Promise<boolean> {
   await dbConnect();
-  
+
   const obra = await Obra.findByIdAndUpdate(
     obraId,
     {
@@ -193,10 +193,12 @@ export async function deleteObra(obraId: string): Promise<boolean> {
     return false;
   }
 
+  const obraTyped = obra as any;
+
   // Desactivar párrafos y secciones relacionadas
-  const { Parrafo } = await import('@/models/Parrafo');
-  const { Seccion } = await import('@/models/Seccion');
-  
+  const { default: Parrafo } = await import('@/models/Parrafo');
+  const { default: Seccion } = await import('@/models/Seccion');
+
   await Promise.all([
     Parrafo.updateMany(
       { obra: obraId },
@@ -209,10 +211,10 @@ export async function deleteObra(obraId: string): Promise<boolean> {
   ]);
 
   // Invalidar caché
-  await revalidateTag(`obra-${obra.slug}`);
-  await revalidateTag(`obra-${obra.slug}-completa`);
+  await revalidateTag(`obra-${obraTyped.slug}`);
+  await revalidateTag(`obra-${obraTyped.slug}-completa`);
   await revalidateTag('obras');
-  await revalidateTag(`autor-${(obra.autor as any).slug}`);
+  await revalidateTag(`autor-${(obraTyped.autor as any).slug}`);
   await revalidateTag('autores');
 
   return true;

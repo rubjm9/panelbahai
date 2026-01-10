@@ -101,7 +101,7 @@ export async function detectMacros(buffer: Buffer): Promise<boolean> {
     // Los archivos .docx son archivos ZIP
     // Las macros están típicamente en vbaProject.bin dentro del ZIP
     const JSZip = await import('jszip').catch(() => null);
-    
+
     if (!JSZip) {
       // Si no podemos verificar, asumimos que no hay macros por seguridad
       // pero no rechazamos el archivo
@@ -110,7 +110,7 @@ export async function detectMacros(buffer: Buffer): Promise<boolean> {
     }
 
     const zip = await JSZip.default.loadAsync(buffer);
-    
+
     // Buscar archivos relacionados con macros
     const macroFiles = [
       'word/vbaProject.bin',
@@ -155,7 +155,7 @@ export function validateObraData(data: unknown): {
     if (error instanceof z.ZodError) {
       return {
         valid: false,
-        errors: error.errors.map(e => `${e.path.join('.')}: ${e.message}`)
+        errors: (error as any).errors.map((e: any) => `${e.path.join('.')}: ${e.message}`)
       };
     }
     return {
@@ -187,7 +187,7 @@ export function validateParrafoData(data: unknown): {
     if (error instanceof z.ZodError) {
       return {
         valid: false,
-        errors: error.errors.map(e => `${e.path.join('.')}: ${e.message}`)
+        errors: (error as any).errors.map((e: any) => `${e.path.join('.')}: ${e.message}`)
       };
     }
     return {
@@ -215,7 +215,7 @@ export function detectMimeType(buffer: Buffer, fileName: string): string | null 
 
   // Leer primeros 4 bytes
   const header = buffer.slice(0, 4).toString('hex').toLowerCase();
-  
+
   // Buscar en signatures
   for (const [sig, mime] of Object.entries(signatures)) {
     if (header.startsWith(sig.toLowerCase())) {

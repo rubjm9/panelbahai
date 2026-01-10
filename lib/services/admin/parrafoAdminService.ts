@@ -28,7 +28,7 @@ export async function updateParrafo(
   userId?: string
 ) {
   await dbConnect();
-  
+
   // Crear revisión antes de actualizar si hay userId y hay cambios en el texto
   if (userId && data.texto !== undefined) {
     try {
@@ -54,20 +54,22 @@ export async function updateParrafo(
     return null;
   }
 
+  const parrafoTyped = parrafo as any;
+
   // Invalidar caché relacionado
-  const obraSlug = (parrafo.obra as any).slug;
+  const obraSlug = (parrafoTyped.obra as any).slug;
   await revalidateTag(`obra-${obraSlug}`);
   await revalidateTag(`obra-${obraSlug}-completa`);
   await revalidateTag('obras');
 
   return {
-    _id: parrafo._id.toString(),
-    numero: parrafo.numero,
-    texto: parrafo.texto,
-    uuid: parrafo.uuid,
-    orden: parrafo.orden,
-    obra: (parrafo.obra as any)._id.toString(),
-    seccion: parrafo.seccion?.toString(),
+    _id: parrafoTyped._id.toString(),
+    numero: parrafoTyped.numero,
+    texto: parrafoTyped.texto,
+    uuid: parrafoTyped.uuid,
+    orden: parrafoTyped.orden,
+    obra: (parrafoTyped.obra as any)._id.toString(),
+    seccion: parrafoTyped.seccion?.toString(),
   };
 }
 
@@ -89,7 +91,7 @@ export async function createParrafo(
   userId?: string
 ) {
   await dbConnect();
-  
+
   // Generar UUID
   const uuid = uuidv4();
 
@@ -138,7 +140,7 @@ export async function createParrafo(
  */
 export async function deleteParrafo(parrafoId: string): Promise<boolean> {
   await dbConnect();
-  
+
   const parrafo = await Parrafo.findByIdAndUpdate(
     parrafoId,
     {
@@ -154,8 +156,10 @@ export async function deleteParrafo(parrafoId: string): Promise<boolean> {
     return false;
   }
 
+  const parrafoTyped = parrafo as any;
+
   // Invalidar caché relacionado
-  const obraSlug = (parrafo.obra as any).slug;
+  const obraSlug = (parrafoTyped.obra as any).slug;
   await revalidateTag(`obra-${obraSlug}`);
   await revalidateTag(`obra-${obraSlug}-completa`);
   await revalidateTag('obras');

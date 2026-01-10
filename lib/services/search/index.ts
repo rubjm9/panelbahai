@@ -22,7 +22,7 @@ export class OptimizedSearchEngine extends BaseSearchEngine {
   buildIndex(documents: SearchDocument[]): void {
     // Crear chunks
     chunkManager.createChunks(documents);
-    
+
     // Construir índice base con chunk base
     const baseChunk = chunkManager.getBaseChunk();
     if (baseChunk) {
@@ -38,7 +38,7 @@ export class OptimizedSearchEngine extends BaseSearchEngine {
    */
   loadChunk(obraSlug: string, autorSlug: string, documents: SearchDocument[]): void {
     chunkManager.loadChunk(obraSlug, autorSlug, documents);
-    
+
     // Reconstruir índice con todos los documentos cargados
     const allLoadedDocs = chunkManager.getLoadedDocuments();
     super.buildIndex(allLoadedDocs);
@@ -58,13 +58,13 @@ export class OptimizedSearchEngine extends BaseSearchEngine {
       }
       const { data: documents } = await response.json();
       return documents.filter(
-        (doc: SearchDocument) => 
+        (doc: SearchDocument) =>
           doc.obraSlug === obraSlug && doc.autorSlug === autorSlug
       );
     };
 
     await chunkManager.preloadChunks(obraSlugs, loadFunction);
-    
+
     // Reconstruir índice con todos los documentos cargados
     const allLoadedDocs = chunkManager.getLoadedDocuments();
     if (allLoadedDocs.length > 0) {
@@ -107,7 +107,7 @@ export class OptimizedSearchEngine extends BaseSearchEngine {
 export const optimizedSearchEngine = new OptimizedSearchEngine();
 
 // Re-exportar tipos y clase base
-export { SearchDocument, SearchResult } from './types';
+export type { SearchDocument, SearchResult } from './types';
 export { SearchEngine } from '@/utils/search';
 
 

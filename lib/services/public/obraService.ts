@@ -25,7 +25,7 @@ export async function getPublishedWorkBySlug(
   autorSlug?: string
 ): Promise<PublicObra | null> {
   await dbConnect();
-  
+
   let obraQuery = Obra.findOne({ slug: obraSlug, activo: true, esPublico: true })
     .populate('autor', 'nombre slug biografia');
 
@@ -38,26 +38,28 @@ export async function getPublishedWorkBySlug(
   }
 
   const obra = await obraQuery.lean();
-  
-  if (!obra || !obra.autor || (autorSlug && (obra.autor as any).slug !== autorSlug)) {
+
+  const obraTyped = obra as any;
+
+  if (!obraTyped || !obraTyped.autor || (autorSlug && (obraTyped.autor as any).slug !== autorSlug)) {
     return null;
   }
 
   return {
-    _id: obra._id.toString(),
-    titulo: obra.titulo,
-    slug: obra.slug,
-    descripcion: obra.descripcion,
-    fechaPublicacion: obra.fechaPublicacion,
-    esPublico: obra.esPublico,
-    archivoDoc: obra.archivoDoc,
-    archivoPdf: obra.archivoPdf,
-    archivoEpub: obra.archivoEpub,
+    _id: obraTyped._id.toString(),
+    titulo: obraTyped.titulo,
+    slug: obraTyped.slug,
+    descripcion: obraTyped.descripcion,
+    fechaPublicacion: obraTyped.fechaPublicacion,
+    esPublico: obraTyped.esPublico,
+    archivoDoc: obraTyped.archivoDoc,
+    archivoPdf: obraTyped.archivoPdf,
+    archivoEpub: obraTyped.archivoEpub,
     autor: {
-      _id: (obra.autor as any)._id.toString(),
-      nombre: (obra.autor as any).nombre,
-      slug: (obra.autor as any).slug,
-      biografia: (obra.autor as any).biografia,
+      _id: (obraTyped.autor as any)._id.toString(),
+      nombre: (obraTyped.autor as any).nombre,
+      slug: (obraTyped.autor as any).slug,
+      biografia: (obraTyped.autor as any).biografia,
     },
   };
 }
@@ -72,7 +74,7 @@ export async function listPublishedWorksByAutor(
   autorSlug: string
 ): Promise<PublicObra[]> {
   await dbConnect();
-  
+
   const autor = await Autor.findOne({ slug: autorSlug, activo: true });
   if (!autor) return [];
 
@@ -84,7 +86,7 @@ export async function listPublishedWorksByAutor(
     .populate('autor', 'nombre slug')
     .sort({ orden: 1, titulo: 1 })
     .select('titulo slug descripcion esPublico orden autor fechaCreacion')
-    .lean();
+    .lean() as any[];
 
   return obras.map(obra => ({
     _id: obra._id.toString(),
@@ -116,7 +118,7 @@ export async function getPublishedWorkComplete(
   autorSlug?: string
 ): Promise<ObraCompleta | null> {
   await dbConnect();
-  
+
   // Obtener obra
   const obra = await getPublishedWorkBySlug(obraSlug, autorSlug);
   if (!obra) return null;
@@ -128,12 +130,12 @@ export async function getPublishedWorkComplete(
     Seccion.find({ obra: obraId, activo: true })
       .sort({ orden: 1 })
       .select('titulo slug nivel orden seccionPadre')
-      .lean(),
+      .lean() as Promise<any[]>,
     Parrafo.find({ obra: obraId, activo: true })
       .populate('seccion', 'titulo slug')
       .sort({ orden: 1, numero: 1 })
       .select('numero texto seccion orden')
-      .lean()
+      .lean() as Promise<any[]>
   ]);
 
   // Organizar secciones jerárquicamente

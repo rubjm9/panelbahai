@@ -171,15 +171,17 @@ export async function getObraRevision(
     return null;
   }
 
+  const revisionTyped = revision as any;
+
   return {
-    _id: revision._id.toString(),
-    version: revision.version,
-    contenido: revision.contenido,
-    estado: revision.estado,
-    esPublico: revision.esPublico,
-    fechaRevision: revision.fechaRevision,
-    cambios: revision.cambios,
-    autorRevision: revision.autorRevision
+    _id: revisionTyped._id.toString(),
+    version: revisionTyped.version,
+    contenido: revisionTyped.contenido,
+    estado: revisionTyped.estado,
+    esPublico: revisionTyped.esPublico,
+    fechaRevision: revisionTyped.fechaRevision,
+    cambios: revisionTyped.cambios,
+    autorRevision: revisionTyped.autorRevision
   };
 }
 
@@ -208,14 +210,16 @@ export async function getParrafoRevision(
     return null;
   }
 
+  const revisionTyped = revision as any;
+
   return {
-    _id: revision._id.toString(),
-    version: revision.version,
-    texto: revision.texto,
-    numero: revision.numero,
-    fechaRevision: revision.fechaRevision,
-    cambios: revision.cambios,
-    autorRevision: revision.autorRevision
+    _id: revisionTyped._id.toString(),
+    version: revisionTyped.version,
+    texto: revisionTyped.texto,
+    numero: revisionTyped.numero,
+    fechaRevision: revisionTyped.fechaRevision,
+    cambios: revisionTyped.cambios,
+    autorRevision: revisionTyped.autorRevision
   };
 }
 
@@ -234,7 +238,7 @@ export async function listObraRevisions(obraId: string) {
   })
     .sort({ version: -1 })
     .populate('autorRevision', 'nombre email')
-    .lean();
+    .lean() as any[];
 
   return revisiones.map(rev => ({
     _id: rev._id.toString(),
@@ -262,7 +266,7 @@ export async function listParrafoRevisions(parrafoId: string) {
   })
     .sort({ version: -1 })
     .populate('autorRevision', 'nombre email')
-    .lean();
+    .lean() as any[];
 
   return revisiones.map(rev => ({
     _id: rev._id.toString(),

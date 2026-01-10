@@ -31,7 +31,7 @@ export function middleware(request: NextRequest) {
 
     // Verificar que tenga rol admin o editor (mínimo para acceder a admin)
     const requiredRole = 'admin';
-    if (!hasPermission(user.rol, requiredRole)) {
+    if (!hasPermission(user!.rol, requiredRole)) {
       // Para rutas de página, redirigir a login con mensaje
       if (isAdminRoute) {
         const loginUrl = new URL('/admin/login', request.url);

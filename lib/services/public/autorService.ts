@@ -18,19 +18,21 @@ import type { PublicAutor } from '../types';
  */
 export async function getAutorBySlug(slug: string): Promise<PublicAutor | null> {
   await dbConnect();
-  
+
   const autor = await Autor.findOne({ slug, activo: true })
     .select('nombre slug biografia orden')
     .lean();
-  
+
   if (!autor) return null;
-  
+
+  const autorTyped = autor as any;
+
   return {
-    _id: autor._id.toString(),
-    nombre: autor.nombre,
-    slug: autor.slug,
-    biografia: autor.biografia,
-    orden: autor.orden,
+    _id: autorTyped._id.toString(),
+    nombre: autorTyped.nombre,
+    slug: autorTyped.slug,
+    biografia: autorTyped.biografia,
+    orden: autorTyped.orden,
   };
 }
 
@@ -42,12 +44,12 @@ export async function getAutorBySlug(slug: string): Promise<PublicAutor | null> 
  */
 export async function listPublishedAutores(): Promise<PublicAutor[]> {
   await dbConnect();
-  
+
   const autores = await Autor.find({ activo: true })
     .sort({ orden: 1, nombre: 1 })
     .select('nombre slug biografia orden')
-    .lean();
-  
+    .lean() as any[];
+
   return autores.map(autor => ({
     _id: autor._id.toString(),
     nombre: autor.nombre,
