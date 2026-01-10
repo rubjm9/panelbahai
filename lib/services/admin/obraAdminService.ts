@@ -142,26 +142,29 @@ export async function updateObra(
     return null;
   }
 
+  // Type assertion para manejar el tipo de lean() con populate()
+  const obraTyped = obra as any;
+
   // Invalidar caché
-  await revalidateTag(`obra-${obra.slug}`);
-  await revalidateTag(`obra-${obra.slug}-completa`);
+  await revalidateTag(`obra-${obraTyped.slug}`);
+  await revalidateTag(`obra-${obraTyped.slug}-completa`);
   await revalidateTag('obras');
-  await revalidateTag(`autor-${(obra.autor as any).slug}`);
+  await revalidateTag(`autor-${obraTyped.autor?.slug || ''}`);
   await revalidateTag('autores');
 
   return {
-    _id: obra._id.toString(),
-    titulo: obra.titulo,
-    slug: obra.slug,
-    uuid: obra.uuid,
-    descripcion: obra.descripcion,
+    _id: obraTyped._id.toString(),
+    titulo: obraTyped.titulo,
+    slug: obraTyped.slug,
+    uuid: obraTyped.uuid,
+    descripcion: obraTyped.descripcion,
     autor: {
-      _id: (obra.autor as any)._id.toString(),
-      nombre: (obra.autor as any).nombre,
-      slug: (obra.autor as any).slug,
+      _id: obraTyped.autor?._id?.toString() || '',
+      nombre: obraTyped.autor?.nombre || '',
+      slug: obraTyped.autor?.slug || '',
     },
-    esPublico: obra.esPublico,
-    estado: obra.estado,
+    esPublico: obraTyped.esPublico,
+    estado: obraTyped.estado,
   };
 }
 
