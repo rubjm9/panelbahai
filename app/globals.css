@@ -194,12 +194,8 @@
     transition: background-color 2s ease-out;
   }
   
-  /* Ajustar el cuadro para que se alinee con la línea base del texto */
   .paragraph .paragraph-number {
-    /* El texto tiene font-size 1.125rem (18px) con line-height 1.8 (32.4px) */
-    /* El cuadro tiene 32px de altura (h-8) */
-    /* Ajustar para alinear el centro del cuadro con la línea base del texto */
-    top: 0.125rem; /* Pequeño ajuste para alinear con la primera línea */
+    top: 0.5rem;
   }
   
   /* Estilos para citas y blockquotes */

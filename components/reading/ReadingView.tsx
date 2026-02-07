@@ -1,17 +1,17 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { ChevronRight, Menu, X, BookOpen, ChevronUp, ChevronDown, PanelLeft, PanelLeftClose, Library, Focus } from 'lucide-react'
+import { ChevronRight, Menu, X, BookOpen, ChevronUp, ChevronDown, PanelLeft, PanelLeftClose, Library, Focus, Type, Minus, Plus } from 'lucide-react'
 import Link from 'next/link'
 import WorksTree from './WorksTree'
 
-interface Paragraph {
+export interface Paragraph {
   numero: number;
   texto: string;
   seccion?: string;
 }
 
-interface Section {
+export interface Section {
   id: string;
   titulo: string;
   slug: string;
@@ -42,10 +42,10 @@ interface ReadingViewProps {
   showSkeleton?: boolean;
 }
 
-export default function ReadingView({ 
-  obra, 
-  parrafos, 
-  secciones, 
+export default function ReadingView({
+  obra,
+  parrafos,
+  secciones,
   currentParagraph,
   highlightQuery,
   onObraSelect,
@@ -54,7 +54,7 @@ export default function ReadingView({
 }: ReadingViewProps) {
   const [activeSection, setActiveSection] = useState<string>('')
   const [activeParagraph, setActiveParagraph] = useState<number>(currentParagraph || 1)
-  
+
   // Ref para acceder al valor actual sin causar recreaciones del observer
   useEffect(() => {
     activeParagraphRef.current = activeParagraph
@@ -64,13 +64,13 @@ export default function ReadingView({
   const [tocOpen, setTocOpen] = useState(false)
   const [libraryOpen, setLibraryOpen] = useState(false)
   const [windowWidth, setWindowWidth] = useState<number>(typeof window !== 'undefined' ? window.innerWidth : 1920)
-  
+
   // Ocultar sidebars por defecto según el tamaño de pantalla
   useEffect(() => {
     const checkWindowSize = () => {
       const width = window.innerWidth
       setWindowWidth(width)
-      
+
       if (width < 1024) {
         // En pantallas menores a 1024px (móvil), ocultar ambos sidebars
         setLibraryOpen(false)
@@ -85,13 +85,13 @@ export default function ReadingView({
         setTocOpen(true)
       }
     }
-    
+
     // Verificar al cargar
     checkWindowSize()
-    
+
     // Escuchar cambios de tamaño
     window.addEventListener('resize', checkWindowSize)
-    
+
     return () => {
       window.removeEventListener('resize', checkWindowSize)
     }
@@ -115,6 +115,32 @@ export default function ReadingView({
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const hasRunInitialHashScroll = useRef<boolean>(false)
 
+  // Estado para el tamaño de letra
+  const [fontSize, setFontSize] = useState<number>(100)
+  const [isFontSizeInitialized, setIsFontSizeInitialized] = useState(false)
+
+  // Cargar preferencia de tamaño de letra
+  useEffect(() => {
+    const savedFontSize = localStorage.getItem('panelbahai-font-size')
+    if (savedFontSize) {
+      const parsed = parseInt(savedFontSize)
+      if (!isNaN(parsed) && parsed >= 70 && parsed <= 200) {
+        setFontSize(parsed)
+      }
+    }
+    setIsFontSizeInitialized(true)
+  }, [])
+
+  // Guardar preferencia de tamaño de letra
+  const changeFontSize = (newSize: number) => {
+    const clamped = Math.max(70, Math.min(200, newSize))
+    setFontSize(clamped)
+    localStorage.setItem('panelbahai-font-size', clamped.toString())
+  }
+
+  const increaseFontSize = () => changeFontSize(fontSize + 10)
+  const decreaseFontSize = () => changeFontSize(fontSize - 10)
+
   // Sincronizar término de resaltado desde props/URL/sessionStorage
   useEffect(() => {
     try {
@@ -137,7 +163,7 @@ export default function ReadingView({
         url.searchParams.set('q', last)
         window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`)
       }
-    } catch {}
+    } catch { }
   }, [highlightQuery])
 
   // Encontrar todas las ocurrencias del término en los párrafos
@@ -182,7 +208,7 @@ export default function ReadingView({
         }
       }
       setCurrentOccurrenceIndex(globalIndex)
-      
+
       // Actualizar resaltado después de un pequeño delay
       setTimeout(() => {
         updateHighlighting()
@@ -197,7 +223,7 @@ export default function ReadingView({
     setCurrentOccurrenceIndex(nextIndex)
     const paragraphNum = occurrences[nextIndex]
     navigateToParagraph(paragraphNum)
-    
+
     // Actualizar resaltado después de un pequeño delay
     setTimeout(() => {
       updateHighlighting()
@@ -211,7 +237,7 @@ export default function ReadingView({
     setCurrentOccurrenceIndex(prevIndex)
     const paragraphNum = occurrences[prevIndex]
     navigateToParagraph(paragraphNum)
-    
+
     // Actualizar resaltado después de un pequeño delay
     setTimeout(() => {
       updateHighlighting()
@@ -228,7 +254,7 @@ export default function ReadingView({
       const url = new URL(window.location.href)
       url.searchParams.delete('q')
       window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`)
-    } catch {}
+    } catch { }
   }
 
   // Utilidad para resaltar términos en HTML simple con foco activo
@@ -238,7 +264,7 @@ export default function ReadingView({
       const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
       const regex = new RegExp(`(${escaped})`, 'gi')
       let occurrenceIndex = 0
-      
+
       return html.replace(regex, (match) => {
         // Calcular el índice global de esta ocurrencia
         let globalIndex = 0
@@ -255,7 +281,7 @@ export default function ReadingView({
           }
         }
         globalIndex += occurrenceIndex
-        
+
         const isActive = globalIndex === currentOccurrenceIndex
         const className = isActive ? 'search-highlight-active' : 'search-highlight'
         occurrenceIndex++
@@ -269,7 +295,7 @@ export default function ReadingView({
   // Función para actualizar el resaltado cuando cambia la ocurrencia activa
   const updateHighlighting = () => {
     if (!highlightTerm || occurrences.length === 0) return
-    
+
     // Forzar re-render de todos los párrafos
     const paragraphElements = document.querySelectorAll('.paragraph-content')
     paragraphElements.forEach((element, index) => {
@@ -286,7 +312,7 @@ export default function ReadingView({
     if (window.location.hash) {
       return
     }
-    
+
     if (currentParagraph) {
       isNavigatingToHash.current = true
       // Pequeño delay para asegurar que el DOM esté renderizado
@@ -295,11 +321,11 @@ export default function ReadingView({
         if (element) {
           scrollToElement(element, false) // No centrar, solo scroll al inicio con offset
           setActiveParagraph(currentParagraph)
-          
+
           // Agregar resaltado temporal después del scroll
           setTimeout(() => {
             element.classList.add('paragraph-highlight-temp')
-            
+
             // Remover el resaltado después de 3 segundos
             setTimeout(() => {
               element.classList.remove('paragraph-highlight-temp')
@@ -323,7 +349,7 @@ export default function ReadingView({
           window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`)
         }
       }
-    } catch {}
+    } catch { }
   }, [currentParagraph, highlightQuery])
 
   // Función para calcular la altura total del header + breadcrumb
@@ -333,15 +359,15 @@ export default function ReadingView({
       const breadcrumb = document.getElementById('breadcrumb')
       return breadcrumb ? breadcrumb.offsetHeight : 73
     }
-    
+
     // Calcular altura del header
     const header = document.getElementById('header')
     const headerHeight = header ? header.offsetHeight : 73
-    
+
     // Calcular altura del breadcrumb
     const breadcrumb = document.getElementById('breadcrumb')
     const breadcrumbHeight = breadcrumb ? breadcrumb.offsetHeight : (isScrolled ? 57 : 73) // py-2 = ~57px, py-4 = ~73px
-    
+
     return headerHeight + breadcrumbHeight
   }
 
@@ -353,7 +379,7 @@ export default function ReadingView({
         const paragraphNum = parseInt(hash.substring(2))
         if (!isNaN(paragraphNum)) {
           isNavigatingToHash.current = true
-          
+
           // Esperar a que el DOM esté completamente renderizado y los estilos aplicados
           setTimeout(() => {
             const element = document.getElementById(`p${paragraphNum}`)
@@ -363,35 +389,35 @@ export default function ReadingView({
               const elementRect = element.getBoundingClientRect()
               const absoluteElementTop = elementRect.top + window.pageYOffset
               const finalPosition = absoluteElementTop - headerOffset - 16
-              
+
               // Usar scrollTo con behavior: 'auto' para evitar animaciones que interfieran
               window.scrollTo({
                 top: Math.max(0, finalPosition),
                 behavior: 'auto'
               })
-              
+
               // Después del scroll inicial, hacer un scroll suave para el ajuste fino
               setTimeout(() => {
                 const newRect = element.getBoundingClientRect()
                 const newAbsoluteTop = newRect.top + window.pageYOffset
                 const newFinalPosition = newAbsoluteTop - headerOffset - 16
-                
+
                 window.scrollTo({
                   top: Math.max(0, newFinalPosition),
                   behavior: 'smooth'
                 })
-                
+
                 setActiveParagraph(paragraphNum)
-                
+
                 // Agregar resaltado temporal después del scroll
                 setTimeout(() => {
                   element.classList.add('paragraph-highlight-temp')
-                  
+
                   // Remover el resaltado después de 3 segundos
                   setTimeout(() => {
                     element.classList.remove('paragraph-highlight-temp')
                   }, 3000)
-                  
+
                   // Permitir que el scroll handler actualice la URL de nuevo
                   setTimeout(() => {
                     isNavigatingToHash.current = false
@@ -429,7 +455,7 @@ export default function ReadingView({
 
     // Escuchar cambios en el hash (enlaces, atrás/adelante)
     window.addEventListener('hashchange', handleHashChange)
-    
+
     return () => {
       window.removeEventListener('hashchange', handleHashChange)
     }
@@ -440,21 +466,21 @@ export default function ReadingView({
     const handleScroll = () => {
       const scrollTop = window.scrollY
       setIsScrolled(scrollTop > 20)
-      
+
       // Marcar que el usuario está haciendo scroll
       isUserScrolling.current = true
-      
+
       // Limpiar timeout anterior
       if (scrollTimeoutRef.current) {
         clearTimeout(scrollTimeoutRef.current)
       }
-      
+
       // Después de 300ms sin scroll, considerar que el usuario terminó de hacer scroll
       scrollTimeoutRef.current = setTimeout(() => {
         isUserScrolling.current = false
       }, 300)
     }
-    
+
     // Actualizar scroll-margin-top dinámicamente
     const updateScrollMargin = () => {
       // Calcular offset dinámicamente
@@ -471,7 +497,7 @@ export default function ReadingView({
           offset = headerHeight + breadcrumbHeight + 16
         }
       }
-      
+
       // Aplicar a párrafos y secciones
       document.querySelectorAll('.paragraph, .section-header').forEach((el) => {
         (el as HTMLElement).style.scrollMarginTop = `${offset}px`
@@ -479,11 +505,11 @@ export default function ReadingView({
     }
 
     window.addEventListener('scroll', handleScroll)
-    
+
     // Actualizar scroll margin al cargar y cuando cambie el tamaño de la ventana o estado
     updateScrollMargin()
     window.addEventListener('resize', updateScrollMargin)
-    
+
     return () => {
       window.removeEventListener('scroll', handleScroll)
       window.removeEventListener('resize', updateScrollMargin)
@@ -553,9 +579,9 @@ export default function ReadingView({
     const absoluteElementTop = elementRect.top + window.pageYOffset
     const viewportHeight = window.innerHeight
     const elementHeight = elementRect.height
-    
+
     let finalPosition: number
-    
+
     if (center) {
       // Calcular posición para centrar verticalmente
       const centerPosition = absoluteElementTop - (viewportHeight / 2) + (elementHeight / 2)
@@ -564,7 +590,7 @@ export default function ReadingView({
       // Scroll al inicio del elemento con offset para header
       finalPosition = absoluteElementTop - headerOffset - 16 // 16px de margen adicional
     }
-    
+
     window.scrollTo({
       top: Math.max(0, finalPosition), // No permitir scroll negativo
       behavior: 'smooth'
@@ -578,11 +604,11 @@ export default function ReadingView({
     if (element) {
       scrollToElement(element)
       setActiveParagraph(targetParagraph)
-      
+
       // Agregar resaltado temporal después del scroll
       setTimeout(() => {
         element.classList.add('paragraph-highlight-temp')
-        
+
         // Remover el resaltado después de 3 segundos
         setTimeout(() => {
           element.classList.remove('paragraph-highlight-temp')
@@ -609,7 +635,7 @@ export default function ReadingView({
   useEffect(() => {
     const paragraphElements = document.querySelectorAll('.paragraph')
     const observers: IntersectionObserver[] = []
-    
+
     // Map para rastrear todos los párrafos visibles y sus ratios
     const visibleParagraphs = new Map<number, number>()
     let updateTimeout: NodeJS.Timeout | null = null
@@ -640,7 +666,7 @@ export default function ReadingView({
       // Si encontramos un párrafo mejor y es diferente al actual, actualizar
       if (bestParagraph !== activeParagraphRef.current && maxRatio > 0.3) {
         setActiveParagraph(bestParagraph)
-        
+
         // Update active section based on current paragraph
         const paragraph = parrafos.find(p => p.numero === bestParagraph)
         if (paragraph?.seccion) {
@@ -666,10 +692,10 @@ export default function ReadingView({
           if (activeSectionElement) {
             const sidebarRect = sidebarScrollRef.current.getBoundingClientRect()
             const elementRect = activeSectionElement.getBoundingClientRect()
-            
+
             if (elementRect.top < sidebarRect.top || elementRect.bottom > sidebarRect.bottom) {
-              activeSectionElement.scrollIntoView({ 
-                behavior: 'smooth', 
+              activeSectionElement.scrollIntoView({
+                behavior: 'smooth',
                 block: 'center',
                 inline: 'nearest'
               })
@@ -684,7 +710,7 @@ export default function ReadingView({
         (entries) => {
           entries.forEach((entry) => {
             const paragraphNum = parseInt((entry.target as HTMLElement).id.replace('p', ''))
-            
+
             if (entry.isIntersecting && entry.intersectionRatio > 0.1) {
               // Actualizar el ratio de intersección para este párrafo
               visibleParagraphs.set(paragraphNum, entry.intersectionRatio)
@@ -728,11 +754,10 @@ export default function ReadingView({
         <button
           onClick={() => navigateToSection(section.titulo)}
           data-section={section.titulo.toLowerCase().replace(/\s+/g, '-')}
-          className={`w-full text-left py-1 px-2 text-xs hover:text-primary-800 dark:hover:text-neutral-100 transition-colors rounded-sm ${
-            activeSection === section.titulo 
-              ? 'text-primary-900 dark:text-neutral-100 font-medium bg-neutral-200 dark:bg-slate-700 dark:text-white' 
-              : 'text-primary-600 dark:text-neutral-300'
-          }`}
+          className={`w-full text-left py-1 px-2 text-xs hover:text-primary-800 dark:hover:text-neutral-100 transition-colors rounded-sm ${activeSection === section.titulo
+            ? 'text-primary-900 dark:text-neutral-100 font-medium bg-neutral-200 dark:bg-slate-700 dark:text-white'
+            : 'text-primary-600 dark:text-neutral-300'
+            }`}
         >
           <div className="flex items-center justify-between">
             <span className="truncate">{section.titulo}</span>
@@ -811,7 +836,7 @@ export default function ReadingView({
     } else {
       document.body.classList.remove('focus-mode')
     }
-    
+
     // Cleanup al desmontar
     return () => {
       document.body.classList.remove('focus-mode')
@@ -825,7 +850,7 @@ export default function ReadingView({
       if (target && target.hasAttribute && target.hasAttribute('data-tooltip')) {
         const rect = target.getBoundingClientRect()
         const tooltipText = target.getAttribute('data-tooltip') || ''
-        
+
         // Crear tooltip en el body para evitar problemas de z-index
         const tooltipElement = document.createElement('div')
         tooltipElement.className = 'custom-tooltip'
@@ -837,7 +862,7 @@ export default function ReadingView({
         tooltipElement.style.zIndex = '999999'
         tooltipElement.style.opacity = '1'
         tooltipElement.style.visibility = 'visible'
-        
+
         // Crear flecha
         const arrowElement = document.createElement('div')
         arrowElement.className = 'custom-tooltip-arrow'
@@ -848,10 +873,10 @@ export default function ReadingView({
         arrowElement.style.zIndex = '999999'
         arrowElement.style.opacity = '1'
         arrowElement.style.visibility = 'visible'
-        
+
         document.body.appendChild(tooltipElement)
         document.body.appendChild(arrowElement)
-        
+
         // Guardar referencias para limpiar después
         target.setAttribute('data-tooltip-element', 'true')
         target.setAttribute('data-tooltip-id', tooltipElement.id || 'tooltip-' + Date.now())
@@ -865,7 +890,7 @@ export default function ReadingView({
         // Remover tooltips del DOM
         const tooltips = document.querySelectorAll('.custom-tooltip')
         const arrows = document.querySelectorAll('.custom-tooltip-arrow')
-        
+
         tooltips.forEach(tooltip => tooltip.remove())
         arrows.forEach(arrow => arrow.remove())
       }
@@ -873,7 +898,7 @@ export default function ReadingView({
 
     document.addEventListener('mouseenter', handleMouseEnter, true)
     document.addEventListener('mouseleave', handleMouseLeave, true)
-    
+
     return () => {
       document.removeEventListener('mouseenter', handleMouseEnter, true)
       document.removeEventListener('mouseleave', handleMouseLeave, true)
@@ -883,13 +908,12 @@ export default function ReadingView({
   return (
     <>
       {/* Breadcrumb fijo con altura reducida al hacer scroll - FUERA del contenedor principal */}
-      <div id={`breadcrumb`} className={`${focusMode ? 'fixed left-0 right-0' : 'sticky'} z-30 bg-white dark:bg-midnight-900 border-b border-neutral-200 dark:border-slate-800 transition-all duration-300 ${
-        focusMode 
-          ? 'top-0 py-2' 
-          : isScrolled 
-            ? 'top-[73px] py-2' 
-            : 'top-[73px] py-4'
-      }`}>
+      <div id={`breadcrumb`} className={`${focusMode ? 'fixed left-0 right-0' : 'sticky'} z-30 bg-white dark:bg-midnight-900 border-b border-neutral-200 dark:border-slate-800 transition-all duration-300 ${focusMode
+        ? 'top-0 py-2'
+        : isScrolled
+          ? 'top-[73px] py-2'
+          : 'top-[73px] py-4'
+        }`}>
         <div className="container-elegant">
           <div className="flex items-center justify-between">
             <nav className="breadcrumb">
@@ -909,37 +933,34 @@ export default function ReadingView({
               <span className="mx-2">•</span>
               <span className="text-primary-500 dark:text-neutral-500">Párrafo {activeParagraph}</span>
             </nav>
-            
+
             <div className="flex items-center space-x-2">
               <button
                 onClick={() => setLibraryOpen(!libraryOpen)}
-                className={`p-2 transition-colors ${
-                  libraryOpen 
-                    ? 'text-accent-600 hover:text-accent-800 dark:text-accent-500 dark:hover:text-accent-400' 
-                    : 'text-primary-600 hover:text-primary-800 dark:text-neutral-400 dark:hover:text-neutral-200'
-                }`}
+                className={`p-2 transition-colors ${libraryOpen
+                  ? 'text-accent-600 hover:text-accent-800 dark:text-accent-500 dark:hover:text-accent-400'
+                  : 'text-primary-600 hover:text-primary-800 dark:text-neutral-400 dark:hover:text-neutral-200'
+                  }`}
                 data-tooltip={libraryOpen ? 'Ocultar biblioteca' : 'Mostrar biblioteca'}
               >
                 <Library className="w-5 h-5" />
               </button>
               <button
                 onClick={() => setTocOpen(!tocOpen)}
-                className={`p-2 transition-colors ${
-                  tocOpen 
-                    ? 'text-accent-600 hover:text-accent-800' 
-                    : 'text-primary-600 hover:text-primary-800'
-                }`}
+                className={`p-2 transition-colors ${tocOpen
+                  ? 'text-accent-600 hover:text-accent-800'
+                  : 'text-primary-600 hover:text-primary-800'
+                  }`}
                 data-tooltip={tocOpen ? 'Ocultar índice de contenidos' : 'Mostrar índice de contenidos'}
               >
                 <BookOpen className="w-5 h-5" />
               </button>
               <button
                 onClick={() => setFocusMode(!focusMode)}
-                className={`p-2 transition-colors ${
-                  focusMode 
-                    ? 'text-accent-600 hover:text-accent-800' 
-                    : 'text-primary-600 hover:text-primary-800'
-                }`}
+                className={`p-2 transition-colors ${focusMode
+                  ? 'text-accent-600 hover:text-accent-800'
+                  : 'text-primary-600 hover:text-primary-800'
+                  }`}
                 data-tooltip={focusMode ? 'Salir del modo lectura enfocada' : 'Activar modo lectura enfocada'}
               >
                 <Focus className="w-5 h-5" />
@@ -951,13 +972,12 @@ export default function ReadingView({
 
       <div className="bg-neutral-50 dark:bg-midnight-900 transition-colors duration-200">
 
-      {/* Contenido principal con ancho fijo */}
-      <main 
-        ref={contentRef}
-        className={`mx-auto max-w-4xl max-[1400px]:max-w-[700px] px-4 lg:px-8 min-h-screen ${
-          windowWidth < 1200 && windowWidth >= 1024 ? 'ml-4' : ''
-        }`}
-      >
+        {/* Contenido principal con ancho fijo */}
+        <main
+          ref={contentRef}
+          className={`mx-auto max-w-4xl max-[1400px]:max-w-[700px] px-4 lg:px-8 min-h-screen ${windowWidth < 1200 && windowWidth >= 1024 ? 'ml-4' : ''
+            }`}
+        >
           <div className="relative">
             {showSkeleton && (
               <div
@@ -980,126 +1000,129 @@ export default function ReadingView({
               </div>
             )}
             <div className={`reading-content px-4 lg:px-8 ${contentWrapperClassName ?? ''}`}>
-            <header className="mb-16 text-center">
-              <h1 className="display-title mb-4">
-                {obra.titulo}
-              </h1>
-              <p className="text-xl text-primary-600 dark:text-neutral-400">
-                por {obra.autor}
-              </p>
-            </header>
+              <header className="mb-16 text-center">
+                <h1 className="display-title mb-4">
+                  {obra.titulo}
+                </h1>
+                <p className="text-xl text-primary-600 dark:text-neutral-400">
+                  por {obra.autor}
+                </p>
+              </header>
 
-            <div className="prose prose-lg max-w-none">
-              {parrafos.map((parrafo, index) => {
-                // Check if this paragraph starts a new section
-                const previousParagraph = index > 0 ? parrafos[index - 1] : null
-                const isNewSection = parrafo.seccion && parrafo.seccion !== previousParagraph?.seccion
-                
-                return (
-                  <div key={`${parrafo.numero}-${index}`}>
-                    {/* Section header */}
-                    {isNewSection && parrafo.seccion && (
-                      <div 
-                        id={`section-${parrafo.seccion.toLowerCase().replace(/\s+/g, '-')}`}
-                        className="section-header mb-8 mt-12 first:mt-0"
-                      >
-                        <h2 className="text-2xl font-display font-semibold text-primary-800 dark:text-neutral-200 border-b border-primary-200 dark:border-slate-700 pb-2">
-                          {parrafo.seccion}
-                        </h2>
-                      </div>
-                    )}
-                    
-                    {/* Paragraph */}
-                    <div
-                      id={`p${parrafo.numero}`}
-                      className="paragraph"
-                    >
-                      <div className="relative">
-                        <div 
-                          className={`paragraph-number transition-colors duration-300 w-5 h-5 flex items-center justify-center text-xs font-medium ${
-                            activeParagraph === parrafo.numero 
-                              ? 'paragraph-number-active' 
-                              : ''
-                          }`}
-                          onClick={() => setShowCopyDropdown(showCopyDropdown === parrafo.numero ? null : parrafo.numero)}
-                          style={{ cursor: 'pointer' }}
+              <div
+                className="prose prose-lg max-w-none transition-all duration-200"
+                style={{ fontSize: isFontSizeInitialized ? `${fontSize}%` : undefined }}
+              >
+                {parrafos.map((parrafo, index) => {
+                  // Check if this paragraph starts a new section
+                  const previousParagraph = index > 0 ? parrafos[index - 1] : null
+                  const isNewSection = parrafo.seccion && parrafo.seccion !== previousParagraph?.seccion
+
+                  return (
+                    <div key={`${parrafo.numero}-${index}`}>
+                      {/* Section header */}
+                      {isNewSection && parrafo.seccion && (
+                        <div
+                          id={`section-${parrafo.seccion.toLowerCase().replace(/\s+/g, '-')}`}
+                          className="section-header mb-8 mt-12 first:mt-0"
                         >
+                          <h2 className="text-2xl font-display font-semibold text-primary-800 dark:text-neutral-200 border-b border-primary-200 dark:border-slate-700 pb-2">
+                            {parrafo.seccion}
+                          </h2>
                         </div>
-                        
-                        {/* Dropdown para copiar enlace */}
-                        {showCopyDropdown === parrafo.numero && (
-                          <div className="absolute left-0 -top-1.5 z-50 bg-white dark:bg-slate-800 border border-primary-200 dark:border-slate-700 rounded-sm shadow-lg py-1 min-w-48">
-                            <button
-                              onClick={() => copyParagraphLink(parrafo.numero)}
-                              className="w-full text-left px-3 py-2 text-xs text-primary-700 dark:text-neutral-300 hover:bg-primary-50 dark:hover:bg-slate-700 transition-colors font-sans font-semibold"
-                            >
-                              Copiar enlace a este párrafo
-                            </button>
+                      )}
+
+                      {/* Paragraph */}
+                      <div
+                        id={`p${parrafo.numero}`}
+                        className="paragraph"
+                      >
+                        <div className="relative">
+                          <div
+                            className={`paragraph-number transition-colors duration-300 w-5 h-5 flex items-center justify-center text-xs font-medium ${activeParagraph === parrafo.numero
+                              ? 'paragraph-number-active'
+                              : ''
+                              }`}
+                            onClick={() => setShowCopyDropdown(showCopyDropdown === parrafo.numero ? null : parrafo.numero)}
+                            style={{ cursor: 'pointer' }}
+                          >
                           </div>
-                        )}
-                        <div 
-                          className="paragraph-content"
-                          dangerouslySetInnerHTML={{ __html: highlightHtml(parrafo.texto, highlightTerm, parrafo.numero) }}
-                        />
+
+                          {/* Dropdown para copiar enlace */}
+                          {showCopyDropdown === parrafo.numero && (
+                            <div className="absolute left-0 -top-1.5 z-50 bg-white dark:bg-slate-800 border border-primary-200 dark:border-slate-700 rounded-sm shadow-lg py-1 min-w-48">
+                              <button
+                                onClick={() => copyParagraphLink(parrafo.numero)}
+                                className="w-full text-left px-3 py-2 text-xs text-primary-700 dark:text-neutral-300 hover:bg-primary-50 dark:hover:bg-slate-700 transition-colors font-sans font-semibold"
+                              >
+                                Copiar enlace a este párrafo
+                              </button>
+                            </div>
+                          )}
+                          <div
+                            className="paragraph-content"
+                            style={{ fontSize: isFontSizeInitialized ? `${fontSize}%` : undefined }}
+                            dangerouslySetInnerHTML={{ __html: highlightHtml(parrafo.texto, highlightTerm, parrafo.numero) }}
+                          />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )
-              })}
-            </div>
+                  )
+                })}
+              </div>
             </div>
           </div>
         </main>
 
-      {/* Sidebar izquierdo flotante - Biblioteca */}
-      <aside 
-        className={`
+        {/* Sidebar izquierdo flotante - Biblioteca */}
+        <aside
+          className={`
           fixed left-0 w-64 bg-white dark:bg-midnight-900 lg:bg-gradient-to-l lg:from-neutral-100 lg:to-neutral-50 dark:lg:from-slate-800 dark:lg:to-midnight-900
           border-r border-neutral-200 dark:border-slate-800 transition-all duration-300 z-30
           ${libraryOpen && !focusMode ? 'translate-x-0' : '-translate-x-full'}
           ${isScrolled ? 'top-[126px]' : 'top-[142px]'}
         `}
-        style={{
-          height: isScrolled ? 'calc(100vh - 126px)' : 'calc(100vh - 142px)'
-        }}
-      >
-        <div className="h-full overflow-y-auto">
-          {/* Header del sidebar izquierdo */}
-          <div className="flex items-center justify-between p-3 border-b border-neutral-200 dark:border-slate-800">
-            <div className="flex items-center space-x-2">
-              <Library className="w-4 h-4 text-primary-700 dark:text-neutral-300" />
-              <h3 className="font-medium text-primary-900 dark:text-neutral-100 text-base">Biblioteca</h3>
+          style={{
+            height: isScrolled ? 'calc(100vh - 126px)' : 'calc(100vh - 142px)'
+          }}
+        >
+          <div className="h-full overflow-y-auto">
+            {/* Header del sidebar izquierdo */}
+            <div className="flex items-center justify-between p-3 border-b border-neutral-200 dark:border-slate-800">
+              <div className="flex items-center space-x-2">
+                <Library className="w-4 h-4 text-primary-700 dark:text-neutral-300" />
+                <h3 className="font-medium text-primary-900 dark:text-neutral-100 text-base">Biblioteca</h3>
+              </div>
+              <button
+                onClick={() => setLibraryOpen(false)}
+                className="p-1 text-primary-500 dark:text-neutral-400 hover:text-primary-700 dark:hover:text-neutral-200"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
-            <button
-              onClick={() => setLibraryOpen(false)}
-              className="p-1 text-primary-500 dark:text-neutral-400 hover:text-primary-700 dark:hover:text-neutral-200"
-            >
-              <X className="w-4 h-4" />
-            </button>
+
+            {/* Contenido de la biblioteca */}
+            <WorksTree
+              currentObraSlug={obra.slug}
+              currentAutorSlug={obra.autorSlug}
+              onObraSelect={onObraSelect}
+            />
           </div>
+        </aside>
 
-          {/* Contenido de la biblioteca */}
-          <WorksTree 
-            currentObraSlug={obra.slug}
-            currentAutorSlug={obra.autorSlug}
-            onObraSelect={onObraSelect}
-          />
-        </div>
-      </aside>
-
-      {/* Sidebar derecho flotante - Índice */}
-      <aside 
-        ref={sidebarRef}
-        className={`
+        {/* Sidebar derecho flotante - Índice */}
+        <aside
+          ref={sidebarRef}
+          className={`
           fixed right-0 w-64 bg-white dark:bg-midnight-900 lg:bg-gradient-to-r lg:from-neutral-100 lg:to-neutral-50 dark:lg:from-slate-800 dark:lg:to-midnight-900
           border-l border-neutral-200 dark:border-slate-800 transition-all duration-300 z-30
           ${tocOpen && !focusMode ? 'translate-x-0' : 'translate-x-full'}
           ${isScrolled ? 'top-[126px]' : 'top-[142px]'}
         `}
-        style={{
-          height: isScrolled ? 'calc(100vh - 126px)' : 'calc(100vh - 142px)'
-        }}
-      >
+          style={{
+            height: isScrolled ? 'calc(100vh - 126px)' : 'calc(100vh - 142px)'
+          }}
+        >
           <div ref={sidebarScrollRef} className="h-full overflow-y-auto lg:overflow-y-auto">
             {/* Header del sidebar derecho */}
             <div className="flex items-center justify-between p-3 border-b border-neutral-200 dark:border-slate-800">
@@ -1130,6 +1153,36 @@ export default function ReadingView({
                 </div>
               )}
 
+              {/* Control de tamaño de letra (Movido al final) */}
+              <div className="mt-8 pt-6 border-t border-neutral-200 dark:border-slate-800">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="font-medium text-primary-900 dark:text-neutral-100">Tamaño de texto</h4>
+                  <span className="text-xs text-primary-500 dark:text-neutral-400 font-mono">{fontSize}%</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={decreaseFontSize}
+                    disabled={fontSize <= 70}
+                    className="flex-1 h-10 flex items-center justify-center p-2 bg-neutral-100 dark:bg-slate-800 hover:bg-neutral-200 dark:hover:bg-slate-700 text-primary-700 dark:text-neutral-300 border border-neutral-200 dark:border-slate-700 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Reducir tamaño"
+                    aria-label="Reducir tamaño de letra"
+                  >
+                    <Type className="w-3 h-3 mr-2" />
+                    <Minus className="w-3 h-3" />
+                  </button>
+                  <button
+                    onClick={increaseFontSize}
+                    disabled={fontSize >= 200}
+                    className="flex-1 h-10 flex items-center justify-center p-2 bg-neutral-100 dark:bg-slate-800 hover:bg-neutral-200 dark:hover:bg-slate-700 text-primary-700 dark:text-neutral-300 border border-neutral-200 dark:border-slate-700 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Aumentar tamaño"
+                    aria-label="Aumentar tamaño de letra"
+                  >
+                    <Type className="w-4 h-4 mr-2" />
+                    <Plus className="w-3 h-3" />
+                  </button>
+                </div>
+              </div>
+
               {/* Sección de Descargas */}
               {(obra.archivoPdf || obra.archivoDoc || obra.archivoEpub) && (
                 <div className="mt-6 pt-4 border-t border-neutral-200 dark:border-slate-800">
@@ -1147,7 +1200,7 @@ export default function ReadingView({
                         <span className="font-medium">PDF</span>
                       </a>
                     )}
-                    
+
                     {obra.archivoDoc && (
                       <a
                         href={`/api/files/${obra.archivoDoc}`}
@@ -1160,7 +1213,7 @@ export default function ReadingView({
                         <span className="font-medium">DOC</span>
                       </a>
                     )}
-                    
+
                     {obra.archivoEpub && (
                       <a
                         href={`/api/files/${obra.archivoEpub}`}
@@ -1199,7 +1252,7 @@ export default function ReadingView({
                         <span className="text-xs text-neutral-500">de {parrafos.length}</span>
                       </form>
                     ) : (
-                      <span 
+                      <span
                         className="font-medium text-primary-900 cursor-pointer hover:text-primary-700 transition-colors"
                         onClick={handleParagraphNumberClick}
                         title="Hacer clic para navegar a un párrafo específico"
@@ -1224,7 +1277,7 @@ export default function ReadingView({
                       Siguiente →
                     </button>
                   </div>
-                  
+
                   <div className="text-xs text-primary-500 space-y-1 pt-2 border-t border-primary-200">
                     <p><strong>Atajos de teclado:</strong></p>
                     <p>↑↓ Navegar párrafos</p>
@@ -1238,72 +1291,72 @@ export default function ReadingView({
           </div>
         </aside>
 
-      {/* Barra flotante de navegación de ocurrencias */}
-      {showFinderBar && highlightTerm && occurrences.length > 0 && (
-        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50">
-          <div className="bg-white border border-primary-200 rounded-sm shadow-lg px-4 py-2 flex items-center space-x-3">
-            <button
-              onClick={goToPreviousOccurrence}
-              className="p-1 text-primary-600 hover:text-primary-800 transition-colors"
-              title="Ocurrencia anterior"
-            >
-              <ChevronUp className="w-4 h-4" />
-            </button>
-            <span className="text-sm text-primary-700 font-medium min-w-0">
-              {currentOccurrenceIndex + 1} de {occurrences.length}
-            </span>
-            <button
-              onClick={goToNextOccurrence}
-              className="p-1 text-primary-600 hover:text-primary-800 transition-colors"
-              title="Siguiente ocurrencia"
-            >
-              <ChevronDown className="w-4 h-4" />
-            </button>
-            <div className="w-px h-4 bg-primary-200"></div>
-            <button
-              onClick={clearHighlighting}
-              className="flex items-center space-x-1 text-sm text-primary-600 hover:text-primary-800 transition-colors"
-              title="Dejar de resaltar"
-            >
-              <X className="w-4 h-4" />
-              <span>Dejar de resaltar</span>
-            </button>
+        {/* Barra flotante de navegación de ocurrencias */}
+        {showFinderBar && highlightTerm && occurrences.length > 0 && (
+          <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50">
+            <div className="bg-white border border-primary-200 rounded-sm shadow-lg px-4 py-2 flex items-center space-x-3">
+              <button
+                onClick={goToPreviousOccurrence}
+                className="p-1 text-primary-600 hover:text-primary-800 transition-colors"
+                title="Ocurrencia anterior"
+              >
+                <ChevronUp className="w-4 h-4" />
+              </button>
+              <span className="text-sm text-primary-700 font-medium min-w-0">
+                {currentOccurrenceIndex + 1} de {occurrences.length}
+              </span>
+              <button
+                onClick={goToNextOccurrence}
+                className="p-1 text-primary-600 hover:text-primary-800 transition-colors"
+                title="Siguiente ocurrencia"
+              >
+                <ChevronDown className="w-4 h-4" />
+              </button>
+              <div className="w-px h-4 bg-primary-200"></div>
+              <button
+                onClick={clearHighlighting}
+                className="flex items-center space-x-1 text-sm text-primary-600 hover:text-primary-800 transition-colors"
+                title="Dejar de resaltar"
+              >
+                <X className="w-4 h-4" />
+                <span>Dejar de resaltar</span>
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Pestaña para mostrar biblioteca cuando está oculta */}
-      {!libraryOpen && !focusMode && (
-        <button
-          onClick={() => setLibraryOpen(true)}
-          className="sidebar-tab sidebar-tab-left"
-          title="Mostrar biblioteca"
-        >
-          <Library className="w-4 h-4" />
-        </button>
-      )}
+        {/* Pestaña para mostrar biblioteca cuando está oculta */}
+        {!libraryOpen && !focusMode && (
+          <button
+            onClick={() => setLibraryOpen(true)}
+            className="sidebar-tab sidebar-tab-left"
+            title="Mostrar biblioteca"
+          >
+            <Library className="w-4 h-4" />
+          </button>
+        )}
 
-      {/* Pestaña para mostrar índice cuando está oculto */}
-      {!tocOpen && !focusMode && (
-        <button
-          onClick={() => setTocOpen(true)}
-          className="sidebar-tab sidebar-tab-right"
-          title="Mostrar índice"
-        >
-          <BookOpen className="w-4 h-4" />
-        </button>
-      )}
+        {/* Pestaña para mostrar índice cuando está oculto */}
+        {!tocOpen && !focusMode && (
+          <button
+            onClick={() => setTocOpen(true)}
+            className="sidebar-tab sidebar-tab-right"
+            title="Mostrar índice"
+          >
+            <BookOpen className="w-4 h-4" />
+          </button>
+        )}
 
-      {/* Overlay para móvil */}
-      {(tocOpen || libraryOpen) && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-20 z-20 lg:hidden"
-          onClick={() => {
-            setTocOpen(false)
-            setLibraryOpen(false)
-          }}
-        />
-      )}
+        {/* Overlay para móvil */}
+        {(tocOpen || libraryOpen) && (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-20 z-20 lg:hidden"
+            onClick={() => {
+              setTocOpen(false)
+              setLibraryOpen(false)
+            }}
+          />
+        )}
 
       </div>
     </>

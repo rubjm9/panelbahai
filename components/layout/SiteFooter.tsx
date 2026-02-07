@@ -1,5 +1,22 @@
-export default function SiteFooter() {
+interface SiteFooterProps {
+  variant?: 'default' | 'minimal'
+}
+
+export default function SiteFooter({ variant = 'default' }: SiteFooterProps) {
   const year = new Date().getFullYear()
+
+  if (variant === 'minimal') {
+    return (
+      <footer className="w-full py-6 mt-auto border-t border-neutral-200 dark:border-slate-800 bg-white dark:bg-slate-950 transition-colors duration-200">
+        <div className="container mx-auto px-4 text-center">
+          <p className="text-sm text-neutral-500 dark:text-neutral-400">
+            &copy; {year} Panel de Traducción de Literatura Bahá'í al Español
+          </p>
+        </div>
+      </footer>
+    )
+  }
+
   return (
     <footer className="bg-primary-900 dark:bg-midnight-900 text-white mt-0 transition-colors duration-200">
       <div className="container-elegant py-12">

@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
-import ReadingView from './ReadingView'
+import ReadingView, { Section } from './ReadingView'
 import WorksTree from './WorksTree'
 
 export interface ObraData {
@@ -16,43 +16,23 @@ export interface ObraData {
     archivoEpub?: string
   }
   parrafos: { numero: number; texto: string; seccion?: string }[]
-  secciones: {
-    id: string
-    titulo: string
-    slug: string
-    nivel: number
-    orden: number
-    subsecciones?: {
-      id: string
-      titulo: string
-      slug: string
-      nivel: number
-      orden: number
-      subsecciones?: unknown[]
-    }[]
-  }[]
+  secciones: Section[]
 }
 
 function normalizeApiData(data: {
   obra: { titulo: string; slug: string; autor: { nombre: string; slug: string }; archivoDoc?: string; archivoPdf?: string; archivoEpub?: string }
-  secciones: { _id: string; titulo: string; slug: string; nivel: number; orden: number; subsecciones?: { _id: string; titulo: string; slug: string; nivel: number; orden: number; subsecciones?: unknown[] }[] }[]
+  secciones: { _id: string; titulo: string; slug: string; nivel: number; orden: number; subsecciones?: { _id: string; titulo: string; slug: string; nivel: number; orden: number; subsecciones?: any[] }[] }[]
   parrafos: { numero: number; texto: string; seccion?: string }[]
 }): ObraData {
-  const mapSection = (sec: { _id: string; titulo: string; slug: string; nivel: number; orden: number; subsecciones?: { _id: string; titulo: string; slug: string; nivel: number; orden: number; subsecciones?: unknown[] }[] }) => ({
-    id: sec._id,
+  const mapSection = (sec: any): Section => ({
+    id: sec._id || sec.id,
     titulo: sec.titulo,
     slug: sec.slug,
     nivel: sec.nivel,
     orden: sec.orden,
-    subsecciones: (sec.subsecciones || []).map(sub => ({
-      id: sub._id,
-      titulo: sub.titulo,
-      slug: sub.slug,
-      nivel: sub.nivel,
-      orden: sub.orden,
-      subsecciones: []
-    }))
+    subsecciones: (sec.subsecciones || []).map(mapSection)
   })
+
   return {
     obra: {
       titulo: data.obra.titulo,
@@ -86,6 +66,13 @@ export default function ReadingPageClient({
   const [workData, setWorkData] = useState<ObraData>(initialData)
   const [transitionPhase, setTransitionPhase] = useState<'idle' | 'out' | 'skeleton' | 'in'>('idle')
   const [isLoading, setIsLoading] = useState(false)
+
+  // Actualizar título del documento cuando cambia la obra (navegación cliente)
+  useEffect(() => {
+    if (workData && workData.obra) {
+      document.title = `${workData.obra.titulo} - ${workData.obra.autor} | Panel Bahá'í`
+    }
+  }, [workData])
 
   const handleObraSelect = useCallback(async (autorSlug: string, obraSlug: string) => {
     const targetPath = `/autores/${autorSlug}/${obraSlug}`
