@@ -133,9 +133,10 @@ const fallbackSearchDocuments: SearchDocument[] = [
 export async function GET(request: NextRequest) {
   try {
     const connection = await dbConnect();
-    
+
     const { searchParams } = request.nextUrl;
     const buildIndex = searchParams.get('buildIndex') === 'true';
+    const forceRebuild = searchParams.get('force') === 'true';
 
     if (buildIndex) {
       // Si la conexión está deshabilitada durante el build, usar fallback
@@ -146,21 +147,25 @@ export async function GET(request: NextRequest) {
           count: fallbackSearchDocuments.length,
           source: 'fallback'
         });
-        
+
         // Headers de cache para fallback
         response.headers.set('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
         return response;
       }
 
-      // Primero intentar obtener el índice de la base de datos
-      const existingIndex = await SearchIndex.findOne({ version: '1.0' });
-      
+      // Primero intentar obtener el índice de la base de datos (si no se fuerza la reconstrucción)
+      let existingIndex = null;
+
+      if (!forceRebuild) {
+        existingIndex = await SearchIndex.findOne({ version: '1.0' });
+      }
+
       if (existingIndex && existingIndex.documents.length > 0) {
         console.log(`📚 Usando índice existente con ${existingIndex.documents.length} documentos`);
-        
+
         // Generar ETag basado en lastUpdated y count
         const etag = `"${existingIndex.lastUpdated?.getTime() || Date.now()}-${existingIndex.count}"`;
-        
+
         // Verificar If-None-Match header para cache del cliente
         const ifNoneMatch = request.headers.get('if-none-match');
         if (ifNoneMatch === etag) {
@@ -172,7 +177,7 @@ export async function GET(request: NextRequest) {
             }
           });
         }
-        
+
         const response = NextResponse.json({
           success: true,
           data: existingIndex.documents,
@@ -183,12 +188,12 @@ export async function GET(request: NextRequest) {
           lastUpdated: existingIndex.lastUpdated,
           source: 'database'
         });
-        
+
         // Headers de cache y ETag
         response.headers.set('ETag', etag);
         response.headers.set('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
         response.headers.set('Content-Type', 'application/json; charset=utf-8');
-        
+
         return response;
       }
 
@@ -293,7 +298,7 @@ export async function GET(request: NextRequest) {
       // Generar ETag para el nuevo índice
       const lastUpdated = new Date();
       const etag = `"${lastUpdated.getTime()}-${documents.length}"`;
-      
+
       const response = NextResponse.json({
         success: true,
         data: documents,
@@ -304,12 +309,12 @@ export async function GET(request: NextRequest) {
         lastUpdated,
         source: 'database'
       });
-      
+
       // Headers de cache y ETag
       response.headers.set('ETag', etag);
       response.headers.set('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
       response.headers.set('Content-Type', 'application/json; charset=utf-8');
-      
+
       return response;
     }
 
@@ -320,11 +325,11 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('Error in search API, using fallback data:', error);
-    
+
     // En caso de error, devolver datos de fallback
     const { searchParams } = request.nextUrl;
     const buildIndex = searchParams.get('buildIndex') === 'true';
-    
+
     if (buildIndex) {
       const response = NextResponse.json({
         success: true,
@@ -332,12 +337,12 @@ export async function GET(request: NextRequest) {
         count: fallbackSearchDocuments.length,
         source: 'fallback'
       });
-      
+
       // Headers de cache para fallback
       response.headers.set('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
       return response;
     }
-    
+
     return NextResponse.json({
       success: false,
       error: 'Error interno del servidor'

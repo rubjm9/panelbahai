@@ -29,15 +29,15 @@ interface CachedResult {
  */
 function levenshteinDistance(a: string, b: string): number {
   const matrix: number[][] = [];
-  
+
   for (let i = 0; i <= b.length; i++) {
     matrix[i] = [i];
   }
-  
+
   for (let j = 0; j <= a.length; j++) {
     matrix[0][j] = j;
   }
-  
+
   for (let i = 1; i <= b.length; i++) {
     for (let j = 1; j <= a.length; j++) {
       if (b.charAt(i - 1) === a.charAt(j - 1)) {
@@ -51,7 +51,7 @@ function levenshteinDistance(a: string, b: string): number {
       }
     }
   }
-  
+
   return matrix[b.length][a.length];
 }
 
@@ -65,24 +65,24 @@ function findSimilarCachedQuery(
 ): string | null {
   let bestMatch: string | null = null;
   let bestDistance = Infinity;
-  
+
   // Convertir MapIterator a array para compatibilidad con TypeScript
   for (const cachedQuery of Array.from(cache.keys())) {
     // Verificar si es prefijo
-    if (cachedQuery.toLowerCase().startsWith(query.toLowerCase()) || 
-        query.toLowerCase().startsWith(cachedQuery.toLowerCase())) {
+    if (cachedQuery.toLowerCase().startsWith(query.toLowerCase()) ||
+      query.toLowerCase().startsWith(cachedQuery.toLowerCase())) {
       return cachedQuery;
     }
-    
+
     // Calcular distancia de Levenshtein
     const distance = levenshteinDistance(query.toLowerCase(), cachedQuery.toLowerCase());
-    
+
     if (distance <= maxDistance && distance < bestDistance) {
       bestDistance = distance;
       bestMatch = cachedQuery;
     }
   }
-  
+
   return bestMatch;
 }
 
@@ -112,7 +112,7 @@ export function useSearch(options: UseSearchOptions = {}) {
   const initializationRef = useRef(false);
 
   // Inicializar índice base
-  const initialize = useCallback(async () => {
+  const initialize = useCallback(async (forceRebuild = false) => {
     if (initializationRef.current || worker.isLoading) {
       return;
     }
@@ -138,14 +138,15 @@ export function useSearch(options: UseSearchOptions = {}) {
       }
 
       // Si no hay cache válido, cargar desde API
-      if (!documents) {
-        const response = await fetch('/api/search?buildIndex=true');
+      if (!documents || forceRebuild) {
+        const url = `/api/search?buildIndex=true${forceRebuild ? '&force=true' : ''}`;
+        const response = await fetch(url);
         if (!response.ok) {
           throw new Error('Error al obtener datos para el índice');
         }
 
         const { data: fetchedDocuments, lastUpdated } = await response.json();
-        
+
         if (!fetchedDocuments || fetchedDocuments.length === 0) {
           throw new Error('No se encontraron documentos para indexar');
         }
@@ -188,7 +189,7 @@ export function useSearch(options: UseSearchOptions = {}) {
 
       setIsInitialized(true);
       console.log(`✅ Índice de búsqueda inicializado con ${documents.length} documentos`);
-      
+
       // Precargar obras populares después de inicializar
       if (typeof window !== 'undefined') {
         setTimeout(() => {
@@ -238,25 +239,25 @@ export function useSearch(options: UseSearchOptions = {}) {
         setTotalResults(exactMatch.total);
         return { results: exactMatch.results, total: exactMatch.total };
       }
-      
+
       // 2. Buscar por prefijo (si la query es más corta que alguna en cache)
       if (query.length >= 3) {
         // Convertir MapIterator a array para compatibilidad con TypeScript
         for (const [cachedQuery, cached] of Array.from(resultsCacheRef.current.entries())) {
           if (cachedQuery.toLowerCase().startsWith(query.toLowerCase()) ||
-              query.toLowerCase().startsWith(cachedQuery.toLowerCase())) {
+            query.toLowerCase().startsWith(cachedQuery.toLowerCase())) {
             const age = Date.now() - cached.timestamp;
             if (age < cacheDuration) {
               cached.accessCount++;
               cached.lastAccess = Date.now();
               // Filtrar resultados para que coincidan con la query más corta
               const filteredResults = query.length < cachedQuery.length
-                ? cached.results.filter((r: SearchResult) => 
-                    r.texto.toLowerCase().includes(query.toLowerCase()) ||
-                    r.titulo.toLowerCase().includes(query.toLowerCase())
-                  )
+                ? cached.results.filter((r: SearchResult) =>
+                  r.texto.toLowerCase().includes(query.toLowerCase()) ||
+                  r.titulo.toLowerCase().includes(query.toLowerCase())
+                )
                 : cached.results;
-              
+
               setResults(filteredResults);
               setTotalResults(filteredResults.length);
               return { results: filteredResults, total: filteredResults.length };
@@ -264,7 +265,7 @@ export function useSearch(options: UseSearchOptions = {}) {
           }
         }
       }
-      
+
       // 3. Buscar términos similares (solo para queries cortas para evitar falsos positivos)
       if (query.length >= 3 && query.length <= 10) {
         const similarQuery = findSimilarCachedQuery(query, resultsCacheRef.current, 2);
@@ -274,11 +275,11 @@ export function useSearch(options: UseSearchOptions = {}) {
             similar.accessCount++;
             similar.lastAccess = Date.now();
             // Usar resultados similares pero filtrar por la query actual
-            const filteredResults = similar.results.filter(r => 
+            const filteredResults = similar.results.filter(r =>
               r.texto.toLowerCase().includes(query.toLowerCase()) ||
               r.titulo.toLowerCase().includes(query.toLowerCase())
             );
-            
+
             setResults(filteredResults);
             setTotalResults(filteredResults.length);
             return { results: filteredResults, total: filteredResults.length };
@@ -316,7 +317,7 @@ export function useSearch(options: UseSearchOptions = {}) {
           accessCount: 1,
           lastAccess: Date.now()
         });
-        
+
         // Limpiar cache antiguo o poco usado (LRU)
         if (resultsCacheRef.current.size > 50) {
           const entries = Array.from(resultsCacheRef.current.entries());
@@ -371,13 +372,13 @@ export function useSearch(options: UseSearchOptions = {}) {
 
       const { data: documents } = await response.json();
       const obraDocuments = documents.filter(
-        (doc: SearchDocument) => 
+        (doc: SearchDocument) =>
           doc.obraSlug === obraSlug && doc.autorSlug === autorSlug
       );
 
       if (obraDocuments.length > 0) {
         chunkManager.loadChunk(obraSlug, autorSlug, obraDocuments);
-        
+
         // Agregar al índice usando searchEngine directamente
         const { searchEngine } = await import('@/utils/search');
         const allLoadedDocs = chunkManager.getLoadedDocuments();
@@ -402,8 +403,8 @@ export function useSearch(options: UseSearchOptions = {}) {
     searchEngine.clearIndex();
     chunkManager.clear();
     resultsCacheRef.current.clear();
-    
-    // Limpiar cache de IndexedDB
+
+    // Clear IndexedDB cache
     if (indexedDBStorage.isAvailable()) {
       try {
         await indexedDBStorage.clearIndex();
@@ -411,8 +412,8 @@ export function useSearch(options: UseSearchOptions = {}) {
         console.warn('Error limpiando IndexedDB:', error);
       }
     }
-    
-    await initialize();
+
+    await initialize(true); // Pass force=true
   }, [initialize]);
 
   return {
