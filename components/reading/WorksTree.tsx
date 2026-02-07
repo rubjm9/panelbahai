@@ -30,9 +30,11 @@ interface Obra {
 interface WorksTreeProps {
   currentObraSlug?: string;
   currentAutorSlug?: string;
+  /** Si se proporciona, al hacer clic en una obra se llama esto en lugar de navegar con Link */
+  onObraSelect?: (autorSlug: string, obraSlug: string) => void;
 }
 
-export default function WorksTree({ currentObraSlug, currentAutorSlug }: WorksTreeProps) {
+export default function WorksTree({ currentObraSlug, currentAutorSlug, onObraSelect }: WorksTreeProps) {
   const [autores, setAutores] = useState<Autor[]>([])
   const [obrasPorAutor, setObrasPorAutor] = useState<Record<string, Obra[]>>({})
   const [expandedAutores, setExpandedAutores] = useState<Set<string>>(new Set())
@@ -167,18 +169,33 @@ export default function WorksTree({ currentObraSlug, currentAutorSlug }: WorksTr
                 <div className="ml-6 space-y-1">
                   {obras.map((obra) => {
                     const isCurrentObra = obra.slug === currentObraSlug
+                    const linkClass = `
+                          flex items-center space-x-2 py-1.5 px-3 rounded-sm transition-colors w-full text-left
+                          ${isCurrentObra 
+                            ? 'text-primary-900 dark:text-white font-medium bg-neutral-200 dark:bg-slate-700' 
+                            : 'text-primary-600 dark:text-neutral-300 hover:bg-primary-50 dark:hover:bg-slate-800'
+                          }
+                        `
+                    
+                    if (onObraSelect) {
+                      return (
+                        <button
+                          key={obra._id}
+                          type="button"
+                          onClick={() => onObraSelect(autor.slug, obra.slug)}
+                          className={linkClass}
+                        >
+                          <BookOpen className="w-3 h-3 flex-shrink-0 text-primary-500 dark:text-neutral-500" />
+                          <span className="text-xs truncate">{obra.titulo}</span>
+                        </button>
+                      )
+                    }
                     
                     return (
                       <Link
                         key={obra._id}
                         href={`/autores/${autor.slug}/${obra.slug}`}
-                        className={`
-                          flex items-center space-x-2 py-1.5 px-3 rounded-sm transition-colors
-                          ${isCurrentObra 
-                            ? 'text-primary-900 dark:text-white font-medium bg-neutral-200 dark:bg-slate-700' 
-                            : 'text-primary-600 dark:text-neutral-300 hover:bg-primary-50 dark:hover:bg-slate-800'
-                          }
-                        `}
+                        className={linkClass}
                       >
                         <BookOpen className="w-3 h-3 flex-shrink-0 text-primary-500 dark:text-neutral-500" />
                         <span className="text-xs truncate">{obra.titulo}</span>

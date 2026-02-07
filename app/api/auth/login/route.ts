@@ -4,6 +4,9 @@ import Usuario from '@/models/Usuario';
 import { verifyPassword, signJWT } from '@/lib/auth';
 import { loginRateLimit, getRateLimitIdentifier, checkRateLimit } from '@/lib/rateLimit';
 
+// Forzar runtime de Node.js (no edge) porque jsonwebtoken y bcryptjs requieren crypto de Node.js
+export const runtime = 'nodejs';
+
 export async function POST(request: NextRequest) {
   try {
     // Rate limiting: 5 intentos cada 15 minutos por IP
@@ -11,6 +14,7 @@ export async function POST(request: NextRequest) {
     const rateLimitResult = await checkRateLimit(loginRateLimit, identifier);
     
     if (!rateLimitResult.success) {
+      console.warn('Rate limit excedido:', { identifier, remaining: rateLimitResult.remaining });
       return NextResponse.json(
         { 
           success: false, 
@@ -33,6 +37,8 @@ export async function POST(request: NextRequest) {
     
     const body = await request.json();
     const { email, password } = body;
+    
+    console.log('Intento de login:', { email: email?.substring(0, 10) + '...', hasPassword: !!password });
 
     if (!email || !password) {
       return NextResponse.json(
@@ -42,12 +48,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Buscar usuario
+    const emailLower = email.toLowerCase().trim();
     const usuario = await Usuario.findOne({ 
-      email: email.toLowerCase(), 
+      email: emailLower, 
       activo: true 
     });
 
     if (!usuario) {
+      console.error('Login fallido: Usuario no encontrado', { email: emailLower });
       return NextResponse.json(
         { success: false, error: 'Credenciales inválidas' },
         { status: 401 }
@@ -58,6 +66,7 @@ export async function POST(request: NextRequest) {
     const isValidPassword = await verifyPassword(password, usuario.password);
     
     if (!isValidPassword) {
+      console.error('Login fallido: Contraseña inválida', { email: emailLower });
       return NextResponse.json(
         { success: false, error: 'Credenciales inválidas' },
         { status: 401 }

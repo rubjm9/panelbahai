@@ -18,6 +18,7 @@
     "dev-domain": "bash scripts/dev-with-domain.sh",
     "seed": "node scripts/seed-data.js",
     "init-admin": "node scripts/init-admin.js",
+    "reset-admin": "node scripts/reset-admin-password.js",
     "clean": "rm -rf .next && rm -rf node_modules/.cache"
   },
   "dependencies": {

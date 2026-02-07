@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getUserFromRequest, hasPermission } from '@/lib/auth';
 
+/**
+ * Middleware simplificado que solo verifica la presencia de la cookie de autenticación.
+ * La verificación real del JWT se hace en las rutas protegidas que tienen acceso
+ * al runtime de Node.js (necesario para jsonwebtoken que usa crypto de Node.js).
+ * 
+ * El middleware se ejecuta en edge runtime, por lo que no puede usar módulos de Node.js
+ * como crypto que requiere jsonwebtoken.
+ */
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -8,19 +15,20 @@ export function middleware(request: NextRequest) {
   const isAdminRoute = pathname.startsWith('/admin') && pathname !== '/admin/login';
   const isAdminAPI = pathname.startsWith('/api/admin');
 
-  // Si es ruta admin o API admin, verificar autenticación
+  // Si es ruta admin o API admin, verificar presencia de cookie de autenticación
   if (isAdminRoute || isAdminAPI) {
-    const user = getUserFromRequest(request);
+    const authToken = request.cookies.get('auth-token')?.value;
 
-    // Si no hay usuario autenticado
-    if (!user) {
+    // Si no hay cookie de autenticación, redirigir/bloquear
+    // La verificación real del JWT se hace en las rutas protegidas
+    if (!authToken) {
       // Para rutas de página, redirigir a login
       if (isAdminRoute) {
         const loginUrl = new URL('/admin/login', request.url);
         loginUrl.searchParams.set('redirect', pathname);
         return NextResponse.redirect(loginUrl);
       }
-      // Para APIs, retornar 401
+      // Para APIs, retornar 401 (la API hará la verificación real del JWT)
       if (isAdminAPI) {
         return NextResponse.json(
           { success: false, error: 'No autorizado' },
@@ -28,27 +36,10 @@ export function middleware(request: NextRequest) {
         );
       }
     }
-
-    // Verificar que tenga rol admin o editor (mínimo para acceder a admin)
-    const requiredRole = 'admin';
-    if (!hasPermission(user!.rol, requiredRole)) {
-      // Para rutas de página, redirigir a login con mensaje
-      if (isAdminRoute) {
-        const loginUrl = new URL('/admin/login', request.url);
-        loginUrl.searchParams.set('error', 'insufficient_permissions');
-        return NextResponse.redirect(loginUrl);
-      }
-      // Para APIs, retornar 403
-      if (isAdminAPI) {
-        return NextResponse.json(
-          { success: false, error: 'Permisos insuficientes' },
-          { status: 403 }
-        );
-      }
-    }
   }
 
   // Continuar con la request
+  // Las rutas protegidas verificarán el JWT usando requireAdminAuth() o requireAdminAPI()
   return NextResponse.next();
 }
 

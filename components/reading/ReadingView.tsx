@@ -34,6 +34,12 @@ interface ReadingViewProps {
   secciones: Section[];
   currentParagraph?: number;
   highlightQuery?: string;
+  /** Si se proporciona, la biblioteca usará navegación cliente en lugar de recargar la página */
+  onObraSelect?: (autorSlug: string, obraSlug: string) => void;
+  /** Clase para animar el contenido al cambiar de obra (fade out/in) */
+  contentWrapperClassName?: string;
+  /** Mostrar skeleton loader mientras se carga otra obra */
+  showSkeleton?: boolean;
 }
 
 export default function ReadingView({ 
@@ -41,7 +47,10 @@ export default function ReadingView({
   parrafos, 
   secciones, 
   currentParagraph,
-  highlightQuery
+  highlightQuery,
+  onObraSelect,
+  contentWrapperClassName,
+  showSkeleton = false
 }: ReadingViewProps) {
   const [activeSection, setActiveSection] = useState<string>('')
   const [activeParagraph, setActiveParagraph] = useState<number>(currentParagraph || 1)
@@ -104,6 +113,7 @@ export default function ReadingView({
   const activeParagraphRef = useRef<number>(activeParagraph)
   const isUserScrolling = useRef<boolean>(false)
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const hasRunInitialHashScroll = useRef<boolean>(false)
 
   // Sincronizar término de resaltado desde props/URL/sessionStorage
   useEffect(() => {
@@ -409,18 +419,21 @@ export default function ReadingView({
       }
     }
 
-    // Ejecutar inmediatamente si hay hash en la URL
-    if (window.location.hash) {
+    // Solo ejecutar scroll al ancla en el montaje inicial si la URL ya trae hash (p. ej. enlace compartido).
+    // No volver a ejecutar cuando el efecto se re-ejecuta por cambio de focusMode/isScrolled,
+    // para evitar que al subir al tope se vuelva a hacer scroll al párrafo del hash.
+    if (window.location.hash && !hasRunInitialHashScroll.current) {
+      hasRunInitialHashScroll.current = true
       handleHashChange()
     }
 
-    // Escuchar cambios en el hash
+    // Escuchar cambios en el hash (enlaces, atrás/adelante)
     window.addEventListener('hashchange', handleHashChange)
     
     return () => {
       window.removeEventListener('hashchange', handleHashChange)
     }
-  }, [focusMode, isScrolled]) // Agregar dependencias para recalcular offset
+  }, [focusMode, isScrolled]) // Dependencias para que getHeaderOffset use valores actuales
 
   // Detectar scroll para hacer el header más fino y actualizar scroll-margin-top
   useEffect(() => {
@@ -594,10 +607,6 @@ export default function ReadingView({
 
   // Update active paragraph and section usando IntersectionObserver
   useEffect(() => {
-    if (isNavigatingToHash.current) {
-      return
-    }
-
     const paragraphElements = document.querySelectorAll('.paragraph')
     const observers: IntersectionObserver[] = []
     
@@ -606,8 +615,8 @@ export default function ReadingView({
     let updateTimeout: NodeJS.Timeout | null = null
 
     const updateActiveParagraph = () => {
-      // No actualizar si el usuario está haciendo scroll manualmente
-      if (isUserScrolling.current) {
+      // No actualizar durante navegación programática (p. ej. al abrir un enlace con ancla)
+      if (isNavigatingToHash.current) {
         return
       }
 
@@ -949,7 +958,28 @@ export default function ReadingView({
           windowWidth < 1200 && windowWidth >= 1024 ? 'ml-4' : ''
         }`}
       >
-          <div className="reading-content px-4 lg:px-8">
+          <div className="relative">
+            {showSkeleton && (
+              <div
+                className="absolute inset-0 z-10 flex flex-col px-4 lg:px-8 pt-12 bg-neutral-50 dark:bg-midnight-900"
+                aria-hidden
+              >
+                <div className="max-w-4xl mx-auto w-full space-y-4">
+                  <div className="reading-skeleton-line h-9 w-3/4 max-w-md mx-auto rounded" />
+                  <div className="reading-skeleton-line h-5 w-32 mx-auto rounded" />
+                </div>
+                <div className="max-w-4xl mx-auto w-full mt-16 space-y-6 px-4">
+                  {[90, 100, 85, 95, 70, 88, 92].map((w) => (
+                    <div
+                      key={w}
+                      className="reading-skeleton-line h-4 rounded"
+                      style={{ width: `${w}%` }}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+            <div className={`reading-content px-4 lg:px-8 ${contentWrapperClassName ?? ''}`}>
             <header className="mb-16 text-center">
               <h1 className="display-title mb-4">
                 {obra.titulo}
@@ -1017,6 +1047,7 @@ export default function ReadingView({
                 )
               })}
             </div>
+            </div>
           </div>
         </main>
 
@@ -1051,6 +1082,7 @@ export default function ReadingView({
           <WorksTree 
             currentObraSlug={obra.slug}
             currentAutorSlug={obra.autorSlug}
+            onObraSelect={onObraSelect}
           />
         </div>
       </aside>

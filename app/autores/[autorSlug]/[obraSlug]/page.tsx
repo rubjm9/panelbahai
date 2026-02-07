@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
-import ReadingView from '@/components/reading/ReadingView'
 import SearchProvider from '@/components/search/SearchProvider'
+import ReadingPageClient from '@/components/reading/ReadingPageClient'
 import { getCachedPublishedWorkComplete } from '@/lib/services/public/obraService'
 
 // Función para obtener datos de la obra usando servicios
@@ -226,20 +226,24 @@ export default async function ReadingPage({ params, searchParams }: ReadingPageP
     notFound();
   }
 
+  const initialData = {
+    obra: {
+      titulo: obra.titulo,
+      autor: obra.autor.nombre,
+      autorSlug: obra.autor.slug,
+      slug: obra.slug,
+      archivoDoc: obra.archivoDoc,
+      archivoPdf: obra.archivoPdf,
+      archivoEpub: obra.archivoEpub
+    },
+    parrafos,
+    secciones
+  }
+
   return (
     <SearchProvider>
-      <ReadingView 
-        obra={{
-          titulo: obra.titulo,
-          autor: obra.autor.nombre,
-          autorSlug: obra.autor.slug,
-          slug: obra.slug,
-          archivoDoc: obra.archivoDoc,
-          archivoPdf: obra.archivoPdf,
-          archivoEpub: obra.archivoEpub
-        }}
-        parrafos={parrafos}
-        secciones={secciones}
+      <ReadingPageClient
+        initialData={initialData}
         currentParagraph={currentParagraph}
         highlightQuery={highlightQuery}
       />

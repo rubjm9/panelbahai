@@ -35,6 +35,42 @@
     font-size: 1.125rem;
   }
   
+  /* Transición al cambiar de obra desde la biblioteca (fade out / fade in) */
+  .reading-content-transition {
+    transition: opacity 120ms ease;
+  }
+  .reading-content-fade-out {
+    opacity: 0;
+  }
+  .reading-content-fade-in {
+    animation: readingContentFadeIn 120ms ease forwards;
+  }
+  @keyframes readingContentFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  /* Skeleton loader al cambiar de obra */
+  @keyframes readingSkeletonShimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+  .reading-skeleton-line {
+    background: linear-gradient(
+      90deg,
+      var(--skeleton-from, rgb(229 231 235)) 0%,
+      var(--skeleton-to, rgb(243 244 246)) 50%,
+      var(--skeleton-from, rgb(229 231 235)) 100%
+    );
+    background-size: 200% 100%;
+    animation: readingSkeletonShimmer 1.2s ease-in-out infinite;
+    border-radius: 0.25rem;
+  }
+  .dark .reading-skeleton-line {
+    --skeleton-from: rgb(51 65 85);
+    --skeleton-to: rgb(71 85 105);
+  }
+  
   /* H1 y línea del autor con Crimson Text */
   .reading-content h1,
   .reading-content header h1.display-title {

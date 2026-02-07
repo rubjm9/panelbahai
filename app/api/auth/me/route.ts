@@ -1,4 +1,6 @@
 export const dynamic = 'force-dynamic'
+// Forzar runtime de Node.js (no edge) porque jsonwebtoken requiere crypto de Node.js
+export const runtime = 'nodejs'
 
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
