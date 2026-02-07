@@ -31,7 +31,7 @@ export default function SiteFooter({ variant = 'default' }: SiteFooterProps) {
             <ul className="space-y-3 text-primary-200 dark:text-neutral-400">
               <li><a href="/autores" className="hover:text-white dark:hover:text-neutral-100 transition-colors">Autores</a></li>
               <li><a href="/proximas-traducciones" className="hover:text-white dark:hover:text-neutral-100 transition-colors">Próximas Traducciones</a></li>
-              <li><a href="/acerca" className="hover:text-white dark:hover:text-neutral-100 transition-colors">Acerca del Panel</a></li>
+              <li><a href="/acerca" className="hover:text-white dark:hover:text-neutral-100 transition-colors">Sobre el Panel</a></li>
               <li><a href="/contacto" className="hover:text-white dark:hover:text-neutral-100 transition-colors">Contacto</a></li>
             </ul>
           </div>

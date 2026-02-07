@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import ConditionalLayout from '@/components/layout/ConditionalLayout'
 import WebVitalsClient from '@/components/WebVitalsClient'
+import GoogleAnalytics from '@/components/GoogleAnalytics'
 import ThemeProviderWrapper from '@/components/providers/ThemeProviderWrapper'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -21,6 +22,7 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body className={inter.className}>
+        <GoogleAnalytics />
         <ThemeProviderWrapper>
           <ConditionalLayout>
             {children}
