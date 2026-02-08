@@ -41,6 +41,8 @@ export default function SiteFooter({ variant = 'default' }: SiteFooterProps) {
               <li><a href="https://bahai.org" className="hover:text-white dark:hover:text-neutral-100 transition-colors">Bahá'í.org</a></li>
               <li><a href="https://bahai.org/library" className="hover:text-white dark:hover:text-neutral-100 transition-colors">Bahá'í Reference Library</a></li>
               <li><a href="https://bahai.es/editorial/" target="_blank" rel="noopener noreferrer" className="hover:text-white dark:hover:text-neutral-100 transition-colors">Editorial Bahá'í de España</a></li>
+              <li><a href="/politica-privacidad" className="hover:text-white dark:hover:text-neutral-100 transition-colors">Política de privacidad</a></li>
+              <li><a href="/politica-cookies" className="hover:text-white dark:hover:text-neutral-100 transition-colors">Política de cookies</a></li>
             </ul>
           </div>
         </div>

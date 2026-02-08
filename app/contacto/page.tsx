@@ -1,21 +1,36 @@
 'use client'
 
 import Link from 'next/link'
+import Script from 'next/script'
 import { Mail, Globe, Send } from 'lucide-react'
 import { useState } from 'react'
+
+const RECAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || '6LeEI2QsAAAAAKq4GUFL9eK4XvqDHuLJyTg2Ze1S'
 
 export default function ContactoPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle')
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setIsSubmitting(true)
     setSubmitStatus('idle')
 
-    const formData = new FormData(e.currentTarget)
-    
+    const form = e.currentTarget
+    const formData = new FormData(form)
+
     try {
+      const grecaptcha = (window as { grecaptcha?: { ready: (cb: () => void) => void; execute: (key: string, opts: { action: string }) => Promise<string> } }).grecaptcha
+      if (!grecaptcha) {
+        setSubmitStatus('error')
+        setIsSubmitting(false)
+        return
+      }
+      await new Promise<void>((resolve) => grecaptcha.ready(resolve))
+      const token = await grecaptcha.execute(RECAPTCHA_SITE_KEY, { action: 'contact' })
+      formData.append('recaptchaToken', token)
+
       const response = await fetch('/api/contacto', {
         method: 'POST',
         body: formData,
@@ -25,18 +40,21 @@ export default function ContactoPage() {
 
       if (response.ok && data.success) {
         setSubmitStatus('success')
+        setErrorMessage(null)
         // Opcional: redirigir a mailto como fallback
         if (data.mailto) {
           window.location.href = data.mailto
         }
         // Resetear formulario
-        e.currentTarget.reset()
+        form.reset()
       } else {
         setSubmitStatus('error')
+        setErrorMessage(data.error || null)
       }
     } catch (error) {
       console.error('Error:', error)
       setSubmitStatus('error')
+      setErrorMessage(null)
     } finally {
       setIsSubmitting(false)
     }
@@ -44,6 +62,10 @@ export default function ContactoPage() {
 
   return (
     <div className="min-h-screen bg-white dark:bg-midnight-900 transition-colors duration-200">
+      <Script
+        src={`https://www.google.com/recaptcha/api.js?render=${RECAPTCHA_SITE_KEY}`}
+        strategy="afterInteractive"
+      />
       {/* Hero azul unificado */}
       <section className="bg-primary-900 dark:bg-midnight-900 text-white">
         <div className="container-elegant">
@@ -147,8 +169,11 @@ export default function ContactoPage() {
                     className="mt-1 w-4 h-4 text-accent-600 border-primary-300 rounded focus:ring-accent-500"
                   />
                   <label htmlFor="privacidad" className="text-sm text-primary-600 dark:text-neutral-400 leading-relaxed">
-                    Acepto que mis datos sean utilizados únicamente para responder a mi consulta 
-                    y posibles comunicaciones relacionadas con el trabajo del Panel de Traducción. *
+                    He leído y acepto la{' '}
+                    <Link href="/politica-privacidad" className="text-accent-600 hover:text-accent-700 underline" target="_blank" rel="noopener noreferrer">
+                      política de privacidad
+                    </Link>
+                    {' '}y acepto que mis datos sean utilizados únicamente para responder a mi consulta y posibles comunicaciones relacionadas con el trabajo del Panel de Traducción. *
                   </label>
                 </div>
 
@@ -159,9 +184,16 @@ export default function ContactoPage() {
                 )}
                 {submitStatus === 'error' && (
                   <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800">
-                    Error al enviar el mensaje. Por favor, inténtalo de nuevo o envía un correo directamente a bahaipanel@gmail.com
+                    {errorMessage || 'Error al enviar el mensaje. Por favor, inténtalo de nuevo o envía un correo directamente a bahaipanel@gmail.com'}
                   </div>
                 )}
+                <p className="text-xs text-primary-500 dark:text-neutral-500">
+                  Este formulario está protegido por reCAPTCHA. Se aplican la{' '}
+                  <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary-700">política de privacidad</a>
+                  {' '}y los{' '}
+                  <a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary-700">términos de servicio</a>
+                  {' '}de Google.
+                </p>
                 <button
                   type="submit"
                   disabled={isSubmitting}

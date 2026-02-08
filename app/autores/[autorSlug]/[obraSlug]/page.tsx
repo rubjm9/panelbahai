@@ -1,5 +1,4 @@
 import { notFound } from 'next/navigation'
-import SearchProvider from '@/components/search/SearchProvider'
 import ReadingPageClient from '@/components/reading/ReadingPageClient'
 import { getCachedPublishedWorkComplete } from '@/lib/services/public/obraService'
 
@@ -7,7 +6,7 @@ import { getCachedPublishedWorkComplete } from '@/lib/services/public/obraServic
 async function getObraData(autorSlug: string, obraSlug: string) {
   try {
     const data = await getCachedPublishedWorkComplete(obraSlug, autorSlug);
-    
+
     if (!data) {
       return null;
     }
@@ -201,10 +200,10 @@ export default async function ReadingPage({ params, searchParams }: ReadingPageP
   const { autorSlug, obraSlug } = params;
   const currentParagraph = searchParams.p ? parseInt(searchParams.p) : undefined;
   const highlightQuery = searchParams.q || undefined;
-  
+
   // Intentar obtener datos reales, usar datos de respaldo si falla
   let data = await getObraData(autorSlug, obraSlug);
-  
+
   if (!data) {
     // Usar datos de respaldo
     const obraData = obrasData[obraSlug];
@@ -241,23 +240,21 @@ export default async function ReadingPage({ params, searchParams }: ReadingPageP
   }
 
   return (
-    <SearchProvider>
-      <ReadingPageClient
-        initialData={initialData}
-        currentParagraph={currentParagraph}
-        highlightQuery={highlightQuery}
-      />
-    </SearchProvider>
+    <ReadingPageClient
+      initialData={initialData}
+      currentParagraph={currentParagraph}
+      highlightQuery={highlightQuery}
+    />
   );
 }
 
 // Generar metadatos dinámicos
 export async function generateMetadata({ params }: { params: { autorSlug: string, obraSlug: string } }) {
   const { autorSlug, obraSlug } = params;
-  
+
   // Intentar obtener datos reales usando servicio
   const data = await getCachedPublishedWorkComplete(obraSlug, autorSlug);
-  
+
   if (!data) {
     // Fallback a datos de respaldo
     const obraData = obrasData[obraSlug];
@@ -274,7 +271,7 @@ export async function generateMetadata({ params }: { params: { autorSlug: string
         }
       };
     }
-    
+
     return {
       title: 'Obra no encontrada - Panel Bahá\'í',
       description: 'La obra solicitada no se encuentra disponible.'
@@ -282,7 +279,7 @@ export async function generateMetadata({ params }: { params: { autorSlug: string
   }
 
   const { obra } = data;
-  
+
   return {
     title: `${obra.titulo} - ${obra.autor.nombre} | Panel Bahá'í`,
     description: obra.descripcion || `${obra.titulo} por ${obra.autor.nombre}. Lectura completa con párrafos numerados y búsqueda avanzada.`,

@@ -33,6 +33,7 @@
     "jszip": "^3.10.1",
     "lucide-react": "^0.294.0",
     "lunr": "^2.3.9",
+    "lunr-languages": "^1.14.0",
     "mammoth": "^1.10.0",
     "mongoose": "^8.0.0",
     "multer": "^2.0.2",

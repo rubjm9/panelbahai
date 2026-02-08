@@ -47,6 +47,10 @@ export function useSearchWorker(options: UseSearchWorkerOptions = {}) {
       worker.onmessage = (event: MessageEvent<SearchWorkerResponse>) => {
         const { type, payload, id, error } = event.data;
 
+        // #region agent log
+        fetch('/api/debug-log',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useSearchWorker.ts:onmessage',message:'worker message received',data:{type,hasError:!!error,errorMsg:error||null,id:id||null,payloadKeys:payload?Object.keys(payload):null},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{});
+        // #endregion
+
         if (error) {
           const request = pendingRequestsRef.current.get(id || '');
           if (request) {
@@ -70,6 +74,9 @@ export function useSearchWorker(options: UseSearchWorkerOptions = {}) {
       };
 
       worker.onerror = (error) => {
+        // #region agent log
+        fetch('/api/debug-log',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useSearchWorker.ts:onerror',message:'worker onerror fired',data:{errorMessage:error?.message||'unknown',hasErroredBefore:hasErrored},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{});
+        // #endregion
         if (!hasErrored) {
           hasErrored = true;
           console.warn('Web Worker no disponible, usando fallback al main thread');

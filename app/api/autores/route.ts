@@ -46,8 +46,8 @@ const fallbackAutores = [
   },
   {
     _id: '6',
-    nombre: "Compilaciones",
-    slug: "compilaciones",
+    nombre: "Recopilaciones",
+    slug: "recopilaciones",
     biografia: "Selecciones temáticas de textos de varios autores bahá'ís.",
     orden: 6,
     activo: true

@@ -287,7 +287,7 @@ Los autores están definidos en el orden de prioridad:
 4. Shoghi Effendi
 5. Casa Universal de Justicia
 6. Declaraciones Oficiales
-7. Compilaciones
+7. Recopilaciones
 
 ## 🧪 Testing
 

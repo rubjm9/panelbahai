@@ -114,8 +114,15 @@ export function useSearch(options: UseSearchOptions = {}) {
   // Inicializar índice base
   const initialize = useCallback(async (forceRebuild = false) => {
     if (initializationRef.current || worker.isLoading) {
+      // #region agent log
+      fetch('/api/debug-log',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useSearch.ts:initialize-skip',message:'initialize skipped',data:{initRef:initializationRef.current,workerLoading:worker.isLoading},timestamp:Date.now(),hypothesisId:'H4'})}).catch(()=>{});
+      // #endregion
       return;
     }
+
+    // #region agent log
+    fetch('/api/debug-log',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useSearch.ts:initialize-start',message:'initialize starting',data:{forceRebuild,workerIsReady:worker.isReady,workerIsLoading:worker.isLoading},timestamp:Date.now(),hypothesisId:'H1,H2,H4'})}).catch(()=>{});
+    // #endregion
 
     initializationRef.current = true;
     setIsLoading(true);
@@ -178,6 +185,10 @@ export function useSearch(options: UseSearchOptions = {}) {
       const baseChunk = chunkManager.getBaseChunk();
       const documentsToIndex = baseChunk ? baseChunk.documents : documents;
 
+      // #region agent log
+      fetch('/api/debug-log',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useSearch.ts:initialize-indexing',message:'about to build index',data:{totalDocs:documents.length,baseChunkExists:!!baseChunk,baseChunkDocs:baseChunk?.documents?.length||0,docsToIndex:documentsToIndex.length,workerIsReady:worker.isReady,docTypes:documents.reduce((acc:Record<string,number>,d:SearchDocument)=>{acc[d.tipo]=(acc[d.tipo]||0)+1;return acc;},{}),indexDocsTypes:documentsToIndex.reduce((acc:Record<string,number>,d:SearchDocument)=>{acc[d.tipo]=(acc[d.tipo]||0)+1;return acc;},{})},timestamp:Date.now(),hypothesisId:'H1,H2,H3'})}).catch(()=>{});
+      // #endregion
+
       if (worker.isReady) {
         // Usar Web Worker
         await worker.buildIndex(documentsToIndex);
@@ -200,6 +211,9 @@ export function useSearch(options: UseSearchOptions = {}) {
       const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
       setError(errorMessage);
       console.error('Error inicializando búsqueda:', err);
+      // #region agent log
+      fetch('/api/debug-log',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useSearch.ts:initialize-error',message:'initialize FAILED',data:{error:errorMessage},timestamp:Date.now(),hypothesisId:'H4'})}).catch(()=>{});
+      // #endregion
     } finally {
       setIsLoading(false);
       initializationRef.current = false;
@@ -218,6 +232,9 @@ export function useSearch(options: UseSearchOptions = {}) {
     query: string,
     limit: number = 50
   ): Promise<{ results: SearchResult[]; total: number }> => {
+    // #region agent log
+    fetch('/api/debug-log',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useSearch.ts:search-entry',message:'search called',data:{query,limit,isInitialized,workerIsReady:worker.isReady},timestamp:Date.now(),hypothesisId:'H3,H4'})}).catch(()=>{});
+    // #endregion
     if (!isInitialized) {
       return { results: [], total: 0 };
     }
@@ -298,12 +315,18 @@ export function useSearch(options: UseSearchOptions = {}) {
       if (worker.isReady) {
         // Usar Web Worker
         const response = await worker.search(query, limit);
+        // #region agent log
+        fetch('/api/debug-log',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useSearch.ts:search-worker-path',message:'worker search done',data:{query,resultsCount:response.results.length,total:response.total},timestamp:Date.now(),hypothesisId:'H2,H3'})}).catch(()=>{});
+        // #endregion
         results = response.results;
         total = response.total;
       } else {
         // Fallback al main thread
         const { searchEngine } = await import('@/utils/search');
         const searchResponse = searchEngine.search(query, limit);
+        // #region agent log
+        fetch('/api/debug-log',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useSearch.ts:search-mainthread-path',message:'mainthread search done',data:{query,resultsCount:searchResponse.results.length,total:searchResponse.total},timestamp:Date.now(),hypothesisId:'H2,H3'})}).catch(()=>{});
+        // #endregion
         results = searchResponse.results;
         total = searchResponse.total;
       }

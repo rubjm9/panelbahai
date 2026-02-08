@@ -3,22 +3,29 @@
  * Este archivo se carga directamente en el navegador
  */
 
-// Cargar Lunr desde CDN
+// Cargar Lunr y lunr-languages desde CDN
 try {
   importScripts('https://unpkg.com/lunr@2.3.9/lunr.js');
-  
-  // Configurar Lunr para español
-  if (typeof lunr !== 'undefined') {
-    lunr.tokenizer.separator = /[\s\-\.]+/;
-  } else {
+
+  // Verificar que Lunr se cargó
+  if (typeof lunr === 'undefined') {
     throw new Error('Lunr no se cargó correctamente');
   }
+
+  // Cargar soporte de idiomas para español
+  importScripts('https://unpkg.com/lunr-languages@1.10.0/lunr.stemmer.support.js');
+  importScripts('https://unpkg.com/lunr-languages@1.10.0/lunr.es.js');
+
+  // Configurar Lunr para español
+  lunr.tokenizer.separator = /[\s\-\.]+/;
+
+  console.log('✅ Lunr con soporte de español cargado en worker');
 } catch (error) {
   console.error('Error cargando Lunr en worker:', error);
   // Enviar error al main thread
   self.postMessage({
     type: 'ERROR',
-    error: 'No se pudo cargar Lunr en el worker'
+    error: 'No se pudo cargar Lunr en el worker: ' + error.message
   });
 }
 
@@ -32,12 +39,17 @@ function buildIndex(docs) {
   documents.clear();
   docs.forEach(doc => documents.set(doc.id, doc));
 
-  index = lunr(function() {
+  index = lunr(function () {
+    // Usar idioma español para stemming y stopwords
+    // TEMPORALMENTE DESHABILITADO para depuración - probando sin Spanish
+    // this.use(lunr.es);
+    console.log('[Worker] Building index WITHOUT lunr.es (test mode)');
+
     this.field('titulo', { boost: 10 });
     this.field('autor', { boost: 8 });
     this.field('seccion', { boost: 6 });
     this.field('texto', { boost: 1 });
-    
+
     this.ref('id');
 
     docs.forEach(doc => {
@@ -87,7 +99,7 @@ function processAdvancedQuery(query) {
     const terms = query.split(/\s+/);
     const includedTerms = [];
     const excludedTerms = [];
-    
+
     terms.forEach(term => {
       if (term.startsWith('-')) {
         excludedTerms.push(term.substring(1));
@@ -98,18 +110,19 @@ function processAdvancedQuery(query) {
 
     const includedQuery = includedTerms.map(term => `${term}* ${term}~1`).join(' ');
     const excludedQuery = excludedTerms.map(term => `-${term}`).join(' ');
-    
+
     return `${includedQuery} ${excludedQuery}`.trim();
   }
 
-  // Búsqueda normal con mejoras
+  // Búsqueda normal - solo términos limpios para compatibilidad con stemmer español
   const terms = query.split(/\s+/);
   const processedTerms = terms.map(term => {
     const cleanTerm = term.toLowerCase().replace(/[^\wáéíóúñü]/g, '');
     if (cleanTerm.length < 2) return '';
-    return `${cleanTerm}* ${cleanTerm}~1`;
+    // No usar wildcards ni fuzzy con lunr.es - el stemmer maneja las variaciones
+    return cleanTerm;
   }).filter(term => term.length > 0);
-  
+
   return processedTerms.join(' ');
 }
 
@@ -126,41 +139,46 @@ function extractExactPhrases(query) {
  * Realizar búsqueda
  */
 function search(query, limit = 50) {
+  console.log('[Worker] search called with:', { query, limit, hasIndex: !!index, docCount: documents.size });
+
   if (!index || query.length < 3) {
+    console.log('[Worker] Early return: no index or query too short');
     return { results: [], total: 0 };
   }
 
   try {
     // Extraer frases exactas
     const exactPhrases = extractExactPhrases(query);
-    
+
     // Procesar la consulta
     const processedQuery = processAdvancedQuery(query);
-    
+    console.log('[Worker] Processed query:', processedQuery);
+
     let results = index.search(processedQuery);
-    
+    console.log('[Worker] Lunr raw results count:', results.length);
+
     // Filtrar resultados si hay búsquedas exactas con comillas
     if (exactPhrases.length > 0) {
       results = results.filter(result => {
         const doc = documents.get(result.ref);
         if (!doc) return false;
-        
+
         const searchableText = `${doc.titulo} ${doc.autor} ${doc.seccion || ''} ${doc.texto}`.toLowerCase();
-        
+
         return exactPhrases.every(phrase => {
           const phraseLower = phrase.toLowerCase();
           return searchableText.includes(phraseLower);
         });
       });
     }
-    
+
     const total = results.length;
     const searchResults = [];
 
     for (let i = 0; i < Math.min(results.length, limit); i++) {
       const result = results[i];
       const doc = documents.get(result.ref);
-      
+
       if (!doc) continue;
 
       searchResults.push({
@@ -187,7 +205,7 @@ function search(query, limit = 50) {
         'shoghi-effendi': 4,
         'casa-justicia': 5,
         'declaraciones-oficiales': 6,
-        'compilaciones': 7
+        'recopilaciones': 7
       };
 
       const autorA = autorOrder[a.autorSlug] || 8;
@@ -215,7 +233,7 @@ function search(query, limit = 50) {
 function extractFragment(texto, query, maxLength = 200) {
   const queryTerms = query.toLowerCase().split(/\s+/).filter(t => t.length >= 2);
   const textoLower = texto.toLowerCase();
-  
+
   let bestIndex = -1;
   let bestScore = 0;
 
@@ -240,9 +258,9 @@ function extractFragment(texto, query, maxLength = 200) {
 
   const contextStart = Math.max(0, bestIndex - 50);
   const contextEnd = Math.min(texto.length, bestIndex + maxLength - 50);
-  
+
   let fragment = texto.substring(contextStart, contextEnd);
-  
+
   if (contextStart > 0) fragment = '...' + fragment;
   if (contextEnd < texto.length) fragment = fragment + '...';
 
@@ -265,11 +283,13 @@ function isWordMatch(texto, startIndex, term) {
  */
 self.addEventListener('message', (event) => {
   const { type, payload, id } = event.data;
+  console.log('[Worker] Message received:', { type, id, payloadLength: Array.isArray(payload) ? payload.length : 'N/A' });
 
   try {
     switch (type) {
       case 'BUILD_INDEX': {
         const documents = payload;
+        console.log('[Worker] BUILD_INDEX: building with', documents.length, 'documents');
         buildIndex(documents);
         const response = {
           type: 'INDEX_BUILT',

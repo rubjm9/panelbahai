@@ -6,14 +6,14 @@ import { Search, BookOpen, FileText, Users, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { SearchResult } from '@/utils/search'
 import SidebarFilters from '@/components/search/SidebarFilters'
-import { useSearch } from '@/lib/hooks/useSearch'
+import { useSearchContext } from '@/components/search/SearchProvider'
 
 function SearchContent() {
   const searchParams = useSearchParams()
   const query = searchParams.get('q') || ''
   const router = useRouter()
-  
-  const search = useSearch({ autoInitialize: true })
+
+  const search = useSearchContext()
   const [results, setResults] = useState<SearchResult[]>([])
   const [totalResults, setTotalResults] = useState(0)
   const [filters, setFilters] = useState({
@@ -21,10 +21,10 @@ function SearchContent() {
     obra: ''
   })
   const [searchQuery, setSearchQuery] = useState(query)
-  
+
   // Datos para los filtros (esto debería venir de la API)
-  const [autores, setAutores] = useState<Array<{value: string, label: string}>>([])
-  const [obras, setObras] = useState<Array<{value: string, label: string}>>([])
+  const [autores, setAutores] = useState<Array<{ value: string, label: string }>>([])
+  const [obras, setObras] = useState<Array<{ value: string, label: string }>>([])
 
   // Sincronizar estado local con search params
   useEffect(() => {
@@ -46,18 +46,18 @@ function SearchContent() {
         console.error('Error loading filter data:', error)
       }
     }
-    
+
     loadFilterData()
   }, [])
 
   // Realizar búsqueda cuando índice esté listo
   useEffect(() => {
     if (!search.isInitialized) return
-    
+
     if (query.length >= 3) {
       const performSearch = async () => {
         const { results: searchResults, total } = await search.search(query, 100)
-        
+
         // Aplicar filtros
         let filteredResults = searchResults
         if (filters.autor) {
@@ -66,11 +66,11 @@ function SearchContent() {
         if (filters.obra) {
           filteredResults = filteredResults.filter(result => result.obraSlug === filters.obra)
         }
-        
+
         setResults(filteredResults)
         setTotalResults(total)
       }
-      
+
       performSearch()
     } else {
       setResults([])
@@ -83,7 +83,7 @@ function SearchContent() {
       if (query && query.length > 0) {
         sessionStorage.setItem('lastSearchQuery', query)
       }
-    } catch {}
+    } catch { }
     const qParam = query && query.length >= 1 ? `&q=${encodeURIComponent(query)}` : ''
     if (result.numero) {
       return `/autores/${result.autorSlug}/${result.obraSlug}?p=${result.numero}${qParam}`
@@ -116,14 +116,14 @@ function SearchContent() {
       <header className="bg-white dark:bg-midnight-900 shadow-sm border-b border-primary-100 dark:border-slate-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
-            <Link 
+            <Link
               href="/"
               className="flex items-center text-accent-600 hover:text-accent-800 transition-colors"
             >
               <ArrowLeft className="w-5 h-5 mr-2" />
               Volver al inicio
             </Link>
-            
+
             <div className="flex-1 max-w-md mx-8">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-primary-400 w-5 h-5" />
@@ -141,7 +141,7 @@ function SearchContent() {
                 />
               </div>
             </div>
-            
+
             <div className="text-sm text-primary-600 dark:text-neutral-400">
               {totalResults} resultado{totalResults !== 1 ? 's' : ''}
             </div>
@@ -185,7 +185,7 @@ function SearchContent() {
                     {totalResults} resultado{totalResults !== 1 ? 's' : ''} encontrado{totalResults !== 1 ? 's' : ''}
                   </p>
                 </div>
-                
+
                 <div className="grid gap-6">
                   {results.map((result) => {
                     const IconComponent = getResultIcon(result.tipo)
@@ -223,8 +223,8 @@ function SearchContent() {
                                 </div>
                               </div>
                             </div>
-                            
-                            <div 
+
+                            <div
                               className="text-primary-700 dark:text-neutral-300 leading-relaxed"
                               dangerouslySetInnerHTML={{
                                 __html: result.fragmento
@@ -272,7 +272,7 @@ function SearchContent() {
               <h3 className="text-lg font-semibold text-primary-900 mb-4">
                 Refinar búsqueda
               </h3>
-              
+
               <SidebarFilters
                 onFilterChange={(newFilters) => {
                   setFilters({
@@ -284,7 +284,7 @@ function SearchContent() {
                 obras={obras}
                 className="mb-4"
               />
-              
+
               {/* Información de búsqueda */}
               <div className="pt-4 border-t border-primary-200">
                 <h4 className="font-medium text-primary-800 mb-3">Información</h4>

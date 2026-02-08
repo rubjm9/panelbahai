@@ -122,18 +122,11 @@ const autoresData: Record<string, any> = {
     biografia: "Declaraciones y comunicados oficiales de las instituciones bahá'ís sobre temas de importancia mundial y comunitaria.",
     obras: []
   },
-  'compilaciones': {
-    nombre: "Compilaciones",
-    slug: "compilaciones",
+  'recopilaciones': {
+    nombre: "Recopilaciones",
+    slug: "recopilaciones",
     biografia: "Selecciones temáticas de textos de varios autores bahá'ís, organizadas para facilitar el estudio de temas específicos de las enseñanzas bahá'ís.",
-    obras: [
-      {
-        titulo: "La Compilación sobre la Mujer",
-        slug: "compilacion-mujer",
-        descripcion: "Selección de textos sobre el papel y la posición de la mujer.",
-        esPublico: true
-      }
-    ]
+    obras: []
   }
 };
 
@@ -193,14 +186,13 @@ export default async function AutorPage({ params }: { params: { autorSlug: strin
         <div className="container-elegant">
           <div className="mb-12">
             <h2 className="text-2xl font-normal text-primary-900 dark:text-neutral-100 mb-4 text-center">
-              Obras Disponibles
+              Obras disponibles
             </h2>
-            <p className="text-primary-600 dark:text-neutral-400 text-center">
-              {obras.length > 0 
-                ? `${obras.length} obra${obras.length !== 1 ? 's' : ''} disponible${obras.length !== 1 ? 's' : ''}`
-                : 'No hay obras disponibles actualmente'
-              }
-            </p>
+            {obras.length > 0 && (
+              <p className="text-primary-600 dark:text-neutral-400 text-center">
+                {obras.length} obra{obras.length !== 1 ? 's' : ''} disponible{obras.length !== 1 ? 's' : ''}
+              </p>
+            )}
           </div>
 
           {obras.length > 0 ? (

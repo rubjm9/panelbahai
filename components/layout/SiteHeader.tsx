@@ -11,7 +11,7 @@ const authors = [
   { name: "'Abdu'l-Bahá", slug: 'abdul-baha' },
   { name: 'Shoghi Effendi', slug: 'shoghi-effendi' },
   { name: 'Casa Universal de Justicia', slug: 'casa-justicia' },
-  { name: 'Compilaciones', slug: 'compilaciones' }
+  { name: 'Recopilaciones', slug: 'recopilaciones' }
 ]
 
 export default function SiteHeader() {

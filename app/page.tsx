@@ -72,8 +72,8 @@ export default function HomePage() {
                   icono={Users}
                 />
                 <AuthorCard
-                  nombre="Compilaciones"
-                  slug="compilaciones"
+                  nombre="Recopilaciones"
+                  slug="recopilaciones"
                   descripcion="Selecciones temáticas de textos de varios autores bahá'ís."
                   icono={Globe}
                 />

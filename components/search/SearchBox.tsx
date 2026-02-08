@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { searchEngine, SearchResult } from '@/utils/search'
 import Link from 'next/link'
 import AdvancedFilters from './AdvancedFilters'
-import { useSearch } from '@/components/search/SearchProvider'
+import { useSearchContext } from '@/components/search/SearchProvider'
 
 interface SearchBoxProps {
   onResultClick?: () => void;
@@ -17,15 +17,15 @@ interface SearchBoxProps {
   autoFocus?: boolean;
 }
 
-export default function SearchBox({ 
-  onResultClick, 
+export default function SearchBox({
+  onResultClick,
   placeholder = "Buscar en toda la biblioteca...",
   className = "",
   showFilters = true,
   context,
   autoFocus = false
 }: SearchBoxProps) {
-  const { isInitialized, isLoading: searchIsLoading } = useSearch()
+  const { isInitialized, isLoading: searchIsLoading, search } = useSearchContext()
   const router = useRouter()
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<SearchResult[]>([])
@@ -40,8 +40,8 @@ export default function SearchBox({
     obra: '' as string | undefined
   })
   const [searchHistory, setSearchHistory] = useState<string[]>([])
-  const [autores, setAutores] = useState<Array<{value: string, label: string}>>([])
-  const [obras, setObras] = useState<Array<{value: string, label: string}>>([])
+  const [autores, setAutores] = useState<Array<{ value: string, label: string }>>([])
+  const [obras, setObras] = useState<Array<{ value: string, label: string }>>([])
   const searchRef = useRef<HTMLDivElement>(null)
   const [selectFirstWhenReady, setSelectFirstWhenReady] = useState(false)
   const resultsContainerRef = useRef<HTMLDivElement>(null)
@@ -68,7 +68,7 @@ export default function SearchBox({
         console.error('Error loading filter data:', error)
       }
     }
-    
+
     loadFilterData()
   }, [])
 
@@ -102,9 +102,12 @@ export default function SearchBox({
     };
 
     const debounceTime = query.length >= 3 ? getDebounceTime(query.length) : 0;
-    
+
     const timeoutId = setTimeout(async () => {
       if (query.length >= 3) {
+        // #region agent log
+        fetch('/api/debug-log',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'SearchBox.tsx:search-attempt',message:'SearchBox debounce fired',data:{query,isInitialized,searchIsLoading,context},timestamp:Date.now(),hypothesisId:'H4,H5'})}).catch(()=>{});
+        // #endregion
         // Solo buscar si el índice está inicializado
         if (!isInitialized) {
           setIsLoading(true)
@@ -120,32 +123,39 @@ export default function SearchBox({
 
         setIsLoading(true)
 
-        // Usar searchEngine directamente (el worker se maneja en useSearch)
-        let searchResponse = searchEngine.search(query, 20)
-        let searchResults = searchResponse.results
-        let total = searchResponse.total
+        try {
+          // Usar la función de búsqueda del contexto (unificada con Web Worker)
+          const { results: searchResults, total } = await search(query, 20)
 
-        // Aplicar filtros
-        if (filters.autor) {
-          searchResults = searchResults.filter(result =>
-            result.autorSlug === filters.autor
-          )
-        }
+          // Aplicar filtros
+          let filteredResults = searchResults
 
-        if (filters.obra) {
-          searchResults = searchResults.filter(result =>
-            result.obraSlug === filters.obra
-          )
-        }
+          if (filters.autor) {
+            filteredResults = filteredResults.filter(result =>
+              result.autorSlug === filters.autor
+            )
+          }
 
-        setResults(searchResults)
-        setTotalResults(total)
-        setIsOpen(true)
-        setIsLoading(false)
+          if (filters.obra) {
+            filteredResults = filteredResults.filter(result =>
+              result.obraSlug === filters.obra
+            )
+          }
 
-        // Guardar en historial
-        if (!searchHistory.includes(query)) {
-          setSearchHistory(prev => [query, ...prev.slice(0, 4)])
+          setResults(filteredResults)
+          setTotalResults(total)
+          setIsOpen(true)
+
+          // Guardar en historial
+          if (!searchHistory.includes(query)) {
+            setSearchHistory(prev => [query, ...prev.slice(0, 4)])
+          }
+        } catch (error) {
+          console.error('Error en búsqueda:', error)
+          setResults([])
+          setTotalResults(0)
+        } finally {
+          setIsLoading(false)
         }
       } else {
         setResults([])
@@ -155,7 +165,7 @@ export default function SearchBox({
     }, debounceTime)
 
     return () => clearTimeout(timeoutId)
-  }, [query, filters, context, isInitialized, searchIsLoading])
+  }, [query, filters, context, isInitialized, searchIsLoading, search])
 
   // If ArrowDown was pressed before results were ready, select first item when results arrive
   useEffect(() => {
@@ -172,7 +182,7 @@ export default function SearchBox({
     if (!container) return
     const el = container.querySelector(`.search-result-item[data-index="${selectedIndex}"]`)
     if (el && 'scrollIntoView' in el) {
-      ;(el as HTMLElement).scrollIntoView({ block: 'nearest' })
+      ; (el as HTMLElement).scrollIntoView({ block: 'nearest' })
     }
   }, [selectedIndex, isOpen])
 
@@ -219,7 +229,7 @@ export default function SearchBox({
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault()
-        setSelectedIndex(prev => 
+        setSelectedIndex(prev =>
           prev < results.length - 1 ? prev + 1 : prev
         )
         break
@@ -234,19 +244,19 @@ export default function SearchBox({
           // Construir URL de manera más robusta
           let url = `/autores/${result.autorSlug}/${result.obraSlug}`;
           const params = new URLSearchParams();
-          
+
           if (result.numero) {
             params.set('p', result.numero.toString());
           }
-          
+
           if (query) {
             params.set('q', query);
           }
-          
+
           if (params.toString()) {
             url += `?${params.toString()}`;
           }
-          
+
           router.push(url)
           if (onResultClick) onResultClick()
         } else if (query.trim()) {
@@ -277,7 +287,7 @@ export default function SearchBox({
       if (query && query.length > 0) {
         sessionStorage.setItem('lastSearchQuery', query)
       }
-    } catch {}
+    } catch { }
     setIsOpen(false)
     onResultClick?.()
   }
@@ -314,186 +324,186 @@ export default function SearchBox({
   }
 
   return (<div className={`search-container ${showFilters && showFiltersPanel ? 'filters-open' : ''} ${className}`} ref={searchRef}>
-      {/* Contenedor del input y botones */}
-      <div className="flex items-stretch w-full">
-        {/* Input de búsqueda - ocupa todo el espacio disponible */}
-        <div className="flex-1 relative">
-          <input
-            ref={inputRef}
-            type="text"
-            value={query}
-            onChange={handleInputChange}
-            onKeyDown={handleKeyDown}
-            placeholder={placeholder}
-            className={context === 'homepage' ? 'search-input-hero' : 'search-input-regular'}
-            aria-label="Buscar en la biblioteca"
-          />
-          <div className="absolute right-4 top-1/2 transform -translate-y-1/2 flex items-center space-x-2">
-            {isLoading && (
-              <div className="animate-spin rounded-full h-4 w-4 border-2 border-gray-300 border-t-white"></div>
-            )}
-            {query && (
-              <button
-                onClick={() => {
-                  setQuery('')
-                  setResults([])
-                  setIsOpen(false)
-                  setSelectedIndex(-1)
-                  inputRef.current?.focus()
-                }}
-                className={`${context === 'homepage' ? 'text-gray-300 hover:text-white' : 'text-gray-400 hover:text-gray-600'} transition-colors`}
-                aria-label="Limpiar búsqueda"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-        </div>
-        
-        {/* Botones de acción */}
-        <div className="flex ml-2 space-x-2">
-          {showFilters && (
+    {/* Contenedor del input y botones */}
+    <div className="flex items-stretch w-full">
+      {/* Input de búsqueda - ocupa todo el espacio disponible */}
+      <div className="flex-1 relative">
+        <input
+          ref={inputRef}
+          type="text"
+          value={query}
+          onChange={handleInputChange}
+          onKeyDown={handleKeyDown}
+          placeholder={placeholder}
+          className={context === 'homepage' ? 'search-input-hero' : 'search-input-regular'}
+          aria-label="Buscar en la biblioteca"
+        />
+        <div className="absolute right-4 top-1/2 transform -translate-y-1/2 flex items-center space-x-2">
+          {isLoading && (
+            <div className="animate-spin rounded-full h-4 w-4 border-2 border-gray-300 border-t-white"></div>
+          )}
+          {query && (
             <button
-              onClick={() => setShowFiltersPanel(!showFiltersPanel)}
-              className={`${context === 'homepage' ? 'search-btn-hero' : 'search-btn'} flex items-center justify-center px-3 sm:px-4`}
-              aria-expanded={showFiltersPanel}
-              aria-controls="filters-panel"
+              onClick={() => {
+                setQuery('')
+                setResults([])
+                setIsOpen(false)
+                setSelectedIndex(-1)
+                inputRef.current?.focus()
+              }}
+              className={`${context === 'homepage' ? 'text-gray-300 hover:text-white' : 'text-gray-400 hover:text-gray-600'} transition-colors`}
+              aria-label="Limpiar búsqueda"
             >
-              <Filter className="w-4 h-4" />
-              <span className="ml-2 hidden sm:inline">Filtros</span>
+              <X className="w-4 h-4" />
             </button>
           )}
-          <button
-            onClick={handleSearchClick}
-            className={`${context === 'homepage' ? 'search-btn-hero' : 'search-btn'}`}
-          >
-            <Search className="w-4 h-4" />
-          </button>
         </div>
       </div>
 
-      {/* Panel de filtros */}
-      {showFilters && showFiltersPanel && (
-        <div className="mt-4">
-          <AdvancedFilters
-            onFilterChange={handleAdvancedFiltersChange}
-            autores={autores}
-            obras={obras}
-            className=""
-            panelClassName={context === 'homepage' ? 'filters-panel-hero' : ''}
-            embedded={true}
-          />
-        </div>
-      )}
+      {/* Botones de acción */}
+      <div className="flex ml-2 space-x-2">
+        {showFilters && (
+          <button
+            onClick={() => setShowFiltersPanel(!showFiltersPanel)}
+            className={`${context === 'homepage' ? 'search-btn-hero' : 'search-btn'} flex items-center justify-center px-3 sm:px-4`}
+            aria-expanded={showFiltersPanel}
+            aria-controls="filters-panel"
+          >
+            <Filter className="w-4 h-4" />
+            <span className="ml-2 hidden sm:inline">Filtros</span>
+          </button>
+        )}
+        <button
+          onClick={handleSearchClick}
+          className={`${context === 'homepage' ? 'search-btn-hero' : 'search-btn'}`}
+        >
+          <Search className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
 
-      {/* Resultados - aparecen debajo de filtros si están abiertos */}
-      {isOpen && (
-        <div ref={resultsContainerRef} className={`search-results ${showFiltersPanel ? 'mt-4' : 'mt-1'}`}>
-          {(isLoading || searchIsLoading || !isInitialized) ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-accent-600 mr-3"></div>
-              <span className="text-primary-600 dark:text-neutral-400">Buscando...</span>
-            </div>
-          ) : (
-            <>
-              {results.length > 0 ? (
-                <div className="flex flex-col h-full">
-                  {/* Área scrolleable de resultados */}
-                  <div className="flex-1 overflow-y-auto max-h-72">
-                    <div className="divide-y divide-neutral-100">
-                      {results.map((result, index) => {
-                        // Construir URL de manera más robusta
-                        let url = `/autores/${result.autorSlug}/${result.obraSlug}`;
-                        const params = new URLSearchParams();
-                        
-                        if (result.numero) {
-                          params.set('p', result.numero.toString());
-                        }
-                        
-                        if (query) {
-                          params.set('q', query);
-                        }
-                        
-                        if (params.toString()) {
-                          url += `?${params.toString()}`;
-                        }
-                        
-                        return (
-                          <Link
-                            key={result.id}
-                            href={url}
-                            onClick={onResultClick}
-                            className={`search-result-item group ${index === selectedIndex ? 'selected' : ''}`}
-                            data-index={index}
-                          >
-                            <div className="flex items-start justify-between mb-2">
-                              <div className="flex-1">
-                                <h4 className="font-medium text-primary-900 dark:text-neutral-100 text-sm mb-1 group-hover:text-primary-800 dark:group-hover:text-neutral-200 transition-colors">
-                                  {result.titulo}
-                                </h4>
-                                <p className="text-xs text-accent-600">
-                                  {result.autor} • {getResultTypeLabel(result.tipo)}
-                                  {result.numero && ` • Párrafo ${result.numero}`}
-                                </p>
-                              </div>
+    {/* Panel de filtros */}
+    {showFilters && showFiltersPanel && (
+      <div className="mt-4">
+        <AdvancedFilters
+          onFilterChange={handleAdvancedFiltersChange}
+          autores={autores}
+          obras={obras}
+          className=""
+          panelClassName={context === 'homepage' ? 'filters-panel-hero' : ''}
+          embedded={true}
+        />
+      </div>
+    )}
+
+    {/* Resultados - aparecen debajo de filtros si están abiertos */}
+    {isOpen && (
+      <div ref={resultsContainerRef} className={`search-results ${showFiltersPanel ? 'mt-4' : 'mt-1'}`}>
+        {(isLoading || searchIsLoading || !isInitialized) ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-accent-600 mr-3"></div>
+            <span className="text-primary-600 dark:text-neutral-400">Buscando...</span>
+          </div>
+        ) : (
+          <>
+            {results.length > 0 ? (
+              <div className="flex flex-col h-full">
+                {/* Área scrolleable de resultados */}
+                <div className="flex-1 overflow-y-auto max-h-72">
+                  <div className="divide-y divide-neutral-100">
+                    {results.map((result, index) => {
+                      // Construir URL de manera más robusta
+                      let url = `/autores/${result.autorSlug}/${result.obraSlug}`;
+                      const params = new URLSearchParams();
+
+                      if (result.numero) {
+                        params.set('p', result.numero.toString());
+                      }
+
+                      if (query) {
+                        params.set('q', query);
+                      }
+
+                      if (params.toString()) {
+                        url += `?${params.toString()}`;
+                      }
+
+                      return (
+                        <Link
+                          key={result.id}
+                          href={url}
+                          onClick={onResultClick}
+                          className={`search-result-item group ${index === selectedIndex ? 'selected' : ''}`}
+                          data-index={index}
+                        >
+                          <div className="flex items-start justify-between mb-2">
+                            <div className="flex-1">
+                              <h4 className="font-medium text-primary-900 dark:text-neutral-100 text-sm mb-1 group-hover:text-primary-800 dark:group-hover:text-neutral-200 transition-colors">
+                                {result.titulo}
+                              </h4>
+                              <p className="text-xs text-accent-600">
+                                {result.autor} • {getResultTypeLabel(result.tipo)}
+                                {result.numero && ` • Párrafo ${result.numero}`}
+                              </p>
                             </div>
-                            <p
-                              className="text-sm text-primary-600 dark:text-neutral-400 leading-relaxed"
-                              dangerouslySetInnerHTML={{ __html: searchEngine.highlightTerms(result.fragmento, query) }}
-                            />
-                          </Link>
-                        )
-                      })}
-                    </div>
+                          </div>
+                          <p
+                            className="text-sm text-primary-600 dark:text-neutral-400 leading-relaxed"
+                            dangerouslySetInnerHTML={{ __html: searchEngine.highlightTerms(result.fragmento, query) }}
+                          />
+                        </Link>
+                      )
+                    })}
                   </div>
-                  
-                  {/* Contador siempre visible en la parte inferior */}
-                  <button 
-                    onClick={handleSearchClick} 
-                    className="px-6 py-3 bg-gradient-to-r from-neutral-100 to-neutral-200 dark:from-slate-800 dark:to-slate-700 text-sm text-primary-600 dark:text-neutral-300 text-center border-t border-neutral-200 dark:border-slate-700 flex-shrink-0 hover:from-neutral-200 hover:to-neutral-300 dark:hover:from-slate-700 dark:hover:to-slate-600 hover:text-primary-800 dark:hover:text-neutral-100 transition-all duration-200 cursor-pointer w-full group"
-                  >
-                    <div className="flex items-center justify-center space-x-2">
-                      <span className="font-medium">
-                        Ver los {totalResults} resultado{totalResults !== 1 ? 's' : ''} encontrado{totalResults !== 1 ? 's' : ''}
-                      </span>
-                      <span className="text-accent-600 group-hover:text-accent-700 transition-colors">
-                        →
-                      </span>
-                    </div>
-                  </button>
                 </div>
-              ) : (
-                query.length >= 3 && (
-                  <div className="px-6 py-8 text-center text-primary-500 dark:text-neutral-400">
-                    <div className="mb-4">
-                      <Search className="w-8 h-8 mx-auto mb-2 text-primary-400 dark:text-neutral-600" />
-                      <p>No se encontraron resultados para "{query}"</p>
-                    </div>
-                    {searchHistory.length > 0 && (
-                      <div className="mt-6 pt-4 border-t border-primary-200 dark:border-slate-700">
-                        <h5 className="text-sm font-medium text-primary-700 dark:text-neutral-300 mb-3 flex items-center">
-                          <Clock className="w-4 h-4 mr-1" />
-                          Búsquedas recientes
-                        </h5>
-                        <div className="flex flex-wrap gap-2 justify-center">
-                          {searchHistory.map((term, index) => (
-                            <button
-                              key={index}
-                              onClick={() => setQuery(term)}
-                              className="px-3 py-1 bg-primary-100 dark:bg-slate-800 text-primary-700 dark:text-neutral-300 rounded-full text-sm hover:bg-primary-200 dark:hover:bg-slate-700 transition-colors"
-                            >
-                              {term}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+
+                {/* Contador siempre visible en la parte inferior */}
+                <button
+                  onClick={handleSearchClick}
+                  className="px-6 py-3 bg-gradient-to-r from-neutral-100 to-neutral-200 dark:from-slate-800 dark:to-slate-700 text-sm text-primary-600 dark:text-neutral-300 text-center border-t border-neutral-200 dark:border-slate-700 flex-shrink-0 hover:from-neutral-200 hover:to-neutral-300 dark:hover:from-slate-700 dark:hover:to-slate-600 hover:text-primary-800 dark:hover:text-neutral-100 transition-all duration-200 cursor-pointer w-full group"
+                >
+                  <div className="flex items-center justify-center space-x-2">
+                    <span className="font-medium">
+                      Ver los {totalResults} resultado{totalResults !== 1 ? 's' : ''} encontrado{totalResults !== 1 ? 's' : ''}
+                    </span>
+                    <span className="text-accent-600 group-hover:text-accent-700 transition-colors">
+                      →
+                    </span>
                   </div>
-                )
-              )}
-            </>
-          )}
-        </div>
-      )}
-    </div>);
+                </button>
+              </div>
+            ) : (
+              query.length >= 3 && (
+                <div className="px-6 py-8 text-center text-primary-500 dark:text-neutral-400">
+                  <div className="mb-4">
+                    <Search className="w-8 h-8 mx-auto mb-2 text-primary-400 dark:text-neutral-600" />
+                    <p>No se encontraron resultados para "{query}"</p>
+                  </div>
+                  {searchHistory.length > 0 && (
+                    <div className="mt-6 pt-4 border-t border-primary-200 dark:border-slate-700">
+                      <h5 className="text-sm font-medium text-primary-700 dark:text-neutral-300 mb-3 flex items-center">
+                        <Clock className="w-4 h-4 mr-1" />
+                        Búsquedas recientes
+                      </h5>
+                      <div className="flex flex-wrap gap-2 justify-center">
+                        {searchHistory.map((term, index) => (
+                          <button
+                            key={index}
+                            onClick={() => setQuery(term)}
+                            className="px-3 py-1 bg-primary-100 dark:bg-slate-800 text-primary-700 dark:text-neutral-300 rounded-full text-sm hover:bg-primary-200 dark:hover:bg-slate-700 transition-colors"
+                          >
+                            {term}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )
+            )}
+          </>
+        )}
+      </div>
+    )}
+  </div>);
 }

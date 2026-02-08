@@ -1,3 +1,4 @@
+
 import './globals.css'
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
@@ -5,6 +6,8 @@ import ConditionalLayout from '@/components/layout/ConditionalLayout'
 import WebVitalsClient from '@/components/WebVitalsClient'
 import GoogleAnalytics from '@/components/GoogleAnalytics'
 import ThemeProviderWrapper from '@/components/providers/ThemeProviderWrapper'
+import SearchProvider from '@/components/search/SearchProvider'
+import CookieConsent from '@/components/legal/CookieConsent'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -24,9 +27,12 @@ export default function RootLayout({
       <body className={inter.className}>
         <GoogleAnalytics />
         <ThemeProviderWrapper>
-          <ConditionalLayout>
-            {children}
-          </ConditionalLayout>
+          <SearchProvider>
+            <ConditionalLayout>
+              {children}
+            </ConditionalLayout>
+            <CookieConsent />
+          </SearchProvider>
           <WebVitalsClient />
         </ThemeProviderWrapper>
       </body>

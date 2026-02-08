@@ -1,99 +1,31 @@
 import Link from 'next/link'
-import { ArrowLeft, Clock, BookOpen, Calendar, Users, CheckCircle, AlertCircle } from 'lucide-react'
+import { BookOpen, Users, CheckCircle, Calendar } from 'lucide-react'
 
 export const metadata = {
   title: 'Próximas Traducciones - Panel Bahá\'í',
   description: 'Conoce las próximas traducciones y proyectos del Panel de Traducción de Literatura Bahá\'í al Español'
 }
 
+type EtiquetaObra = 'Revisión de traducción' | 'Obra no publicada anteriormente'
+
+const OBRAS: { titulo: string; autor: string; etiqueta: EtiquetaObra }[] = [
+  { titulo: 'Afire with the Vision', autor: 'Shoghi Effendi', etiqueta: 'Obra no publicada anteriormente' },
+  { titulo: 'Selección de los Escritos del Báb', autor: 'El Báb', etiqueta: 'Revisión de traducción' },
+  { titulo: 'Tablas de Bahá\'u\'lláh, reveladas después del Kitáb-i-Aqdas', autor: 'Bahá\'u\'lláh', etiqueta: 'Revisión de traducción' },
+  { titulo: 'Selección de los Escritos de \'Abdu\'l-Bahá', autor: '\'Abdu\'l-Bahá', etiqueta: 'Revisión de traducción' }
+]
+
 export default function ProximasTraduccionesPage() {
-  const proximasObras = [
-    {
-      titulo: "Las Siete Valles",
-      autor: "Bahá'u'lláh",
-      estado: "En revisión final",
-      progreso: 90,
-      fechaEstimada: "2024 Q4",
-      descripcion: "Una obra mística que describe el viaje espiritual del alma hacia Dios a través de siete valles metafóricos.",
-      prioridad: "Alta"
-    },
-    {
-      titulo: "Los Cuatro Valles", 
-      autor: "Bahá'u'lláh",
-      estado: "En traducción",
-      progreso: 75,
-      fechaEstimada: "2025 Q1",
-      descripcion: "Complemento místico de Las Siete Valles, explorando cuatro estados espirituales del alma.",
-      prioridad: "Alta"
-    },
-    {
-      titulo: "El Secreto de la Civilización Divina",
-      autor: "'Abdu'l-Bahá",
-      estado: "En planificación",
-      progreso: 25,
-      fechaEstimada: "2025 Q2",
-      descripcion: "Análisis profundo sobre los principios necesarios para el avance de la civilización humana.",
-      prioridad: "Media"
-    },
-    {
-      titulo: "Cartas a Martha Root",
-      autor: "Shoghi Effendi",
-      estado: "En preparación",
-      progreso: 10,
-      fechaEstimada: "2025 Q3",
-      descripcion: "Correspondencia con una de las más destacadas promotoras de la Fe Bahá'í en Occidente.",
-      prioridad: "Media"
-    },
-    {
-      titulo: "Tablas de Bahá'u'lláh",
-      autor: "Bahá'u'lláh",
-      estado: "En investigación",
-      progreso: 5,
-      fechaEstimada: "2025 Q4",
-      descripcion: "Colección de escritos revelados por Bahá'u'lláh dirigidos a diversos destinatarios.",
-      prioridad: "Baja"
-    }
-  ];
-
-  const getEstadoColor = (estado: string) => {
-    switch (estado) {
-      case 'En revisión final': return 'text-green-600 bg-green-100 border-green-200';
-      case 'En traducción': return 'text-blue-600 bg-blue-100 border-blue-200';
-      case 'En planificación': return 'text-yellow-600 bg-yellow-100 border-yellow-200';
-      case 'En preparación': return 'text-purple-600 bg-purple-100 border-purple-200';
-      case 'En investigación': return 'text-gray-600 bg-gray-100 border-gray-200';
-      default: return 'text-gray-600 bg-gray-100 border-gray-200';
-    }
-  };
-
-  const getPrioridadColor = (prioridad: string) => {
-    switch (prioridad) {
-      case 'Alta': return 'text-red-600 bg-red-100';
-      case 'Media': return 'text-yellow-600 bg-yellow-100';
-      case 'Baja': return 'text-green-600 bg-green-100';
-      default: return 'text-gray-600 bg-gray-100';
-    }
-  };
-
-  const getEstadoIcon = (estado: string) => {
-    switch (estado) {
-      case 'En revisión final': return <CheckCircle className="w-4 h-4" />;
-      case 'En traducción': return <BookOpen className="w-4 h-4" />;
-      case 'En planificación': return <Calendar className="w-4 h-4" />;
-      case 'En preparación': return <Users className="w-4 h-4" />;
-      case 'En investigación': return <AlertCircle className="w-4 h-4" />;
-      default: return <Clock className="w-4 h-4" />;
-    }
-  };
-
   return (
     <div className="min-h-screen bg-white dark:bg-midnight-900 transition-colors duration-200">
-      {/* Hero azul unificado */}
+      {/* Hero */}
       <section className="bg-primary-900 dark:bg-midnight-900 text-white">
         <div className="container-elegant">
           <div className="section-elegant text-center">
-            <h1 className="display-title text-white mb-4">Próximas Traducciones</h1>
-            <p className="text-xl text-primary-200 max-w-3xl mx-auto">Proyectos en desarrollo y planificación del Panel Internacional de Traducción</p>
+            <h1 className="display-title text-white mb-4">Próximas traducciones</h1>
+            <p className="text-xl text-primary-200 max-w-3xl mx-auto">
+              Obras en fase de traducción o revisión del Panel Internacional de Traducción
+            </p>
           </div>
         </div>
       </section>
@@ -104,182 +36,108 @@ export default function ProximasTraduccionesPage() {
           <div className="flex items-center py-4">
             <Link href="/" className="text-primary-600 dark:text-neutral-400 hover:text-primary-800 dark:hover:text-neutral-200 transition-colors">Inicio</Link>
             <span className="mx-2 text-primary-400 dark:text-neutral-600">/</span>
-            <span className="text-primary-900 dark:text-neutral-100 font-medium">Próximas Traducciones</span>
+            <span className="text-primary-900 dark:text-neutral-100 font-medium">Próximas traducciones</span>
           </div>
         </div>
       </nav>
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Introducción */}
-        <section className="mb-16">
-          <div className="bg-gradient-to-r from-primary-50 to-white dark:from-slate-800 dark:to-midnight-900 rounded-lg p-8 border border-primary-100 dark:border-slate-700">
-            <div className="flex items-center mb-6">
-              <div className="w-12 h-12 bg-accent-500 rounded-lg flex items-center justify-center mr-4">
-                <Clock className="w-6 h-6 text-white" />
-              </div>
-              <h2 className="text-3xl font-display font-bold text-primary-900 dark:text-neutral-100">
-                Trabajo en progreso
-              </h2>
-            </div>
-            <p className="text-lg text-primary-700 dark:text-neutral-300 leading-relaxed mb-6">
-              El Panel Internacional de Traducción trabaja continuamente en nuevos proyectos para ampliar 
-              la biblioteca de literatura bahá'í disponible en español. Nuestro compromiso es hacer accesibles 
-              los textos sagrados y escritos de autoridad a las comunidades de habla hispana en todo el mundo.
-            </p>
-            <p className="text-lg text-primary-700 dark:text-neutral-300 leading-relaxed">
-              Aquí puedes seguir el progreso de nuestras próximas publicaciones y conocer qué obras están 
-              siendo preparadas para la comunidad bahá'í internacional.
-            </p>
-          </div>
-        </section>
+      <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {/* Párrafo introductorio */}
+        <p className="text-primary-700 dark:text-neutral-300 text-lg leading-relaxed mb-12">
+          Actualmente están en alguna de las fases de traducción o revisión las siguientes obras, por lo que se espera que puedan ser subidas a este sitio web próximamente:
+        </p>
 
-        {/* Estadísticas generales */}
-        <section className="mb-16">
-          <div className="grid md:grid-cols-4 gap-6 mb-8">
-            <div className="bg-white dark:bg-slate-800 border border-primary-200 dark:border-slate-700 rounded-lg p-6 text-center">
-              <div className="w-12 h-12 bg-accent-500 rounded-lg flex items-center justify-center mx-auto mb-3">
-                <BookOpen className="w-6 h-6 text-white" />
-              </div>
-              <h3 className="text-2xl font-bold text-primary-900 dark:text-neutral-100 mb-1">{proximasObras.length}</h3>
-              <p className="text-primary-600 dark:text-neutral-400">Proyectos activos</p>
-            </div>
-            <div className="bg-white border border-primary-200 rounded-lg p-6 text-center">
-              <div className="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center mx-auto mb-3">
-                <CheckCircle className="w-6 h-6 text-white" />
-              </div>
-              <h3 className="text-2xl font-bold text-primary-900 mb-1">1</h3>
-              <p className="text-primary-600">En revisión final</p>
-            </div>
-            <div className="bg-white border border-primary-200 rounded-lg p-6 text-center">
-              <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center mx-auto mb-3">
-                <Users className="w-6 h-6 text-white" />
-              </div>
-              <h3 className="text-2xl font-bold text-primary-900 mb-1">1</h3>
-              <p className="text-primary-600">En traducción</p>
-            </div>
-            <div className="bg-white border border-primary-200 rounded-lg p-6 text-center">
-              <div className="w-12 h-12 bg-yellow-500 rounded-lg flex items-center justify-center mx-auto mb-3">
-                <Calendar className="w-6 h-6 text-white" />
-              </div>
-              <h3 className="text-2xl font-bold text-primary-900 mb-1">3</h3>
-              <p className="text-primary-600">En planificación</p>
-            </div>
-          </div>
-        </section>
-
-        {/* Lista de próximas obras */}
-        <section className="mb-16">
-          <h2 className="text-2xl font-display font-bold text-primary-900 dark:text-neutral-100 mb-8">Proyectos actuales</h2>
-          <div className="space-y-8">
-            {proximasObras.map((obra, index) => (
-              <div key={index} className="bg-white dark:bg-slate-800 border border-primary-200 dark:border-slate-700 rounded-lg p-8 hover:shadow-lg transition-shadow">
-                <div className="flex flex-col lg:flex-row lg:items-start justify-between mb-6">
-                  <div className="flex-1">
-                    <div className="flex items-center mb-3">
-                      <h3 className="text-2xl font-display font-bold text-primary-900 dark:text-neutral-100 mr-4">
-                        {obra.titulo}
-                      </h3>
-                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getPrioridadColor(obra.prioridad)}`}>
-                        {obra.prioridad}
-                      </span>
-                    </div>
-                    <p className="text-accent-600 dark:text-accent-400 font-medium text-lg mb-3">
-                      por {obra.autor}
-                    </p>
-                    <p className="text-primary-700 dark:text-neutral-300 leading-relaxed text-lg">
-                      {obra.descripcion}
+        {/* Obras en traducción o revisión */}
+        <section>
+          <h2 className="text-xl font-display font-semibold text-primary-900 dark:text-neutral-100 mb-6">
+            Obras en traducción o revisión
+          </h2>
+          <ul className="space-y-4">
+            {OBRAS.map((obra, index) => (
+              <li
+                key={index}
+                className="group rounded-xl border border-primary-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-5 py-4 transition-colors hover:border-primary-300 dark:hover:border-slate-600"
+              >
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-display font-semibold text-primary-900 dark:text-neutral-100 text-lg leading-snug">
+                      {obra.titulo}
+                    </h3>
+                    <p className="mt-1 text-sm text-primary-600 dark:text-neutral-400">
+                      {obra.autor}
                     </p>
                   </div>
-                  <div className="mt-4 lg:mt-0 lg:ml-6 flex-shrink-0">
-                    <span className={`inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium border ${getEstadoColor(obra.estado)}`}>
-                      {getEstadoIcon(obra.estado)}
-                      <span className="ml-2">{obra.estado}</span>
-                    </span>
-                  </div>
+                  <span
+                    className={
+                      'inline-flex shrink-0 items-center rounded-full px-3 py-1 text-xs font-medium ' +
+                      (obra.etiqueta === 'Revisión de traducción'
+                        ? 'bg-primary-200/80 text-primary-800 dark:bg-primary-900/60 dark:text-primary-200'
+                        : 'bg-neutral-200/80 text-neutral-700 dark:bg-slate-600/60 dark:text-neutral-300')
+                    }
+                  >
+                    {obra.etiqueta}
+                  </span>
                 </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="flex items-center">
-                    <Calendar className="w-5 h-5 text-primary-500 dark:text-neutral-400 mr-3" />
-                    <div>
-                      <span className="text-sm text-primary-500 dark:text-neutral-400 block">Fecha Estimada</span>
-                      <span className="text-lg font-medium text-primary-900 dark:text-neutral-100">{obra.fechaEstimada}</span>
-                    </div>
-                  </div>
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-primary-500 dark:text-neutral-400">Progreso</span>
-                      <span className="text-lg font-bold text-primary-900 dark:text-neutral-100">{obra.progreso}%</span>
-                    </div>
-                    <div className="w-full bg-primary-100 dark:bg-slate-700 rounded-full h-3">
-                      <div 
-                        className="bg-gradient-to-r from-accent-500 to-accent-600 h-3 rounded-full transition-all duration-500"
-                        style={{ width: `${obra.progreso}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              </li>
             ))}
-          </div>
+          </ul>
         </section>
 
         {/* Proceso y metodología */}
-        <section className="mb-16">
-          <h2 className="text-2xl font-display font-bold text-primary-900 dark:text-neutral-100 mb-8 text-center">
+        <section className="mt-16">
+          <h2 className="text-xl font-display font-semibold text-primary-900 dark:text-neutral-100 mb-6 text-center">
             Nuestro proceso de desarrollo
           </h2>
-          <div className="grid md:grid-cols-4 gap-8">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-accent-500 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <BookOpen className="w-8 h-8 text-white" />
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="text-center p-4">
+              <div className="w-12 h-12 bg-accent-500 rounded-lg flex items-center justify-center mx-auto mb-3">
+                <BookOpen className="w-6 h-6 text-white" />
               </div>
-              <h3 className="text-xl font-display font-semibold text-primary-900 dark:text-neutral-100 mb-3">Preparación</h3>
-              <p className="text-primary-700 dark:text-neutral-300">
-                Investigación exhaustiva del texto original y preparación de materiales de referencia especializados.
+              <h3 className="font-display font-semibold text-primary-900 dark:text-neutral-100 mb-2">Preparación</h3>
+              <p className="text-sm text-primary-700 dark:text-neutral-300">
+                Investigación del texto original y preparación de materiales de referencia.
               </p>
             </div>
-            <div className="text-center">
-              <div className="w-16 h-16 bg-accent-500 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <Users className="w-8 h-8 text-white" />
+            <div className="text-center p-4">
+              <div className="w-12 h-12 bg-accent-500 rounded-lg flex items-center justify-center mx-auto mb-3">
+                <Users className="w-6 h-6 text-white" />
               </div>
-              <h3 className="text-xl font-display font-semibold text-primary-900 mb-3">Traducción</h3>
-              <p className="text-primary-700">
-                Trabajo colaborativo de traducción con múltiples revisiones y consultas especializadas.
+              <h3 className="font-display font-semibold text-primary-900 dark:text-neutral-100 mb-2">Traducción</h3>
+              <p className="text-sm text-primary-700 dark:text-neutral-300">
+                Trabajo colaborativo con múltiples revisiones y consultas especializadas.
               </p>
             </div>
-            <div className="text-center">
-              <div className="w-16 h-16 bg-accent-500 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <CheckCircle className="w-8 h-8 text-white" />
+            <div className="text-center p-4">
+              <div className="w-12 h-12 bg-accent-500 rounded-lg flex items-center justify-center mx-auto mb-3">
+                <CheckCircle className="w-6 h-6 text-white" />
               </div>
-              <h3 className="text-xl font-display font-semibold text-primary-900 mb-3">Revisión</h3>
-              <p className="text-primary-700">
-                Proceso exhaustivo de revisión y refinamiento del texto para asegurar máxima fidelidad.
+              <h3 className="font-display font-semibold text-primary-900 dark:text-neutral-100 mb-2">Revisión</h3>
+              <p className="text-sm text-primary-700 dark:text-neutral-300">
+                Revisión y refinamiento del texto para asegurar máxima fidelidad.
               </p>
             </div>
-            <div className="text-center">
-              <div className="w-16 h-16 bg-accent-500 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <Calendar className="w-8 h-8 text-white" />
+            <div className="text-center p-4">
+              <div className="w-12 h-12 bg-accent-500 rounded-lg flex items-center justify-center mx-auto mb-3">
+                <Calendar className="w-6 h-6 text-white" />
               </div>
-              <h3 className="text-xl font-display font-semibold text-primary-900 mb-3">Publicación</h3>
-              <p className="text-primary-700">
-                Aprobación final por las instituciones correspondientes y publicación en la plataforma digital.
+              <h3 className="font-display font-semibold text-primary-900 dark:text-neutral-100 mb-2">Publicación</h3>
+              <p className="text-sm text-primary-700 dark:text-neutral-300">
+                Aprobación final y publicación en la plataforma digital.
               </p>
             </div>
           </div>
         </section>
 
         {/* Llamada a la colaboración */}
-        <section className="bg-primary-900 dark:bg-midnight-900 text-white rounded-lg p-8 text-center">
-          <h2 className="text-2xl font-display font-bold mb-4">Únete a nuestro trabajo</h2>
-          <p className="text-primary-200 dark:text-neutral-300 mb-6 max-w-2xl mx-auto">
-            Si tienes habilidades en traducción, revisión, o edición y deseas contribuir 
-            a estos importantes proyectos, nos encantaría conocer tu interés en formar parte 
-            de este noble esfuerzo.
+        <section className="mt-16 bg-primary-900 dark:bg-midnight-900 text-white rounded-lg p-8 text-center">
+          <h2 className="text-xl font-display font-semibold mb-4">Únete a nuestro trabajo</h2>
+          <p className="text-primary-200 dark:text-neutral-300 mb-6 max-w-2xl mx-auto text-sm">
+            Si tienes habilidades en traducción, revisión o edición y deseas contribuir
+            a estos proyectos, nos encantaría conocer tu interés.
           </p>
-          <Link 
-            href="/contacto" 
-            className="bg-accent-500 hover:bg-accent-600 text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200 inline-block"
+          <Link
+            href="/contacto"
+            className="bg-accent-500 hover:bg-accent-600 text-white font-medium py-2.5 px-5 rounded-lg transition-colors duration-200 inline-block text-sm"
           >
             Contáctanos
           </Link>

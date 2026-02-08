@@ -46,8 +46,8 @@ export default function AutoresPage() {
       obras: 0
     },
     {
-      nombre: "Compilaciones",
-      slug: "compilaciones",
+      nombre: "Recopilaciones",
+      slug: "recopilaciones",
       biografia: "Selecciones temáticas de textos de varios autores bahá'ís organizadas por tema.",
       icono: Globe,
       obras: 1
