@@ -24,19 +24,19 @@ export default function SiteFooter({ variant = 'default' }: SiteFooterProps) {
           <div>
             <h4 className="font-medium mb-4 text-white dark:text-neutral-100">Panel de Traducción</h4>
             <p className="text-primary-200 dark:text-neutral-400 leading-relaxed">
-              Traducciones oficiales en español de los textos de autoridad de la Fe bahá'í.
+              Traducciones oficiales al español de los textos de autoridad de la Fe bahá'í.
             </p>
           </div>
           <div>
             <ul className="space-y-3 text-primary-200 dark:text-neutral-400">
               <li><a href="/autores" className="hover:text-white dark:hover:text-neutral-100 transition-colors">Autores</a></li>
-              <li><a href="/proximas-traducciones" className="hover:text-white dark:hover:text-neutral-100 transition-colors">Próximas Traducciones</a></li>
+              <li><a href="/proximas-traducciones" className="hover:text-white dark:hover:text-neutral-100 transition-colors">Próximas traducciones</a></li>
               <li><a href="/acerca" className="hover:text-white dark:hover:text-neutral-100 transition-colors">Sobre el Panel</a></li>
               <li><a href="/contacto" className="hover:text-white dark:hover:text-neutral-100 transition-colors">Contacto</a></li>
             </ul>
           </div>
           <div>
-            <h4 className="font-medium mb-4 text-white dark:text-neutral-100">Recursos Oficiales</h4>
+            <h4 className="font-medium mb-4 text-white dark:text-neutral-100">Recursos oficiales</h4>
             <ul className="space-y-3 text-primary-200 dark:text-neutral-400">
               <li><a href="https://bahai.org" className="hover:text-white dark:hover:text-neutral-100 transition-colors">Bahá'í.org</a></li>
               <li><a href="https://bahai.org/library" className="hover:text-white dark:hover:text-neutral-100 transition-colors">Bahá'í Reference Library</a></li>

@@ -105,9 +105,6 @@ export default function SearchBox({
 
     const timeoutId = setTimeout(async () => {
       if (query.length >= 3) {
-        // #region agent log
-        fetch('/api/debug-log',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'SearchBox.tsx:search-attempt',message:'SearchBox debounce fired',data:{query,isInitialized,searchIsLoading,context},timestamp:Date.now(),hypothesisId:'H4,H5'})}).catch(()=>{});
-        // #endregion
         // Solo buscar si el índice está inicializado
         if (!isInitialized) {
           setIsLoading(true)

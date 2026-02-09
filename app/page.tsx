@@ -1,11 +1,8 @@
 import Link from 'next/link'
-import { Search, BookOpen, Users, Globe, ArrowRight } from 'lucide-react'
+import { BookOpen, Users, Globe, ArrowRight } from 'lucide-react'
 import SearchBox from '@/components/search/SearchBox'
-import SearchProvider from '@/components/search/SearchProvider'
-
 export default function HomePage() {
   return (
-    <SearchProvider>
       <div className="min-h-screen bg-neutral-50 dark:bg-midnight-900 transition-colors duration-200">
         {/* Hero principal con fondo azul */}
         <section className="bg-hero-gradient text-white">
@@ -80,33 +77,9 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Características elegantes */}
-            <div className="card">
-              <h3 className="text-2xl font-normal text-primary-900 dark:text-neutral-100 mb-12 text-center">
-                Características de la plataforma
-              </h3>
-              <div className="grid-elegant md:grid-cols-3">
-                <FeatureCard
-                  icono={Search}
-                  titulo="Búsqueda avanzada"
-                  descripcion="Encuentra cualquier texto con búsqueda en tiempo real y resultados priorizados."
-                />
-                <FeatureCard
-                  icono={BookOpen}
-                  titulo="Modo lectura"
-                  descripcion="Párrafos numerados con anclajes directos e índice de navegación lateral."
-                />
-                <FeatureCard
-                  icono={Globe}
-                  titulo="Multilingüe"
-                  descripcion="Interfaz disponible en español e inglés, optimizada para todos los dispositivos."
-                />
-              </div>
-            </div>
           </div>
         </main>
       </div>
-    </SearchProvider>
   )
 }
 
@@ -139,24 +112,5 @@ function AuthorCard({ nombre, slug, descripcion, icono: IconoComponente }: {
         </div>
       </div>
     </Link>
-  )
-}
-
-// Componente para características
-function FeatureCard({ icono: IconoComponente, titulo, descripcion }: {
-  icono: any;
-  titulo: string;
-  descripcion: string;
-}) {
-  return (
-    <div className="text-center">
-      <div className="w-16 h-16 bg-primary-100 dark:bg-slate-800 rounded-sm flex items-center justify-center mx-auto mb-6">
-        <IconoComponente className="w-8 h-8 text-primary-700 dark:text-neutral-300" />
-      </div>
-      <h4 className="font-medium text-primary-900 dark:text-neutral-100 mb-3">{titulo}</h4>
-      <p className="text-primary-600 dark:text-neutral-400 leading-relaxed">
-        {descripcion}
-      </p>
-    </div>
   )
 }

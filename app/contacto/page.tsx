@@ -120,7 +120,7 @@ export default function ContactoPage() {
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
                     <label htmlFor="nombre" className="block text-sm font-medium text-primary-700 dark:text-neutral-300 mb-2">
-                      Nombre completo *
+                      Nombre y apellidos *
                     </label>
                     <input
                       type="text"
@@ -128,11 +128,11 @@ export default function ContactoPage() {
                       name="nombre"
                       required
                       className="w-full px-4 py-3 border border-primary-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-accent-500 transition-colors bg-white dark:bg-slate-800 text-primary-900 dark:text-neutral-100"
-                      placeholder="Tu nombre completo"
+                      placeholder="Ej.: María García López"
                     />
                   </div>
                   <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-primary-700 mb-2">
+                    <label htmlFor="email" className="block text-sm font-medium text-primary-700 dark:text-neutral-300 mb-2">
                       Correo electrónico *
                     </label>
                     <input
@@ -141,13 +141,13 @@ export default function ContactoPage() {
                       name="email"
                       required
                       className="w-full px-4 py-3 border border-primary-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-accent-500 transition-colors bg-white dark:bg-slate-800 text-primary-900 dark:text-neutral-100"
-                      placeholder="tu@email.com"
+                      placeholder="Ej.: nombre@ejemplo.com"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label htmlFor="mensaje" className="block text-sm font-medium text-primary-700 mb-2">
+                  <label htmlFor="mensaje" className="block text-sm font-medium text-primary-700 dark:text-neutral-300 mb-2">
                     Mensaje *
                   </label>
                   <textarea
@@ -155,8 +155,8 @@ export default function ContactoPage() {
                     name="mensaje"
                     rows={5}
                     required
-                    className="w-full px-4 py-3 border border-primary-200 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-accent-500 transition-colors resize-none"
-                    placeholder="Comparte tus ideas, preguntas o cómo te gustaría contribuir al trabajo del Panel..."
+                    className="w-full px-4 py-3 border border-primary-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-accent-500 transition-colors resize-none bg-white dark:bg-slate-800 text-primary-900 dark:text-neutral-100"
+                    placeholder="Ej.: Me gustaría colaborar en la revisión de traducciones. ¿Podrían indicarme los pasos a seguir?"
                   />
                 </div>
 

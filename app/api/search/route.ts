@@ -130,28 +130,9 @@ const fallbackSearchDocuments: SearchDocument[] = [
   }
 ];
 
-// #region agent log
-import fs from 'fs';
-import path from 'path';
-function debugLog(msg: string, data: any) {
-  try {
-    const logPath = path.join(process.cwd(), '.cursor', 'debug.log');
-    const dir = path.dirname(logPath);
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    fs.appendFileSync(logPath, JSON.stringify({ location: 'api/search/route.ts', message: msg, data, timestamp: Date.now() }) + '\n');
-  } catch {}
-}
-// #endregion
-
 export async function GET(request: NextRequest) {
   try {
-    // #region agent log
-    debugLog('GET start - about to dbConnect', { url: request.nextUrl.toString(), hypothesisId: 'H4' });
-    // #endregion
     const connection = await dbConnect();
-    // #region agent log
-    debugLog('dbConnect returned', { connected: connection?.connected, hypothesisId: 'H4' });
-    // #endregion
 
     const { searchParams } = request.nextUrl;
     const buildIndex = searchParams.get('buildIndex') === 'true';

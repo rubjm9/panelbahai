@@ -64,8 +64,8 @@ export default function SiteHeader() {
             <Link href="/acerca" className="nav-link">Sobre el Panel</Link>
             <Link href="/contacto" className="nav-link">Contacto</Link>
 
-            {/* Dashboard */}
-            <Link href="/admin" className="nav-link text-accent-700 hover:text-accent-800 dark:text-accent-500 dark:hover:text-accent-400">Dashboard</Link>
+            {/* Acceso */}
+            <Link href="/admin" className="nav-link text-accent-700 hover:text-accent-800 dark:text-accent-500 dark:hover:text-accent-400">Acceso</Link>
             
             {/* Theme Toggle */}
             <ThemeToggle size="md" />
@@ -104,7 +104,7 @@ export default function SiteHeader() {
               <Link href="/proximas-traducciones" className="nav-link" onClick={() => setMobileOpen(false)}>Próximas traducciones</Link>
               <Link href="/acerca" className="nav-link" onClick={() => setMobileOpen(false)}>Sobre el Panel</Link>
               <Link href="/contacto" className="nav-link" onClick={() => setMobileOpen(false)}>Contacto</Link>
-              <Link href="/admin" className="nav-link text-accent-700 dark:text-accent-500" onClick={() => setMobileOpen(false)}>Dashboard</Link>
+              <Link href="/admin" className="nav-link text-accent-700 dark:text-accent-500" onClick={() => setMobileOpen(false)}>Acceso</Link>
             </nav>
           </div>
         )}

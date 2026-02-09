@@ -1,8 +1,7 @@
 import Link from 'next/link'
-import { BookOpen, Users, CheckCircle, Calendar } from 'lucide-react'
 
 export const metadata = {
-  title: 'Próximas Traducciones - Panel Bahá\'í',
+  title: 'Próximas traducciones - Panel Bahá\'í',
   description: 'Conoce las próximas traducciones y proyectos del Panel de Traducción de Literatura Bahá\'í al Español'
 }
 
@@ -41,7 +40,7 @@ export default function ProximasTraduccionesPage() {
         </div>
       </nav>
 
-      <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Párrafo introductorio */}
         <p className="text-primary-700 dark:text-neutral-300 text-lg leading-relaxed mb-12">
           Actualmente están en alguna de las fases de traducción o revisión las siguientes obras, por lo que se espera que puedan ser subidas a este sitio web próximamente:
@@ -83,61 +82,16 @@ export default function ProximasTraduccionesPage() {
           </ul>
         </section>
 
-        {/* Proceso y metodología */}
-        <section className="mt-16">
-          <h2 className="text-xl font-display font-semibold text-primary-900 dark:text-neutral-100 mb-6 text-center">
-            Nuestro proceso de desarrollo
-          </h2>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="text-center p-4">
-              <div className="w-12 h-12 bg-accent-500 rounded-lg flex items-center justify-center mx-auto mb-3">
-                <BookOpen className="w-6 h-6 text-white" />
-              </div>
-              <h3 className="font-display font-semibold text-primary-900 dark:text-neutral-100 mb-2">Preparación</h3>
-              <p className="text-sm text-primary-700 dark:text-neutral-300">
-                Investigación del texto original y preparación de materiales de referencia.
-              </p>
-            </div>
-            <div className="text-center p-4">
-              <div className="w-12 h-12 bg-accent-500 rounded-lg flex items-center justify-center mx-auto mb-3">
-                <Users className="w-6 h-6 text-white" />
-              </div>
-              <h3 className="font-display font-semibold text-primary-900 dark:text-neutral-100 mb-2">Traducción</h3>
-              <p className="text-sm text-primary-700 dark:text-neutral-300">
-                Trabajo colaborativo con múltiples revisiones y consultas especializadas.
-              </p>
-            </div>
-            <div className="text-center p-4">
-              <div className="w-12 h-12 bg-accent-500 rounded-lg flex items-center justify-center mx-auto mb-3">
-                <CheckCircle className="w-6 h-6 text-white" />
-              </div>
-              <h3 className="font-display font-semibold text-primary-900 dark:text-neutral-100 mb-2">Revisión</h3>
-              <p className="text-sm text-primary-700 dark:text-neutral-300">
-                Revisión y refinamiento del texto para asegurar máxima fidelidad.
-              </p>
-            </div>
-            <div className="text-center p-4">
-              <div className="w-12 h-12 bg-accent-500 rounded-lg flex items-center justify-center mx-auto mb-3">
-                <Calendar className="w-6 h-6 text-white" />
-              </div>
-              <h3 className="font-display font-semibold text-primary-900 dark:text-neutral-100 mb-2">Publicación</h3>
-              <p className="text-sm text-primary-700 dark:text-neutral-300">
-                Aprobación final y publicación en la plataforma digital.
-              </p>
-            </div>
-          </div>
-        </section>
-
-        {/* Llamada a la colaboración */}
-        <section className="mt-16 bg-primary-900 dark:bg-midnight-900 text-white rounded-lg p-8 text-center">
-          <h2 className="text-xl font-display font-semibold mb-4">Únete a nuestro trabajo</h2>
-          <p className="text-primary-200 dark:text-neutral-300 mb-6 max-w-2xl mx-auto text-sm">
+        {/* Colabora con el Panel */}
+        <section className="mt-16 bg-primary-900 dark:bg-midnight-900 text-white rounded-lg p-10 text-center">
+          <h2 className="text-2xl font-display font-semibold mb-5">Colabora con el Panel</h2>
+          <p className="text-primary-200 dark:text-neutral-300 mb-8 max-w-2xl mx-auto text-lg leading-relaxed">
             Si tienes habilidades en traducción, revisión o edición y deseas contribuir
             a estos proyectos, nos encantaría conocer tu interés.
           </p>
           <Link
             href="/contacto"
-            className="bg-accent-500 hover:bg-accent-600 text-white font-medium py-2.5 px-5 rounded-lg transition-colors duration-200 inline-block text-sm"
+            className="bg-accent-500 hover:bg-accent-600 text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200 inline-block"
           >
             Contáctanos
           </Link>

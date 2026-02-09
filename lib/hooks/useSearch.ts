@@ -114,15 +114,8 @@ export function useSearch(options: UseSearchOptions = {}) {
   // Inicializar índice base
   const initialize = useCallback(async (forceRebuild = false) => {
     if (initializationRef.current || worker.isLoading) {
-      // #region agent log
-      fetch('/api/debug-log',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useSearch.ts:initialize-skip',message:'initialize skipped',data:{initRef:initializationRef.current,workerLoading:worker.isLoading},timestamp:Date.now(),hypothesisId:'H4'})}).catch(()=>{});
-      // #endregion
       return;
     }
-
-    // #region agent log
-    fetch('/api/debug-log',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useSearch.ts:initialize-start',message:'initialize starting',data:{forceRebuild,workerIsReady:worker.isReady,workerIsLoading:worker.isLoading},timestamp:Date.now(),hypothesisId:'H1,H2,H4'})}).catch(()=>{});
-    // #endregion
 
     initializationRef.current = true;
     setIsLoading(true);
@@ -178,24 +171,24 @@ export function useSearch(options: UseSearchOptions = {}) {
         throw new Error('No se pudieron obtener documentos para indexar');
       }
 
-      // Crear chunks
+      // Crear chunks (for future lazy-loading of per-obra data)
       chunkManager.createChunks(documents);
 
-      // Intentar usar Web Worker, fallback a main thread si no está disponible
-      const baseChunk = chunkManager.getBaseChunk();
-      const documentsToIndex = baseChunk ? baseChunk.documents : documents;
+      // FIX: Index ALL documents, not just base chunk titles.
+      // The base chunk only has titles (6 docs out of 2287).
+      // We need all paragraphs and sections to be searchable.
+      const documentsToIndex = documents;
 
-      // #region agent log
-      fetch('/api/debug-log',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useSearch.ts:initialize-indexing',message:'about to build index',data:{totalDocs:documents.length,baseChunkExists:!!baseChunk,baseChunkDocs:baseChunk?.documents?.length||0,docsToIndex:documentsToIndex.length,workerIsReady:worker.isReady,docTypes:documents.reduce((acc:Record<string,number>,d:SearchDocument)=>{acc[d.tipo]=(acc[d.tipo]||0)+1;return acc;},{}),indexDocsTypes:documentsToIndex.reduce((acc:Record<string,number>,d:SearchDocument)=>{acc[d.tipo]=(acc[d.tipo]||0)+1;return acc;},{})},timestamp:Date.now(),hypothesisId:'H1,H2,H3'})}).catch(()=>{});
-      // #endregion
+      // Always build on main thread searchEngine first (guaranteed to work).
+      // Then also try to build in the worker for future off-thread searches.
+      const { searchEngine } = await import('@/utils/search');
+      searchEngine.buildIndex(documentsToIndex);
 
+      // Also build in worker if available (non-blocking, don't await)
       if (worker.isReady) {
-        // Usar Web Worker
-        await worker.buildIndex(documentsToIndex);
-      } else {
-        // Fallback al main thread
-        const { searchEngine } = await import('@/utils/search');
-        searchEngine.buildIndex(documentsToIndex);
+        worker.buildIndex(documentsToIndex).catch((err: unknown) => {
+          console.warn('Worker buildIndex failed (main thread fallback active):', err);
+        });
       }
 
       setIsInitialized(true);
@@ -211,9 +204,6 @@ export function useSearch(options: UseSearchOptions = {}) {
       const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
       setError(errorMessage);
       console.error('Error inicializando búsqueda:', err);
-      // #region agent log
-      fetch('/api/debug-log',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useSearch.ts:initialize-error',message:'initialize FAILED',data:{error:errorMessage},timestamp:Date.now(),hypothesisId:'H4'})}).catch(()=>{});
-      // #endregion
     } finally {
       setIsLoading(false);
       initializationRef.current = false;
@@ -232,9 +222,6 @@ export function useSearch(options: UseSearchOptions = {}) {
     query: string,
     limit: number = 50
   ): Promise<{ results: SearchResult[]; total: number }> => {
-    // #region agent log
-    fetch('/api/debug-log',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useSearch.ts:search-entry',message:'search called',data:{query,limit,isInitialized,workerIsReady:worker.isReady},timestamp:Date.now(),hypothesisId:'H3,H4'})}).catch(()=>{});
-    // #endregion
     if (!isInitialized) {
       return { results: [], total: 0 };
     }
@@ -312,24 +299,14 @@ export function useSearch(options: UseSearchOptions = {}) {
       let results: SearchResult[];
       let total: number;
 
-      if (worker.isReady) {
-        // Usar Web Worker
-        const response = await worker.search(query, limit);
-        // #region agent log
-        fetch('/api/debug-log',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useSearch.ts:search-worker-path',message:'worker search done',data:{query,resultsCount:response.results.length,total:response.total},timestamp:Date.now(),hypothesisId:'H2,H3'})}).catch(()=>{});
-        // #endregion
-        results = response.results;
-        total = response.total;
-      } else {
-        // Fallback al main thread
-        const { searchEngine } = await import('@/utils/search');
-        const searchResponse = searchEngine.search(query, limit);
-        // #region agent log
-        fetch('/api/debug-log',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'useSearch.ts:search-mainthread-path',message:'mainthread search done',data:{query,resultsCount:searchResponse.results.length,total:searchResponse.total},timestamp:Date.now(),hypothesisId:'H2,H3'})}).catch(()=>{});
-        // #endregion
-        results = searchResponse.results;
-        total = searchResponse.total;
-      }
+      // FIX: Always use main thread searchEngine for search.
+      // The worker may not have the index built (race condition with stale closure).
+      // searchEngine is guaranteed to have all documents indexed since initialize()
+      // always builds on the main thread.
+      const { searchEngine } = await import('@/utils/search');
+      const searchResponse = searchEngine.search(query, limit);
+      results = searchResponse.results;
+      total = searchResponse.total;
 
       // Guardar en cache con metadata
       if (cacheResults) {

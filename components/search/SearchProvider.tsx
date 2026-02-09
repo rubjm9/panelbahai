@@ -32,12 +32,6 @@ interface SearchProviderProps {
 export default function SearchProvider({ children }: SearchProviderProps) {
   const search = useSearchHook({ autoInitialize: true })
 
-  // #region agent log
-  useEffect(() => {
-    fetch('/api/debug-log',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'SearchProvider.tsx:mount',message:'SearchProvider mounted',data:{isInitialized:search.isInitialized,isLoading:search.isLoading,error:search.error},timestamp:Date.now(),hypothesisId:'H4,H5'})}).catch(()=>{});
-  }, [search.isInitialized, search.isLoading, search.error]);
-  // #endregion
-
   // Exponer función de reconstrucción globalmente
   useEffect(() => {
     (window as any).rebuildSearchIndex = search.rebuild

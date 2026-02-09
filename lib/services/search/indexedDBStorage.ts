@@ -6,7 +6,7 @@
 import { SearchDocument } from './types';
 
 const DB_NAME = 'panel-bahai-search';
-const DB_VERSION = 1;
+const DB_VERSION = 2; // Bumped to invalidate old cache with only title docs
 const STORE_NAME = 'searchIndex';
 const INDEX_VERSION_KEY = 'indexVersion';
 const INDEX_DATA_KEY = 'indexData';
