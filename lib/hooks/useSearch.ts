@@ -124,13 +124,35 @@ export function useSearch(options: UseSearchOptions = {}) {
     try {
       let documents: SearchDocument[] | null = null;
 
-      // Intentar cargar desde IndexedDB primero
-      if (indexedDBStorage.isAvailable()) {
+      // Intentar cargar desde IndexedDB primero (si no forzamos reconstrucción)
+      if (indexedDBStorage.isAvailable() && !forceRebuild) {
         try {
-          const cachedDocuments = await indexedDBStorage.getIndex();
-          if (cachedDocuments && cachedDocuments.length > 0) {
-            documents = cachedDocuments;
-            console.log(`📦 Índice cargado desde cache (${documents.length} documentos)`);
+          // Comprobar si el servidor tiene un índice más reciente
+          let useCached = true;
+          try {
+            const versionRes = await fetch('/api/search/version');
+            if (versionRes.ok) {
+              const { lastUpdated: serverLastUpdated } = await versionRes.json();
+              const cachedVersion = await indexedDBStorage.getIndexVersion();
+              if (serverLastUpdated && cachedVersion) {
+                const serverMs = new Date(serverLastUpdated).getTime();
+                const cachedMs = parseInt(cachedVersion, 10);
+                if (!isNaN(cachedMs) && serverMs > cachedMs) {
+                  useCached = false;
+                  await indexedDBStorage.clearIndex();
+                }
+              }
+            }
+          } catch (_) {
+            // Si falla la comprobación de versión, usar cache si existe
+          }
+
+          if (useCached) {
+            const cachedDocuments = await indexedDBStorage.getIndex();
+            if (cachedDocuments && cachedDocuments.length > 0) {
+              documents = cachedDocuments;
+              console.log(`📦 Índice cargado desde cache (${documents.length} documentos)`);
+            }
           }
         } catch (error) {
           console.warn('Error cargando desde IndexedDB:', error);
@@ -183,6 +205,9 @@ export function useSearch(options: UseSearchOptions = {}) {
       // Then also try to build in the worker for future off-thread searches.
       const { searchEngine } = await import('@/utils/search');
       searchEngine.buildIndex(documentsToIndex);
+
+      // Clear result cache so searches use the new index (no stale results)
+      resultsCacheRef.current.clear();
 
       // Also build in worker if available (non-blocking, don't await)
       if (worker.isReady) {
@@ -383,6 +408,7 @@ export function useSearch(options: UseSearchOptions = {}) {
         const { searchEngine } = await import('@/utils/search');
         const allLoadedDocs = chunkManager.getLoadedDocuments();
         searchEngine.buildIndex(allLoadedDocs);
+        resultsCacheRef.current.clear();
       }
     } catch (err) {
       console.error('Error cargando chunk:', err);

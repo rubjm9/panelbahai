@@ -22,11 +22,23 @@ try {
   console.log('✅ Lunr con soporte de español cargado en worker');
 } catch (error) {
   console.error('Error cargando Lunr en worker:', error);
-  // Enviar error al main thread
   self.postMessage({
     type: 'ERROR',
     error: 'No se pudo cargar Lunr en el worker: ' + error.message
   });
+}
+
+// Stopwords español: no enviarlos a Lunr en frases entrecomilladas (ej. "el todopoderoso" -> +todopoderoso)
+var STOPWORDS_ES = new Set([
+  'el', 'la', 'los', 'las', 'un', 'una', 'de', 'del', 'al', 'a', 'en', 'es', 'por', 'con', 'que', 'no',
+  'se', 'su', 'sus', 'lo', 'le', 'como', 'pero', 'mas', 'para', 'son', 'ser', 'fue', 'ha', 'han', 'eso',
+  'esa', 'este', 'esta', 'estos', 'estas', 'todo', 'toda', 'todos', 'todas', 'otro', 'otra', 'otros',
+  'otras', 'uno', 'dos', 'y', 'o', 'si', 'ya', 'bien', 'solo', 'tan', 'asi', 'entre', 'hasta', 'desde',
+  'contra', 'sin', 'sobre', 'tras', 'durante', 'mediante', 'ante', 'bajo', 'tras'
+]);
+
+function normalizeTextForPhraseMatch(text) {
+  return text.replace(/\s+/g, ' ').trim();
 }
 
 let index = null;
@@ -68,14 +80,15 @@ function buildIndex(docs) {
  * Procesar query avanzada (similar a searchEngine)
  */
 function processAdvancedQuery(query) {
-  // Detectar búsquedas exactas con comillas
+  // Detectar búsquedas exactas con comillas (solo términos no stopword para Lunr)
   const exactMatches = query.match(/"([^"]+)"/g);
   if (exactMatches) {
     let processedQuery = query;
     exactMatches.forEach(match => {
       const cleanTerm = match.replace(/"/g, '');
       const terms = cleanTerm.split(/\s+/).filter(t => t.length > 0);
-      const requiredTerms = terms.map(term => `+${term}`).join(' ');
+      const termsForLunr = terms.filter(term => !STOPWORDS_ES.has(term.toLowerCase()));
+      const requiredTerms = (termsForLunr.length > 0 ? termsForLunr : terms).map(term => '+' + term).join(' ');
       processedQuery = processedQuery.replace(match, requiredTerms);
     });
     return processedQuery;
@@ -157,17 +170,18 @@ function search(query, limit = 50) {
     let results = index.search(processedQuery);
     console.log('[Worker] Lunr raw results count:', results.length);
 
-    // Filtrar resultados si hay búsquedas exactas con comillas
+    // Filtrar por frase exacta (normalizando espacios)
     if (exactPhrases.length > 0) {
       results = results.filter(result => {
         const doc = documents.get(result.ref);
         if (!doc) return false;
 
-        const searchableText = `${doc.titulo} ${doc.autor} ${doc.seccion || ''} ${doc.texto}`.toLowerCase();
+        const searchableText = (doc.titulo + ' ' + doc.autor + ' ' + (doc.seccion || '') + ' ' + doc.texto).toLowerCase();
+        const normalizedText = normalizeTextForPhraseMatch(searchableText);
 
         return exactPhrases.every(phrase => {
-          const phraseLower = phrase.toLowerCase();
-          return searchableText.includes(phraseLower);
+          const phraseNorm = normalizeTextForPhraseMatch(phrase.toLowerCase());
+          return phraseNorm.length > 0 && normalizedText.includes(phraseNorm);
         });
       });
     }

@@ -6,6 +6,16 @@ require("lunr-languages/lunr.es")(lunr)
 // Configurar Lunr para español
 lunr.tokenizer.separator = /[\s\-\.]+/;
 
+// Stopwords que Lunr elimina en español; no los enviamos en la consulta para frases entrecomilladas
+// (ej. "el todopoderoso" → solo +todopoderoso, así Lunr devuelve candidatos y luego filtramos por frase exacta)
+const STOPWORDS_ES = new Set([
+  'el', 'la', 'los', 'las', 'un', 'una', 'de', 'del', 'al', 'a', 'en', 'es', 'por', 'con', 'que', 'no',
+  'se', 'su', 'sus', 'lo', 'le', 'como', 'pero', 'mas', 'para', 'son', 'ser', 'fue', 'ha', 'han', 'eso',
+  'esa', 'este', 'esta', 'estos', 'estas', 'todo', 'toda', 'todos', 'todas', 'otro', 'otra', 'otros',
+  'otras', 'uno', 'dos', 'y', 'o', 'si', 'ya', 'bien', 'solo', 'tan', 'asi', 'entre', 'hasta', 'desde',
+  'contra', 'sin', 'sobre', 'tras', 'durante', 'mediante', 'ante', 'bajo', 'tras'
+]);
+
 export interface SearchDocument {
   id: string;
   titulo: string;
@@ -89,19 +99,18 @@ export class SearchEngine {
 
       let results = this.index.search(processedQuery);
 
-      // Filtrar resultados si hay búsquedas exactas con comillas
+      // Filtrar resultados si hay búsquedas exactas con comillas (frase literal, normalizando espacios)
       if (exactPhrases.length > 0) {
         results = results.filter(result => {
           const doc = this.documents.get(result.ref);
           if (!doc) return false;
 
-          // Buscar en todos los campos indexables
           const searchableText = `${doc.titulo} ${doc.autor} ${doc.seccion || ''} ${doc.texto}`.toLowerCase();
+          const normalizedText = this.normalizeTextForPhraseMatch(searchableText);
 
-          // Verificar que todas las frases exactas estén presentes
           return exactPhrases.every(phrase => {
-            const phraseLower = phrase.toLowerCase();
-            return searchableText.includes(phraseLower);
+            const phraseNorm = this.normalizeTextForPhraseMatch(phrase.toLowerCase());
+            return phraseNorm.length > 0 && normalizedText.includes(phraseNorm);
           });
         });
       }
@@ -144,6 +153,11 @@ export class SearchEngine {
     }
   }
 
+  // Normalizar texto para comparación de frase exacta: colapsar espacios y recortar
+  private normalizeTextForPhraseMatch(text: string): string {
+    return text.replace(/\s+/g, ' ').trim();
+  }
+
   // Extraer frases exactas de la consulta (texto entre comillas)
   private extractExactPhrases(query: string): string[] {
     const matches = query.match(/"([^"]+)"/g);
@@ -157,15 +171,14 @@ export class SearchEngine {
     // Detectar búsquedas exactas con comillas
     const exactMatches = query.match(/"([^"]+)"/g);
     if (exactMatches) {
-      // Para búsquedas exactas, convertir a términos requeridos para la búsqueda inicial
-      // El filtrado exacto se hará después en el método search()
+      // Construir consulta Lunr solo con términos que no son stopwords (Lunr los elimina y puede devolver 0 resultados)
+      // El filtrado por frase exacta se hace después en search()
       let processedQuery = query;
       exactMatches.forEach(match => {
         const cleanTerm = match.replace(/"/g, '');
-        // Convertir cada término de la frase en un término requerido
-        // Esto ayuda a Lunr a encontrar documentos relevantes, pero luego filtramos por frase exacta
         const terms = cleanTerm.split(/\s+/).filter(t => t.length > 0);
-        const requiredTerms = terms.map(term => `+${term}`).join(' ');
+        const termsForLunr = terms.filter(term => !STOPWORDS_ES.has(term.toLowerCase()));
+        const requiredTerms = (termsForLunr.length > 0 ? termsForLunr : terms).map(term => `+${term}`).join(' ');
         processedQuery = processedQuery.replace(match, requiredTerms);
       });
       return processedQuery;
@@ -422,53 +435,57 @@ export class SearchEngine {
     return b.score - a.score;
   }
 
-  // Resaltar términos de búsqueda en texto con soporte para sintaxis avanzada
+  // Resaltar términos de búsqueda en texto. Si la consulta tiene frases entrecomilladas,
+  // solo se resalta la frase exacta (no cada palabra por separado).
   highlightTerms(text: string, query: string): string {
     if (!query) return text;
 
-    // Extraer términos limpios de la consulta
+    const isInsideHtmlTag = (text: string, pos: number): boolean => {
+      const before = text.substring(0, pos);
+      const lastOpenTag = before.lastIndexOf('<');
+      const lastCloseTag = before.lastIndexOf('>');
+      return lastOpenTag > lastCloseTag;
+    };
+    const isInsideMark = (text: string, pos: number): boolean => {
+      const before = text.substring(0, pos);
+      const openMarks = (before.match(/<mark[^>]*>/gi) || []).length;
+      const closeMarks = (before.match(/<\/mark>/gi) || []).length;
+      return openMarks > closeMarks;
+    };
+
+    const exactPhrases = this.extractExactPhrases(query);
+    if (exactPhrases.length > 0) {
+      let highlightedText = text;
+      for (const phrase of exactPhrases) {
+        const trimmed = phrase.trim();
+        if (trimmed.length === 0) continue;
+        const phraseRegex = this.buildPhraseHighlightRegex(trimmed);
+        highlightedText = highlightedText.replace(phraseRegex, (match, offset) => {
+          if (isInsideHtmlTag(highlightedText, offset) || isInsideMark(highlightedText, offset)) {
+            return match;
+          }
+          return '<mark class="search-highlight">' + match + '</mark>';
+        });
+      }
+      return highlightedText;
+    }
+
     const cleanQuery = this.extractSearchTerms(query);
     const terms = cleanQuery.toLowerCase().split(/\s+/).filter(term => term.length >= 2);
     let highlightedText = text;
-
-    // Resaltar términos en orden de importancia (más largos primero)
     const sortedTerms = terms.sort((a, b) => b.length - a.length);
 
     sortedTerms.forEach(term => {
-      // Escapar caracteres especiales para regex
       const escapedTerm = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-
-      // Función auxiliar para verificar si una posición está dentro de un tag HTML o mark
-      const isInsideHtmlTag = (text: string, pos: number): boolean => {
-        const before = text.substring(0, pos);
-        const lastOpenTag = before.lastIndexOf('<');
-        const lastCloseTag = before.lastIndexOf('>');
-        return lastOpenTag > lastCloseTag;
-      };
-
-      // Función auxiliar para verificar si una posición está dentro de un <mark>
-      const isInsideMark = (text: string, pos: number): boolean => {
-        const before = text.substring(0, pos);
-        const openMarks = (before.match(/<mark[^>]*>/gi) || []).length;
-        const closeMarks = (before.match(/<\/mark>/gi) || []).length;
-        return openMarks > closeMarks;
-      };
-
-      // Primero, buscar palabras completas (con límites de palabra)
       const wordBoundaryRegex = new RegExp(`\\b(${escapedTerm})\\b`, 'gi');
       highlightedText = highlightedText.replace(wordBoundaryRegex, (match, p1, offset) => {
-        // Si ya está dentro de un tag HTML o mark, no resaltar
         if (isInsideHtmlTag(highlightedText, offset) || isInsideMark(highlightedText, offset)) {
           return match;
         }
         return '<mark class="search-highlight">' + match + '</mark>';
       });
-
-      // Luego, buscar coincidencias parciales (sin límites de palabra)
-      // pero solo en texto que no esté dentro de tags HTML o marks
       const partialRegex = new RegExp(`(${escapedTerm})`, 'gi');
       highlightedText = highlightedText.replace(partialRegex, (match, p1, offset) => {
-        // Si ya está dentro de un tag HTML o mark, no resaltar
         if (isInsideHtmlTag(highlightedText, offset) || isInsideMark(highlightedText, offset)) {
           return match;
         }
@@ -477,6 +494,13 @@ export class SearchEngine {
     });
 
     return highlightedText;
+  }
+
+  // Regex para resaltar una frase permitiendo espacios variables entre palabras
+  private buildPhraseHighlightRegex(phrase: string): RegExp {
+    const parts = phrase.split(/\s+/).filter(p => p.length > 0);
+    const escaped = parts.map(p => p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+    return new RegExp('(' + escaped.join('\\s+') + ')', 'gi');
   }
 }
 

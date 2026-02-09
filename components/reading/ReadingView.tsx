@@ -141,24 +141,40 @@ export default function ReadingView({
   const increaseFontSize = () => changeFontSize(fontSize + 10)
   const decreaseFontSize = () => changeFontSize(fontSize - 10)
 
+  // Normalizar término de búsqueda para resaltado: quitar comillas si es frase exacta
+  const normalizeHighlightTerm = (q: string): string => {
+    const t = q.trim()
+    if (t.length >= 2 && t.startsWith('"') && t.endsWith('"')) {
+      return t.slice(1, -1).trim()
+    }
+    return t
+  }
+
+  // Regex para buscar el término (frase con espacios flexibles o palabra única)
+  const buildHighlightRegex = (term: string): RegExp => {
+    const escaped = term.trim().split(/\s+/).filter(Boolean).map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+    const pattern = escaped.length > 1 ? escaped.join('\\s+') : (escaped[0] || '')
+    return new RegExp(`(${pattern})`, 'gi')
+  }
+
   // Sincronizar término de resaltado desde props/URL/sessionStorage
   useEffect(() => {
     try {
       if (highlightQuery && highlightQuery.length > 0) {
-        setHighlightTerm(highlightQuery)
+        setHighlightTerm(normalizeHighlightTerm(highlightQuery))
         setShowFinderBar(true)
         return
       }
       const url = new URL(window.location.href)
       const qp = url.searchParams.get('q') || ''
       if (qp) {
-        setHighlightTerm(qp)
+        setHighlightTerm(normalizeHighlightTerm(qp))
         setShowFinderBar(true)
         return
       }
       const last = sessionStorage.getItem('lastSearchQuery') || ''
       if (last) {
-        setHighlightTerm(last)
+        setHighlightTerm(normalizeHighlightTerm(last))
         setShowFinderBar(true)
         url.searchParams.set('q', last)
         window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`)
@@ -176,8 +192,8 @@ export default function ReadingView({
     }
 
     const found: number[] = []
+    const regex = buildHighlightRegex(highlightTerm)
     parrafos.forEach((parrafo) => {
-      const regex = new RegExp(highlightTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi')
       const matches = parrafo.texto.match(regex)
       if (matches) {
         // Agregar el número de párrafo por cada ocurrencia encontrada
@@ -193,12 +209,11 @@ export default function ReadingView({
   // Sincronizar índice inicial cuando se carga con un párrafo específico
   useEffect(() => {
     if (currentParagraph && highlightTerm && occurrences.length > 0) {
-      // Encontrar el índice de la ocurrencia que corresponde al párrafo actual
       let globalIndex = 0
+      const regex = buildHighlightRegex(highlightTerm)
       for (let i = 0; i < parrafos.length; i++) {
         const p = parrafos[i]
         if (p.numero < currentParagraph) {
-          const regex = new RegExp(highlightTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi')
           const matches = p.texto.match(regex)
           if (matches) {
             globalIndex += matches.length
@@ -261,21 +276,16 @@ export default function ReadingView({
   const highlightHtml = (html: string, term?: string, paragraphNum?: number): string => {
     if (!term || term.trim().length === 0) return html
     try {
-      const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-      const regex = new RegExp(`(${escaped})`, 'gi')
+      const regex = buildHighlightRegex(term)
       let occurrenceIndex = 0
 
       return html.replace(regex, (match) => {
-        // Calcular el índice global de esta ocurrencia
         let globalIndex = 0
         for (let i = 0; i < parrafos.length; i++) {
           const p = parrafos[i]
           if (p.numero < paragraphNum!) {
-            const paragraphRegex = new RegExp(escaped, 'gi')
-            const paragraphMatches = p.texto.match(paragraphRegex)
-            if (paragraphMatches) {
-              globalIndex += paragraphMatches.length
-            }
+            const paragraphMatches = p.texto.match(regex)
+            if (paragraphMatches) globalIndex += paragraphMatches.length
           } else if (p.numero === paragraphNum) {
             break
           }

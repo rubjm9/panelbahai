@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Search, BookOpen, FileText, Users, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
-import { SearchResult } from '@/utils/search'
+import { SearchResult, searchEngine } from '@/utils/search'
 import SidebarFilters from '@/components/search/SidebarFilters'
 import { useSearchContext } from '@/components/search/SearchProvider'
 
@@ -227,7 +227,7 @@ function SearchContent() {
                             <div
                               className="text-primary-700 dark:text-neutral-300 leading-relaxed"
                               dangerouslySetInnerHTML={{
-                                __html: result.fragmento
+                                __html: searchEngine.highlightTerms(result.fragmento, query)
                               }}
                             />
                           </div>

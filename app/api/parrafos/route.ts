@@ -3,6 +3,7 @@ import dbConnect from '@/lib/mongodb';
 import Parrafo from '@/models/Parrafo';
 import Obra from '@/models/Obra';
 import Seccion from '@/models/Seccion';
+import { rebuildSearchIndexAsync } from '@/utils/search-rebuild';
 
 export async function GET(request: NextRequest) {
   try {
@@ -99,6 +100,8 @@ export async function POST(request: NextRequest) {
     await parrafo.populate('obra', 'titulo slug');
     await parrafo.populate('seccion', 'titulo slug');
 
+    rebuildSearchIndexAsync();
+
     return NextResponse.json({
       success: true,
       data: parrafo
@@ -160,6 +163,8 @@ export async function PUT(request: NextRequest) {
       );
     }
 
+    rebuildSearchIndexAsync();
+
     return NextResponse.json({
       success: true,
       data: parrafo
@@ -199,6 +204,8 @@ export async function DELETE(request: NextRequest) {
         { status: 404 }
       );
     }
+
+    rebuildSearchIndexAsync();
 
     return NextResponse.json({
       success: true,

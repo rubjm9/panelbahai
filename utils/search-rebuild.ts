@@ -64,6 +64,103 @@ export interface RebuildResult {
   error?: string;
 }
 
+/** Max paragraphs to include in the search index. Raise or remove if corpus grows; monitor memory/response size. */
+export const PARRAFOS_INDEX_LIMIT = 10000;
+
+/**
+ * Builds the search documents array from the database (single source of truth for index content).
+ * Caller must ensure dbConnect() has been called. Used by rebuildSearchIndex() and the search API.
+ */
+export async function buildSearchDocumentsFromDb(): Promise<SearchDocument[]> {
+  const documents: SearchDocument[] = [];
+
+  const obras = await Obra.find({ esPublico: true, activo: true })
+    .populate('autor', 'nombre slug')
+    .select('titulo slug descripcion autor');
+
+  for (const obra of obras) {
+    documents.push({
+      id: `obra-${obra._id}`,
+      titulo: obra.titulo,
+      autor: (obra.autor as any).nombre,
+      obraSlug: obra.slug,
+      autorSlug: (obra.autor as any).slug,
+      texto: `${obra.titulo} ${obra.descripcion || ''}`,
+      tipo: 'titulo'
+    });
+  }
+
+  const secciones = await Seccion.find({ activo: true })
+    .populate({
+      path: 'obra',
+      populate: {
+        path: 'autor',
+        select: 'nombre slug'
+      },
+      match: { esPublico: true, activo: true }
+    })
+    .select('titulo slug obra nivel');
+
+  for (const seccion of secciones) {
+    if (seccion.obra) {
+      documents.push({
+        id: `seccion-${seccion._id}`,
+        titulo: (seccion.obra as any).titulo,
+        autor: (seccion.obra as any).autor.nombre,
+        obraSlug: (seccion.obra as any).slug,
+        autorSlug: (seccion.obra as any).autor.slug,
+        seccion: seccion.titulo,
+        texto: seccion.titulo,
+        tipo: 'seccion'
+      });
+    }
+  }
+
+  const parrafos = await Parrafo.find({ activo: true })
+    .populate({
+      path: 'obra',
+      populate: {
+        path: 'autor',
+        select: 'nombre slug'
+      },
+      match: { esPublico: true, activo: true }
+    })
+    .populate('seccion', 'titulo')
+    .select('numero texto obra seccion')
+    .limit(PARRAFOS_INDEX_LIMIT);
+
+  for (const parrafo of parrafos) {
+    if (parrafo.obra) {
+      let textoPlano = parrafo.texto;
+      if (parrafo.texto && parrafo.texto.includes('<')) {
+        textoPlano = parrafo.texto
+          .replace(/<[^>]*>/g, '')
+          .replace(/&nbsp;/g, ' ')
+          .replace(/&amp;/g, '&')
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>')
+          .replace(/&quot;/g, '"')
+          .replace(/&#39;/g, "'")
+          .replace(/\s+/g, ' ')
+          .trim();
+      }
+      documents.push({
+        id: `parrafo-${parrafo._id}`,
+        titulo: (parrafo.obra as any).titulo,
+        autor: (parrafo.obra as any).autor.nombre,
+        obraSlug: (parrafo.obra as any).slug,
+        autorSlug: (parrafo.obra as any).autor.slug,
+        seccion: parrafo.seccion ? (parrafo.seccion as any).titulo : undefined,
+        texto: textoPlano,
+        numero: parrafo.numero,
+        tipo: 'parrafo'
+      });
+    }
+  }
+
+  return documents;
+}
+
 /**
  * Reconstruye el índice de búsqueda automáticamente
  * Esta función se puede llamar desde cualquier API después de cambios en el contenido
@@ -74,120 +171,23 @@ export async function rebuildSearchIndex(): Promise<RebuildResult> {
 
     console.log('🔄 Reconstruyendo índice de búsqueda automáticamente...');
 
-    // Construir índice de búsqueda
-    const documents: SearchDocument[] = [];
+    const documents = await buildSearchDocumentsFromDb();
 
-    // Obtener todas las obras con sus autores
-    const obras = await Obra.find({ esPublico: true, activo: true })
-      .populate('autor', 'nombre slug')
-      .select('titulo slug descripcion autor');
+    const obrasCount = documents.filter(d => d.tipo === 'titulo').length;
+    const seccionesCount = documents.filter(d => d.tipo === 'seccion').length;
+    const parrafosCount = documents.filter(d => d.tipo === 'parrafo').length;
 
-    console.log(`📚 Indexando ${obras.length} obras públicas`);
+    console.log(`✅ Índice reconstruido automáticamente con ${documents.length} documentos (obras: ${obrasCount}, secciones: ${seccionesCount}, párrafos: ${parrafosCount})`);
 
-    // Agregar títulos de obras al índice
-    for (const obra of obras) {
-      documents.push({
-        id: `obra-${obra._id}`,
-        titulo: obra.titulo,
-        autor: (obra.autor as any).nombre,
-        obraSlug: obra.slug,
-        autorSlug: (obra.autor as any).slug,
-        texto: `${obra.titulo} ${obra.descripcion || ''}`,
-        tipo: 'titulo'
-      });
-    }
-
-    // Obtener todas las secciones
-    const secciones = await Seccion.find({ activo: true })
-      .populate({
-        path: 'obra',
-        populate: {
-          path: 'autor',
-          select: 'nombre slug'
-        },
-        match: { esPublico: true, activo: true }
-      })
-      .select('titulo slug obra nivel');
-
-    console.log(`📖 Indexando ${secciones.length} secciones`);
-
-    // Agregar secciones al índice
-    for (const seccion of secciones) {
-      if (seccion.obra) {
-        documents.push({
-          id: `seccion-${seccion._id}`,
-          titulo: (seccion.obra as any).titulo,
-          autor: (seccion.obra as any).autor.nombre,
-          obraSlug: (seccion.obra as any).slug,
-          autorSlug: (seccion.obra as any).autor.slug,
-          seccion: seccion.titulo,
-          texto: seccion.titulo,
-          tipo: 'seccion'
-        });
-      }
-    }
-
-    // Obtener todos los párrafos
-    const parrafos = await Parrafo.find({ activo: true })
-      .populate({
-        path: 'obra',
-        populate: {
-          path: 'autor',
-          select: 'nombre slug'
-        },
-        match: { esPublico: true, activo: true }
-      })
-      .populate('seccion', 'titulo')
-      .select('numero texto obra seccion')
-      .limit(10000); // Limitar para evitar sobrecarga
-
-    console.log(`📝 Indexando ${parrafos.length} párrafos`);
-
-    // Agregar párrafos al índice
-    for (const parrafo of parrafos) {
-      if (parrafo.obra) {
-        // Extraer texto plano del HTML si el párrafo contiene HTML
-        let textoPlano = parrafo.texto;
-        if (parrafo.texto && parrafo.texto.includes('<')) {
-          // Es HTML, extraer texto plano
-          textoPlano = parrafo.texto
-            .replace(/<[^>]*>/g, '') // Remover tags HTML
-            .replace(/&nbsp;/g, ' ') // Reemplazar &nbsp; con espacio
-            .replace(/&amp;/g, '&') // Reemplazar entidades HTML
-            .replace(/&lt;/g, '<')
-            .replace(/&gt;/g, '>')
-            .replace(/&quot;/g, '"')
-            .replace(/&#39;/g, "'")
-            .replace(/\s+/g, ' ') // Normalizar espacios
-            .trim();
-        }
-        
-        documents.push({
-          id: `parrafo-${parrafo._id}`,
-          titulo: (parrafo.obra as any).titulo,
-          autor: (parrafo.obra as any).autor.nombre,
-          obraSlug: (parrafo.obra as any).slug,
-          autorSlug: (parrafo.obra as any).autor.slug,
-          seccion: parrafo.seccion ? (parrafo.seccion as any).titulo : undefined,
-          texto: textoPlano,
-          numero: parrafo.numero,
-          tipo: 'parrafo'
-        });
-      }
-    }
-
-    console.log(`✅ Índice reconstruido automáticamente con ${documents.length} documentos`);
-
-    // Guardar el índice en la base de datos
     await SearchIndex.findOneAndUpdate(
       { version: '1.0' },
       {
         documents,
         lastUpdated: new Date(),
         count: documents.length,
-        obras: obras.length,
-        secciones: secciones.length,
-        parrafos: parrafos.length
+        obras: obrasCount,
+        secciones: seccionesCount,
+        parrafos: parrafosCount
       },
       { upsert: true, new: true }
     );
@@ -197,9 +197,9 @@ export async function rebuildSearchIndex(): Promise<RebuildResult> {
     return {
       success: true,
       count: documents.length,
-      obras: obras.length,
-      secciones: secciones.length,
-      parrafos: parrafos.length
+      obras: obrasCount,
+      secciones: seccionesCount,
+      parrafos: parrafosCount
     };
 
   } catch (error) {
@@ -215,13 +215,21 @@ export async function rebuildSearchIndex(): Promise<RebuildResult> {
   }
 }
 
+const REBUILD_DEBOUNCE_MS = 3000;
+let rebuildTimeoutId: ReturnType<typeof setTimeout> | null = null;
+
 /**
- * Reconstruye el índice de búsqueda de forma asíncrona (no bloquea la respuesta)
- * Útil para llamar desde APIs donde no queremos esperar a que termine la reconstrucción
+ * Reconstruye el índice de búsqueda de forma asíncrona (no bloquea la respuesta).
+ * Debounced: múltiples llamadas en corto tiempo coalescen en una sola reconstrucción.
  */
 export async function rebuildSearchIndexAsync(): Promise<void> {
-  // Ejecutar en background sin esperar resultado
-  rebuildSearchIndex().catch(error => {
-    console.error('❌ Error en reconstrucción asíncrona del índice:', error);
-  });
+  if (rebuildTimeoutId !== null) {
+    clearTimeout(rebuildTimeoutId);
+  }
+  rebuildTimeoutId = setTimeout(() => {
+    rebuildTimeoutId = null;
+    rebuildSearchIndex().catch(error => {
+      console.error('❌ Error en reconstrucción asíncrona del índice:', error);
+    });
+  }, REBUILD_DEBOUNCE_MS);
 }
