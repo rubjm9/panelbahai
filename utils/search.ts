@@ -115,6 +115,14 @@ export class SearchEngine {
         });
       }
 
+      // Para párrafos: solo mantener si el término aparece en el texto del párrafo, no solo en sección/título
+      results = results.filter(result => {
+        const doc = this.documents.get(result.ref);
+        if (!doc || doc.tipo !== 'parrafo') return true;
+
+        return this.queryMatchesInParagraphText(doc, query, exactPhrases);
+      });
+
       // Guardar el total antes de aplicar el límite
       const total = results.length;
 
@@ -156,6 +164,30 @@ export class SearchEngine {
   // Normalizar texto para comparación de frase exacta: colapsar espacios y recortar
   private normalizeTextForPhraseMatch(text: string): string {
     return text.replace(/\s+/g, ' ').trim();
+  }
+
+  /**
+   * Comprueba si la consulta aparece en el texto del párrafo (no solo en sección/título).
+   * Así evitamos listar todos los párrafos de un epígrafe cuando el término solo coincide con el título de la sección.
+   */
+  private queryMatchesInParagraphText(
+    doc: SearchDocument,
+    query: string,
+    exactPhrases: string[]
+  ): boolean {
+    const textoNorm = this.normalizeTextForPhraseMatch(doc.texto.toLowerCase());
+    if (textoNorm.length === 0) return false;
+
+    if (exactPhrases.length > 0) {
+      return exactPhrases.some(phrase => {
+        const phraseNorm = this.normalizeTextForPhraseMatch(phrase.toLowerCase());
+        return phraseNorm.length > 0 && textoNorm.includes(phraseNorm);
+      });
+    }
+
+    const cleanQuery = this.extractSearchTerms(query);
+    const terms = cleanQuery.toLowerCase().split(/\s+/).filter(t => t.length >= 2);
+    return terms.some(term => textoNorm.includes(term));
   }
 
   // Extraer frases exactas de la consulta (texto entre comillas)
