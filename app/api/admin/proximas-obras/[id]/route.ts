@@ -16,17 +16,18 @@ export async function GET(
     if (!mongoose.Types.ObjectId.isValid(params.id)) {
       return NextResponse.json({ success: false, error: 'Id no válido' }, { status: 400 });
     }
-    const doc = await ProximaObra.findById(params.id).populate('autor', 'nombre _id').lean();
-    if (!doc) {
+    const raw = await ProximaObra.findById(params.id).populate('autor', 'nombre _id').lean();
+    if (!raw) {
       return NextResponse.json({ success: false, error: 'No encontrado' }, { status: 404 });
     }
+    const doc = raw as unknown as { _id: unknown; titulo: string; autor?: { _id: unknown; nombre?: string }; tipo: string; orden: number };
     return NextResponse.json({
       success: true,
       data: {
         id: String(doc._id),
         titulo: doc.titulo,
-        autorId: doc.autor && typeof doc.autor === 'object' ? String((doc.autor as { _id: unknown })._id) : null,
-        autorNombre: doc.autor && typeof doc.autor === 'object' && 'nombre' in doc.autor ? (doc.autor as { nombre: string }).nombre : '',
+        autorId: doc.autor && typeof doc.autor === 'object' ? String(doc.autor._id) : null,
+        autorNombre: doc.autor && typeof doc.autor === 'object' && doc.autor.nombre != null ? doc.autor.nombre : '',
         tipo: doc.tipo,
         orden: doc.orden
       }
@@ -60,7 +61,7 @@ export async function PUT(
     if (autorId != null) update.autor = new mongoose.Types.ObjectId(autorId);
     if (tipo === 'Revisión de traducción' || tipo === 'Obra no publicada anteriormente') update.tipo = tipo;
 
-    const doc = await ProximaObra.findByIdAndUpdate(
+    const raw = await ProximaObra.findByIdAndUpdate(
       params.id,
       { $set: update },
       { new: true }
@@ -68,17 +69,18 @@ export async function PUT(
       .populate('autor', 'nombre _id')
       .lean();
 
-    if (!doc) {
+    if (!raw) {
       return NextResponse.json({ success: false, error: 'No encontrado' }, { status: 404 });
     }
 
+    const doc = raw as unknown as { _id: unknown; titulo: string; autor?: { _id: unknown; nombre?: string }; tipo: string; orden: number };
     return NextResponse.json({
       success: true,
       data: {
         id: String(doc._id),
         titulo: doc.titulo,
-        autorId: doc.autor && typeof doc.autor === 'object' ? String((doc.autor as { _id: unknown })._id) : null,
-        autorNombre: doc.autor && typeof doc.autor === 'object' && 'nombre' in doc.autor ? (doc.autor as { nombre: string }).nombre : '',
+        autorId: doc.autor && typeof doc.autor === 'object' ? String(doc.autor._id) : null,
+        autorNombre: doc.autor && typeof doc.autor === 'object' && doc.autor.nombre != null ? doc.autor.nombre : '',
         tipo: doc.tipo,
         orden: doc.orden
       }

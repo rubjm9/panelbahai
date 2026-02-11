@@ -17,7 +17,7 @@ export default async function EditarUsuarioPage({ params }: { params: { id: stri
   const usuario = await Usuario.findOne({ _id: params.id, activo: true }).lean()
   if (!usuario) notFound()
 
-  const u = usuario as { _id: { toString: () => string }; nombre: string; email: string; rol: string }
+  const u = usuario as unknown as { _id: { toString: () => string }; nombre: string; email: string; rol: string }
 
   return (
     <div>

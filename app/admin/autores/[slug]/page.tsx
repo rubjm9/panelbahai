@@ -20,7 +20,7 @@ export default async function VerAutorPage({ params }: { params: { slug: string 
     .sort({ orden: 1, titulo: 1 })
     .lean()
 
-  const autorObj = autor as { _id: unknown; nombre: string; slug: string; biografia?: string; orden: number }
+  const autorObj = autor as unknown as { _id: unknown; nombre: string; slug: string; biografia?: string; orden: number }
 
   return (
     <div>
@@ -78,7 +78,7 @@ export default async function VerAutorPage({ params }: { params: { slug: string 
             <p className="text-primary-500 text-sm">Este autor no tiene obras aún.</p>
           ) : (
             <ul className="space-y-2">
-              {(obras as { titulo: string; slug: string }[]).map((obra) => (
+              {(obras as unknown as { titulo: string; slug: string }[]).map((obra) => (
                 <li key={obra.slug}>
                   <Link
                     href={`/admin/obras/${obra.slug}/editar`}

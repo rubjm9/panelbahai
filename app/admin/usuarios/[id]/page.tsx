@@ -38,7 +38,7 @@ export default async function VerUsuarioPage({ params }: { params: { id: string 
   const usuario = await Usuario.findOne({ _id: params.id, activo: true }).lean()
   if (!usuario) notFound()
 
-  const u = usuario as { nombre: string; email: string; rol: string; fechaCreacion: Date; fechaActualizacion: Date }
+  const u = usuario as unknown as { nombre: string; email: string; rol: string; fechaCreacion: Date; fechaActualizacion: Date }
   const Icon = getRoleIcon(u.rol)
 
   return (

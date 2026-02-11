@@ -9,16 +9,18 @@ export async function GET() {
   try {
     await requireAdminAPI();
     await dbConnect();
-    const items = await ProximaObra.find()
+    const raw = await ProximaObra.find()
       .sort({ orden: 1 })
       .populate('autor', 'nombre _id')
       .lean();
 
-    const data = items.map((item: { _id: unknown; titulo: string; autor: { _id: unknown; nombre: string } | null; tipo: string; orden: number }) => ({
+    type ItemLean = { _id: unknown; titulo: string; autor: { _id: unknown; nombre: string } | null; tipo: string; orden: number };
+    const items = raw as unknown as ItemLean[];
+    const data = items.map((item) => ({
       id: String(item._id),
       titulo: item.titulo,
-      autorId: item.autor && typeof item.autor === 'object' && item.autor !== null ? String((item.autor as { _id: unknown })._id) : null,
-      autorNombre: item.autor && typeof item.autor === 'object' && 'nombre' in item.autor ? (item.autor as { nombre: string }).nombre : '',
+      autorId: item.autor && typeof item.autor === 'object' && item.autor !== null ? String(item.autor._id) : null,
+      autorNombre: item.autor && typeof item.autor === 'object' && item.autor.nombre != null ? item.autor.nombre : '',
       tipo: item.tipo,
       orden: item.orden
     }));
@@ -56,7 +58,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const maxOrden = await ProximaObra.findOne().sort({ orden: -1 }).select('orden').lean();
+    const maxOrdenRaw = await ProximaObra.findOne().sort({ orden: -1 }).select('orden').lean();
+    const maxOrden = maxOrdenRaw as unknown as { orden?: number } | null;
     const orden = (maxOrden?.orden ?? -1) + 1;
 
     const doc = new ProximaObra({
@@ -67,16 +70,20 @@ export async function POST(request: NextRequest) {
     });
     await doc.save();
 
-    const populated = await ProximaObra.findById(doc._id).populate('autor', 'nombre _id').lean();
+    const populatedRaw = await ProximaObra.findById(doc._id).populate('autor', 'nombre _id').lean();
+    const populated = populatedRaw as unknown as { _id: unknown; titulo: string; autor?: { _id: unknown; nombre?: string }; tipo: string; orden: number } | null;
+    if (!populated) {
+      return NextResponse.json({ success: false, error: 'Error al crear' }, { status: 500 });
+    }
     return NextResponse.json({
       success: true,
       data: {
-        id: String(populated!._id),
-        titulo: populated!.titulo,
-        autorId: populated!.autor && typeof populated!.autor === 'object' ? String((populated!.autor as { _id: unknown })._id) : null,
-        autorNombre: populated!.autor && typeof populated!.autor === 'object' && 'nombre' in populated!.autor ? (populated!.autor as { nombre: string }).nombre : '',
-        tipo: populated!.tipo,
-        orden: populated!.orden
+        id: String(populated._id),
+        titulo: populated.titulo,
+        autorId: populated.autor && typeof populated.autor === 'object' ? String(populated.autor._id) : null,
+        autorNombre: populated.autor && typeof populated.autor === 'object' && populated.autor.nombre != null ? populated.autor.nombre : '',
+        tipo: populated.tipo,
+        orden: populated.orden
       }
     }, { status: 201 });
   } catch (error) {

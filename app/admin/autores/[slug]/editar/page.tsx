@@ -15,7 +15,7 @@ export default async function EditarAutorPage({ params }: { params: { slug: stri
   const autor = await Autor.findOne({ slug: params.slug, activo: true }).lean()
   if (!autor) notFound()
 
-  const a = autor as { _id: { toString: () => string }; nombre: string; biografia?: string; orden: number }
+  const a = autor as unknown as { _id: { toString: () => string }; nombre: string; biografia?: string; orden: number }
 
   return (
     <div>

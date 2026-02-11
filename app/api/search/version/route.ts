@@ -12,10 +12,11 @@ export async function GET() {
   try {
     await dbConnect();
 
-    const index = await SearchIndex.findOne({ version: '1.0' })
+    const raw = await SearchIndex.findOne({ version: '1.0' })
       .select('lastUpdated count')
       .lean();
 
+    const index = raw as unknown as { lastUpdated?: unknown; count?: number } | null;
     if (!index || !index.lastUpdated) {
       return NextResponse.json(
         { lastUpdated: null, count: 0 },
