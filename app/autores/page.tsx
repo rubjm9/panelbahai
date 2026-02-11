@@ -4,6 +4,8 @@ import dbConnect from '@/lib/mongodb'
 import Obra from '@/models/Obra'
 import { listCachedPublishedAutores } from '@/lib/services/public/autorService'
 
+export const dynamic = 'force-dynamic'
+
 export default async function AutoresPage() {
   const autores = await listCachedPublishedAutores()
   await dbConnect()

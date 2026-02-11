@@ -43,7 +43,12 @@ export async function GET() {
     console.error('Error fetching search index version:', error);
     return NextResponse.json(
       { lastUpdated: null, count: 0 },
-      { status: 500 }
+      {
+        status: 200,
+        headers: {
+          'Cache-Control': 'public, max-age=60, stale-while-revalidate=300'
+        }
+      }
     );
   }
 }
