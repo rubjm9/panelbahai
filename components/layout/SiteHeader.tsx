@@ -84,30 +84,37 @@ export default function SiteHeader() {
           </div>
         </div>
 
-        {/* Mobile Navigation Panel */}
-        {mobileOpen && (
-          <div className="md:hidden border-t border-primary-100 dark:border-slate-800 py-3">
-            <nav className="flex flex-col space-y-2">
-              <Link href="/autores" className="nav-link" onClick={() => setMobileOpen(false)}>Autores</Link>
-              <div>
-                <div className="text-sm font-medium text-primary-700 dark:text-neutral-300 mt-2 mb-1">Autores principales</div>
-                <ul className="grid grid-cols-1 gap-1">
-                  {authors.map(a => (
-                    <li key={a.slug}>
-                      <Link href={`/autores/${a.slug}`} className="block px-3 py-2 text-sm text-primary-700 dark:text-neutral-300 hover:bg-primary-50 dark:hover:bg-slate-800 rounded-sm transition-colors" onClick={() => setMobileOpen(false)}>
-                        {a.name}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <Link href="/proximas-traducciones" className="nav-link" onClick={() => setMobileOpen(false)}>Próximas traducciones</Link>
-              <Link href="/acerca" className="nav-link" onClick={() => setMobileOpen(false)}>Sobre el Panel</Link>
-              <Link href="/contacto" className="nav-link" onClick={() => setMobileOpen(false)}>Contacto</Link>
-              <Link href="/admin" className="nav-link text-accent-700 dark:text-accent-500" onClick={() => setMobileOpen(false)}>Acceso</Link>
-            </nav>
+        {/* Mobile Navigation Panel — siempre en DOM para animar apertura/cierre */}
+        <div
+          className={`md:hidden grid transition-[grid-template-rows,opacity] duration-300 ease-out ${
+            mobileOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+          }`}
+          aria-hidden={!mobileOpen}
+        >
+          <div className="overflow-hidden">
+            <div className="border-t border-primary-100 dark:border-slate-800 py-3 min-h-0">
+              <nav className={`flex flex-col space-y-2 transition-opacity duration-300 ${mobileOpen ? 'opacity-100 delay-75' : 'opacity-0'}`}>
+                <Link href="/autores" className="nav-link" onClick={() => setMobileOpen(false)}>Autores</Link>
+                <div>
+                  <div className="text-sm font-medium text-primary-700 dark:text-neutral-300 mt-2 mb-1">Autores principales</div>
+                  <ul className="grid grid-cols-1 gap-1">
+                    {authors.map(a => (
+                      <li key={a.slug}>
+                        <Link href={`/autores/${a.slug}`} className="block px-3 py-2 text-sm text-primary-700 dark:text-neutral-300 hover:bg-primary-50 dark:hover:bg-slate-800 rounded-sm transition-colors" onClick={() => setMobileOpen(false)}>
+                          {a.name}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <Link href="/proximas-traducciones" className="nav-link" onClick={() => setMobileOpen(false)}>Próximas traducciones</Link>
+                <Link href="/acerca" className="nav-link" onClick={() => setMobileOpen(false)}>Sobre el Panel</Link>
+                <Link href="/contacto" className="nav-link" onClick={() => setMobileOpen(false)}>Contacto</Link>
+                <Link href="/admin" className="nav-link text-accent-700 dark:text-accent-500" onClick={() => setMobileOpen(false)}>Acceso</Link>
+              </nav>
+            </div>
           </div>
-        )}
+        </div>
       </div>
     </header>
   )
