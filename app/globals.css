@@ -581,6 +581,24 @@ body.focus-mode h1.display-title {
     @apply hover:text-primary-700 transition-colors duration-200;
   }
 
+  /* Breadcrumb en lectura: scroll horizontal en móvil sin solapamientos */
+  .breadcrumb-scroll {
+    -webkit-overflow-scrolling: touch;
+  }
+  .breadcrumb-scroll::-webkit-scrollbar {
+    height: 4px;
+  }
+  .breadcrumb-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .breadcrumb-scroll::-webkit-scrollbar-thumb {
+    border-radius: 2px;
+    background: theme('colors.neutral.300');
+  }
+  .dark .breadcrumb-scroll::-webkit-scrollbar-thumb {
+    background: theme('colors.slate.600');
+  }
+
   /* Formularios elegantes */
   .form-input {
     @apply w-full px-4 py-3 border border-neutral-300 rounded-sm focus:ring-1 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all duration-200 bg-white;

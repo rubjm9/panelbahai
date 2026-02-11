@@ -7,8 +7,9 @@ import Obra from '@/models/Obra';
 import Parrafo from '@/models/Parrafo';
 import Seccion from '@/models/Seccion';
 import Link from 'next/link';
-import { Plus, Edit, Trash2, Eye, Users, BookOpen, FileText, Settings } from 'lucide-react';
+import { Plus, Edit, Eye, Users, BookOpen } from 'lucide-react';
 import { requireAdminAuth } from '@/lib/auth-helpers';
+import DeleteAutorButton from '@/components/admin/DeleteAutorButton';
 
 export default async function AdminAutoresPage() {
   // Verificar autenticación admin
@@ -63,7 +64,7 @@ export default async function AdminAutoresPage() {
                 </div>
                 
                 <p className="text-primary-600 font-reading mb-4 line-clamp-3">
-                  {autor.biografia}
+                  {autor.biografia || '—'}
                 </p>
                 
                 <div className="flex items-center text-sm text-primary-500 mb-4">
@@ -85,9 +86,11 @@ export default async function AdminAutoresPage() {
                 >
                   <Edit className="w-4 h-4" />
                 </Link>
-                <button className="btn-secondary text-red-600 hover:text-red-800">
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                <DeleteAutorButton
+                  autorId={String(autor._id)}
+                  autorNombre={autor.nombre}
+                  className="btn-secondary text-red-600 hover:text-red-800"
+                />
               </div>
             </div>
           </div>

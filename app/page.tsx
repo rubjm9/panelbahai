@@ -35,7 +35,7 @@ export default function HomePage() {
             {/* Navegación por Autores elegante */}
             <div className="mb-20">
               <h3 className="text-2xl font-normal text-primary-900 dark:text-neutral-100 mb-12 text-center">
-                Explora por autor
+                Explore por autor
               </h3>
               <div className="grid-elegant md:grid-cols-2 lg:grid-cols-3">
                 <AuthorCard
@@ -107,7 +107,7 @@ function AuthorCard({ nombre, slug, descripcion, icono: IconoComponente }: {
           </div>
         </div>
         <div className="flex items-center text-primary-500 dark:text-neutral-400 text-sm font-medium group-hover:text-primary-700 dark:group-hover:text-neutral-300 transition-colors">
-          <span>Explorar obras</span>
+          <span>Explore las obras</span>
           <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
         </div>
       </div>

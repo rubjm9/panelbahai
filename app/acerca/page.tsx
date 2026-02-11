@@ -38,7 +38,7 @@ export default function AcercaPage() {
               ¿Qué es el Panel Internacional de Traducción?
             </h2>
             <p className="text-lg text-primary-700 dark:text-neutral-300 leading-relaxed mb-6">
-              El Panel Internacional de Traducción es un órgano creado el <strong>6 de enero de 1993</strong> por la Casa Universal de Justicia para producir traducciones oficiales en español de los textos de autoridad de la Fe bahá'í, es decir, las obras de Bahá'u'lláh, del Báb, de 'Abdu'l-Bahá, los escritos de Shoghi Effendi y algunos mensajes de la Casa Universal de Justicia.
+              El Panel Internacional de Traducción es un órgano creado el <strong>6 de enero de 1993</strong> por la Casa Universal de Justicia (de la que depende para su nombramiento, financiación y renovación) para producir traducciones oficiales en español de los textos de autoridad de la Fe bahá'í, es decir, las obras de Bahá'u'lláh, del Báb, de 'Abdu'l-Bahá, los escritos de Shoghi Effendi y algunos mensajes de la Casa Universal de Justicia para todo el mundo de habla hispana.
             </p>
             <p className="text-lg text-primary-700 dark:text-neutral-300 leading-relaxed">
               El primer encargo que les realizó la Casa de Justicia fue la traducción del <strong>Kitáb-i-Aqdás</strong> (el Libro Más Sagrado) al español, trabajo que fue completado en 1999.
@@ -57,7 +57,7 @@ export default function AcercaPage() {
                 <div className="w-12 h-12 bg-accent-500 rounded-lg flex items-center justify-center mr-4">
                   <BookOpen className="w-6 h-6 text-white" />
                 </div>
-                <h3 className="text-xl font-display font-semibold text-primary-900 dark:text-neutral-100">Facilitar y Supervisar</h3>
+                <h3 className="text-xl font-display font-semibold text-primary-900 dark:text-neutral-100">Facilitar y supervisar</h3>
               </div>
               <p className="text-primary-700 dark:text-neutral-300">
                 Facilitar y supervisar la traducción de textos bahá'ís de autoridad, obras generales introductorias y materiales publicados comúnmente.
@@ -69,7 +69,7 @@ export default function AcercaPage() {
                 <div className="w-12 h-12 bg-accent-500 rounded-lg flex items-center justify-center mr-4">
                   <Users className="w-6 h-6 text-white" />
                 </div>
-                <h3 className="text-xl font-display font-semibold text-primary-900">Obtener Ayuda</h3>
+                <h3 className="text-xl font-display font-semibold text-primary-900 dark:text-neutral-100">Obtener ayuda</h3>
               </div>
               <p className="text-primary-700">
                 Obtener ayuda de traductores bien cualificados y asignar tareas concretas a cada uno de ellos.
@@ -81,7 +81,7 @@ export default function AcercaPage() {
                 <div className="w-12 h-12 bg-accent-500 rounded-lg flex items-center justify-center mr-4">
                   <CheckCircle className="w-6 h-6 text-white" />
                 </div>
-                <h3 className="text-xl font-display font-semibold text-primary-900">Revisar el Trabajo</h3>
+                <h3 className="text-xl font-display font-semibold text-primary-900 dark:text-neutral-100">Revisar el trabajo</h3>
               </div>
               <p className="text-primary-700">
                 Revisar el trabajo de traducción para asegurar la máxima calidad y fidelidad al texto original.
@@ -93,7 +93,7 @@ export default function AcercaPage() {
                 <div className="w-12 h-12 bg-accent-500 rounded-lg flex items-center justify-center mr-4">
                   <Globe className="w-6 h-6 text-white" />
                 </div>
-                <h3 className="text-xl font-display font-semibold text-primary-900">Ofrecer Traducciones</h3>
+                <h3 className="text-xl font-display font-semibold text-primary-900 dark:text-neutral-100">Ofrecer traducciones</h3>
               </div>
               <p className="text-primary-700">
                 Ofrecer las traducciones a Asambleas Espirituales Nacionales y Editoriales para su distribución.
@@ -157,12 +157,12 @@ export default function AcercaPage() {
         {/* Nuevas Traducciones */}
         <section className="mb-16">
           <div className="bg-gradient-to-r from-accent-500 to-accent-600 text-white rounded-lg p-8 text-center">
-            <h2 className="text-2xl font-display font-bold mb-4">Nuevas Traducciones Disponibles</h2>
+            <h2 className="text-2xl font-display font-bold mb-4">Nuevas traducciones disponibles</h2>
             <Link 
               href="/proximas-traducciones" 
               className="bg-white hover:bg-gray-100 text-accent-600 font-medium py-3 px-6 rounded-lg transition-colors duration-200 inline-block"
             >
-              Descubre las nuevas traducciones
+              Descubra las nuevas traducciones
             </Link>
           </div>
         </section>
@@ -171,8 +171,8 @@ export default function AcercaPage() {
         <section className="bg-primary-900 dark:bg-midnight-900 text-white rounded-lg p-8 text-center">
           <h2 className="text-2xl font-display font-bold mb-4">¿Deseas colaborar con el Panel?</h2>
           <p className="text-primary-200 dark:text-neutral-300 mb-6 max-w-2xl mx-auto">
-            Si tienes experiencia en traducción y sientes el llamado a servir en este campo, 
-            nos encantaría conocer tu interés en contribuir a este importante trabajo.
+            Si tiene experiencia en traducción y siente el llamado a servir en este campo, 
+            nos encantaría conocer su interés en contribuir a este importante trabajo.
           </p>
           <Link 
             href="/contacto" 

@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
 
     if (!recaptchaToken || typeof recaptchaToken !== 'string') {
       return NextResponse.json(
-        { error: 'Verificación de seguridad incorrecta. Recarga la página e inténtalo de nuevo.' },
+        { error: 'Verificación de seguridad incorrecta. Recargue la página e inténtelo de nuevo.' },
         { status: 400 }
       )
     }

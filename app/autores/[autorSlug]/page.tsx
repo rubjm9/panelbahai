@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { ChevronLeft, BookOpen, Calendar, ArrowRight } from 'lucide-react'
+import { BookOpen, Calendar, ArrowRight } from 'lucide-react'
 import { getCachedAutorBySlug } from '@/lib/services/public/autorService'
 import { listPublishedWorksByAutor } from '@/lib/services/public/obraService'
 
@@ -24,126 +24,13 @@ async function getAutorData(slug: string) {
   }
 }
 
-// Datos de respaldo para desarrollo
-const autoresData: Record<string, any> = {
-  'bahaullah': {
-    nombre: "Bahá'u'lláh",
-    slug: "bahaullah",
-    biografia: "Bahá'u'lláh (1817-1892) es el título de Mírzá Husayn-'Alí, que significa 'Gloria de Dios'. Es el Fundador de la Fe Bahá'í y el Manifestante de Dios para esta época. Sus escritos forman la base de las enseñanzas bahá'ís y incluyen más de 100 volúmenes de revelaciones, cartas, oraciones y comentarios sobre temas espirituales, sociales y administrativos.",
-    fechas: "1817-1892",
-    obras: [
-      {
-        titulo: "El Kitab-i-Iqan",
-        slug: "kitab-i-iqan",
-        descripcion: "El Libro de la Certeza, una de las obras más importantes sobre temas espirituales y teológicos.",
-        esPublico: true,
-        fechaPublicacion: "1862"
-      },
-      {
-        titulo: "Pasajes de los Escritos de Bahá'u'lláh",
-        slug: "pasajes-bahaullah",
-        descripcion: "Selección de pasajes representativos sobre diversos temas espirituales.",
-        esPublico: true
-      },
-      {
-        titulo: "El Kitab-i-Aqdas",
-        slug: "kitab-i-aqdas",
-        descripcion: "El Libro Más Sagrado, la obra principal de leyes y ordenanzas de Bahá'u'lláh.",
-        esPublico: true,
-        fechaPublicacion: "1873"
-      }
-    ]
-  },
-  'el-bab': {
-    nombre: "El Báb",
-    slug: "el-bab",
-    biografia: "El Báb (1819-1850), cuyo nombre era Siyyid 'Alí-Muhammad, fue el Precursor de Bahá'u'lláh. Anunció la proximidad de Aquel 'a Quien Dios hará manifiesto' y preparó el camino para la revelación de Bahá'u'lláh. Sus escritos, que incluyen comentarios sobre el Corán, oraciones, y leyes, constituyen una revelación independiente.",
-    fechas: "1819-1850",
-    obras: [
-      {
-        titulo: "Selecciones de los Escritos del Báb",
-        slug: "selecciones-bab",
-        descripcion: "Compilación de pasajes representativos de los escritos del Báb.",
-        esPublico: true
-      }
-    ]
-  },
-  'abdul-baha': {
-    nombre: "'Abdu'l-Bahá",
-    slug: "abdul-baha",
-    biografia: "'Abdu'l-Bahá (1844-1921), cuyo nombre significa 'Siervo de Bahá', fue el hijo mayor de Bahá'u'lláh. Designado como el intérprete autorizado de las enseñanzas de Su Padre, Sus escritos y charlas proporcionan explicaciones claras de los principios bahá'ís y su aplicación práctica en la vida diaria.",
-    fechas: "1844-1921",
-    obras: [
-      {
-        titulo: "Contestación a Unas Preguntas",
-        slug: "contestacion-preguntas",
-        descripcion: "Respuestas a preguntas sobre temas espirituales y filosóficos.",
-        esPublico: true
-      },
-      {
-        titulo: "La Sabiduría de 'Abdu'l-Bahá",
-        slug: "sabiduria-abdul-baha",
-        descripcion: "Compilación de charlas y escritos sobre diversos temas.",
-        esPublico: true
-      }
-    ]
-  },
-  'shoghi-effendi': {
-    nombre: "Shoghi Effendi",
-    slug: "shoghi-effendi",
-    biografia: "Shoghi Effendi (1897-1957) fue el Guardián de la Fe Bahá'í, nieto de 'Abdu'l-Bahá. Durante 36 años guió el desarrollo de la comunidad bahá'í mundial, tradujo textos sagrados al inglés y escribió extensamente sobre la interpretación y aplicación de las enseñanzas bahá'ís.",
-    fechas: "1897-1957",
-    obras: [
-      {
-        titulo: "El Desenvolvimiento de la Civilización Mundial",
-        slug: "desenvolvimiento-civilizacion",
-        descripcion: "Análisis del plan divino para la unificación de la humanidad.",
-        esPublico: true
-      }
-    ]
-  },
-  'casa-justicia': {
-    nombre: "Casa Universal de Justicia",
-    slug: "casa-justicia",
-    biografia: "La Casa Universal de Justicia es el cuerpo administrativo supremo de la Fe Bahá'í, establecido en 1963. Compuesta por nueve miembros elegidos cada cinco años, guía los asuntos de la comunidad bahá'í mundial y legisla sobre materias no explícitamente reveladas en los textos sagrados.",
-    fechas: "1963-presente",
-    obras: [
-      {
-        titulo: "Cartas de la Casa Universal de Justicia",
-        slug: "cartas-casa-justicia",
-        descripcion: "Compilación de cartas y declaraciones oficiales.",
-        esPublico: true
-      }
-    ]
-  },
-  'declaraciones-oficiales': {
-    nombre: "Declaraciones Oficiales",
-    slug: "declaraciones-oficiales",
-    biografia: "Declaraciones y comunicados oficiales de las instituciones bahá'ís sobre temas de importancia mundial y comunitaria.",
-    obras: []
-  },
-  'recopilaciones': {
-    nombre: "Recopilaciones",
-    slug: "recopilaciones",
-    biografia: "Selecciones temáticas de textos de varios autores bahá'ís, organizadas para facilitar el estudio de temas específicos de las enseñanzas bahá'ís.",
-    obras: []
-  }
-};
-
 export default async function AutorPage({ params }: { params: { autorSlug: string } }) {
-  const { autorSlug } = params;
-  
-  let data = await getAutorData(autorSlug);
-  
-  if (!data) {
-    const autorData = autoresData[autorSlug];
-    if (!autorData) {
-      notFound();
-    }
-    data = { autor: autorData, obras: autorData.obras || [] };
-  }
+  const { autorSlug } = params
 
-  const { autor, obras } = data;
+  const data = await getAutorData(autorSlug)
+  if (!data) notFound()
+
+  const { autor, obras } = data
 
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-midnight-900 transition-colors duration-200">
@@ -173,8 +60,8 @@ export default async function AutorPage({ params }: { params: { autorSlug: strin
         <div className="container-elegant">
           <div className="text-center mb-16">
             <div className="max-w-4xl mx-auto">
-              <p className="text-lg text-primary-700 dark:text-neutral-300 leading-relaxed">
-                {autor.biografia}
+              <p className="text-lg text-primary-700 dark:text-neutral-300 leading-relaxed whitespace-pre-wrap">
+                {autor.biografia || '—'}
               </p>
             </div>
           </div>

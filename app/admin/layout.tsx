@@ -1,28 +1,26 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { 
-  BookOpen, 
-  Users, 
-  FileText, 
-  Settings, 
-  Menu, 
+import {
+  BookOpen,
+  Users,
+  FileText,
+  Settings,
+  Menu,
   X,
   LogOut,
   BarChart3,
-  Search
 } from 'lucide-react'
 
-const navigation = [
-  { name: 'Dashboard', href: '/admin', icon: BarChart3 },
-  { name: 'Autores', href: '/admin/autores', icon: Users },
-  { name: 'Obras', href: '/admin/obras', icon: BookOpen },
-  { name: 'Importar', href: '/admin/importar', icon: FileText },
-  { name: 'Búsqueda', href: '/admin/busqueda', icon: Search },
-  { name: 'Usuarios', href: '/admin/usuarios', icon: Users },
-  { name: 'Configuración', href: '/admin/configuracion', icon: Settings },
+const allNavigation = [
+  { name: 'Dashboard', href: '/admin', icon: BarChart3, adminOnly: false },
+  { name: 'Autores', href: '/admin/autores', icon: Users, adminOnly: false },
+  { name: 'Obras', href: '/admin/obras', icon: BookOpen, adminOnly: false },
+  { name: 'Próximas obras', href: '/admin/proximas-obras', icon: FileText, adminOnly: false },
+  { name: 'Usuarios', href: '/admin/usuarios', icon: Users, adminOnly: true },
+  { name: 'Configuración', href: '/admin/configuracion', icon: Settings, adminOnly: false },
 ]
 
 export default function AdminLayout({
@@ -31,7 +29,36 @@ export default function AdminLayout({
   children: React.ReactNode
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [userRol, setUserRol] = useState<string | null>(null)
+  const [userNombre, setUserNombre] = useState<string | null>(null)
+  const [loggingOut, setLoggingOut] = useState(false)
   const pathname = usePathname()
+
+  useEffect(() => {
+    fetch('/api/auth/me', { credentials: 'include' })
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => {
+        if (data?.data) {
+          if (data.data.rol != null) setUserRol(data.data.rol)
+          if (data.data.nombre != null) setUserNombre(data.data.nombre)
+        }
+      })
+      .catch(() => {})
+  }, [])
+
+  async function handleLogout() {
+    if (loggingOut) return
+    setLoggingOut(true)
+    try {
+      await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
+    } finally {
+      window.location.href = '/admin/login'
+    }
+  }
+
+  const navigation = userRol === 'admin'
+    ? allNavigation
+    : allNavigation.filter((item) => !item.adminOnly)
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -114,10 +141,17 @@ export default function AdminLayout({
           <div className="flex-shrink-0 flex border-t border-gray-200 p-4">
             <div className="flex items-center">
               <div className="ml-3">
-                <p className="text-sm font-medium text-gray-700">Administrador</p>
-                <button className="text-xs text-gray-500 hover:text-gray-700 flex items-center">
+                <p className="text-sm font-medium text-gray-700">
+                  {userNombre ?? (userRol === 'admin' ? 'Administrador' : userRol === 'editor' ? 'Editor' : 'Administrador')}
+                </p>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  disabled={loggingOut}
+                  className="text-xs text-gray-500 hover:text-gray-700 flex items-center disabled:opacity-50"
+                >
                   <LogOut className="w-3 h-3 mr-1" />
-                  Cerrar sesión
+                  {loggingOut ? 'Cerrando…' : 'Cerrar sesión'}
                 </button>
               </div>
             </div>

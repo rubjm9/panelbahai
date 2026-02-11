@@ -10,7 +10,7 @@ export default function SiteFooter({ variant = 'default' }: SiteFooterProps) {
       <footer className="w-full py-6 mt-auto border-t border-neutral-200 dark:border-slate-800 bg-white dark:bg-slate-950 transition-colors duration-200">
         <div className="container mx-auto px-4 text-center">
           <p className="text-sm text-neutral-500 dark:text-neutral-400">
-            &copy; {year} Panel de Traducción de Literatura Bahá'í al Español
+            &copy; {year} Panel Internacional de Traducción de Literatura Bahá'í al Español
           </p>
         </div>
       </footer>
@@ -47,7 +47,7 @@ export default function SiteFooter({ variant = 'default' }: SiteFooterProps) {
           </div>
         </div>
         <div className="border-t border-primary-800 dark:border-slate-800 mt-8 pt-6 text-center text-primary-300 dark:text-neutral-500">
-          <p>&copy; {year} Panel de Traducción de Literatura Bahá'í al Español</p>
+          <p>&copy; {year} Panel Internacional de Traducción de Literatura Bahá'í al Español</p>
         </div>
       </div>
     </footer>

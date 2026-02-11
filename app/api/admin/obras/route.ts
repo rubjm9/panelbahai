@@ -6,6 +6,7 @@ import { rebuildSearchIndexAsync } from '@/utils/search-rebuild'
 import { uploadFile } from '@/lib/gridfs'
 import { requireAdminAPI } from '@/lib/auth-helpers'
 import { adminAPIRateLimit, getRateLimitIdentifier, checkRateLimit } from '@/lib/rateLimit'
+import { revalidateTag } from 'next/cache'
 
 export async function POST(request: NextRequest) {
   try {
@@ -170,6 +171,47 @@ export async function POST(request: NextRequest) {
     console.error('Error creando obra:', error)
     return NextResponse.json(
       { message: 'Error interno del servidor' },
+      { status: 500 }
+    )
+  }
+}
+
+/**
+ * PATCH: reordenar obras. Body: { ids: string[] } con los _id en el orden deseado.
+ * Ese orden se usa en la parte pública.
+ */
+export async function PATCH(request: NextRequest) {
+  try {
+    await requireAdminAPI()
+    await dbConnect()
+
+    const body = await request.json()
+    const { ids } = body as { ids?: string[] }
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return NextResponse.json(
+        { success: false, error: 'Se requiere un array de ids (orden)' },
+        { status: 400 }
+      )
+    }
+
+    await Promise.all(
+      ids.map((id, index) =>
+        Obra.updateOne({ _id: id, activo: true }, { $set: { orden: index } })
+      )
+    )
+
+    revalidateTag('obras')
+    revalidateTag('autores')
+
+    return NextResponse.json({ success: true })
+  } catch (err) {
+    if (err instanceof Error && (err.message === 'No autorizado' || err.message === 'Token inválido')) {
+      return NextResponse.json({ success: false, error: 'No autorizado' }, { status: 401 })
+    }
+    console.error('Error reordenando obras:', err)
+    return NextResponse.json(
+      { success: false, error: 'Error al reordenar' },
       { status: 500 }
     )
   }

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { ChevronRight, Menu, X, BookOpen, ChevronUp, ChevronDown, PanelLeft, PanelLeftClose, Library, Focus, Type, Minus, Plus } from 'lucide-react'
+import { ChevronRight, Menu, X, BookOpen, ChevronUp, ChevronDown, PanelLeft, PanelLeftClose, Library, Focus, Type, Minus, Plus, Home } from 'lucide-react'
 import Link from 'next/link'
 import WorksTree from './WorksTree'
 
@@ -925,13 +925,34 @@ export default function ReadingView({
           : 'top-[73px] py-4'
         }`}>
         <div className="container-elegant">
-          <div className="flex items-center justify-between">
-            <nav className="breadcrumb">
+          {/* Móvil: 2 filas centradas con icono casa, sin botones */}
+          <div className="flex flex-col gap-1 text-center md:hidden">
+            <nav className="breadcrumb justify-center" aria-label="Navegación">
+              <Link href="/" className="inline-flex items-center" aria-label="Inicio">
+                <Home className="w-4 h-4 text-primary-500 dark:text-neutral-400" />
+              </Link>
+              <span className="mx-2">/</span>
+              <Link href={`/autores/${obra.autorSlug}`}>{obra.autor}</Link>
+              <span className="mx-2">/</span>
+              <span className="text-primary-900 dark:text-neutral-100 font-medium">{obra.titulo}</span>
+            </nav>
+            <nav className="breadcrumb justify-center" aria-label="Ubicación en la obra">
+              {getCurrentSectionTitle() && (
+                <>
+                  <span className="text-primary-600 dark:text-neutral-400">{getCurrentSectionTitle()}</span>
+                  <span className="mx-2">•</span>
+                </>
+              )}
+              <span className="text-primary-500 dark:text-neutral-500">Párrafo {activeParagraph}</span>
+            </nav>
+          </div>
+
+          {/* Desktop: una sola fila como antes (Inicio / Autor / Obra / Sección • Párrafo) y botones */}
+          <div className="hidden md:flex md:items-center md:justify-between">
+            <nav className="breadcrumb" aria-label="Navegación">
               <Link href="/">Inicio</Link>
               <span className="mx-2">/</span>
-              <Link href={`/autores/${obra.autorSlug}`}>
-                {obra.autor}
-              </Link>
+              <Link href={`/autores/${obra.autorSlug}`}>{obra.autor}</Link>
               <span className="mx-2">/</span>
               <span className="text-primary-900 dark:text-neutral-100 font-medium">{obra.titulo}</span>
               {getCurrentSectionTitle() && (
@@ -943,15 +964,14 @@ export default function ReadingView({
               <span className="mx-2">•</span>
               <span className="text-primary-500 dark:text-neutral-500">Párrafo {activeParagraph}</span>
             </nav>
-
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center gap-2 flex-shrink-0">
               <button
                 onClick={() => setLibraryOpen(!libraryOpen)}
                 className={`p-2 transition-colors ${libraryOpen
                   ? 'text-accent-600 hover:text-accent-800 dark:text-accent-500 dark:hover:text-accent-400'
                   : 'text-primary-600 hover:text-primary-800 dark:text-neutral-400 dark:hover:text-neutral-200'
                   }`}
-                data-tooltip={libraryOpen ? 'Ocultar biblioteca' : 'Mostrar biblioteca'}
+                aria-label={libraryOpen ? 'Ocultar biblioteca' : 'Mostrar biblioteca'}
               >
                 <Library className="w-5 h-5" />
               </button>
@@ -961,7 +981,7 @@ export default function ReadingView({
                   ? 'text-accent-600 hover:text-accent-800'
                   : 'text-primary-600 hover:text-primary-800'
                   }`}
-                data-tooltip={tocOpen ? 'Ocultar índice de contenidos' : 'Mostrar índice de contenidos'}
+                aria-label={tocOpen ? 'Ocultar índice de contenidos' : 'Mostrar índice de contenidos'}
               >
                 <BookOpen className="w-5 h-5" />
               </button>
@@ -971,7 +991,7 @@ export default function ReadingView({
                   ? 'text-accent-600 hover:text-accent-800'
                   : 'text-primary-600 hover:text-primary-800'
                   }`}
-                data-tooltip={focusMode ? 'Salir del modo lectura enfocada' : 'Activar modo lectura enfocada'}
+                aria-label={focusMode ? 'Salir del modo lectura enfocada' : 'Modo lectura enfocada'}
               >
                 <Focus className="w-5 h-5" />
               </button>

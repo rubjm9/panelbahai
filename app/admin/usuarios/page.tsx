@@ -4,15 +4,15 @@ import { notFound } from 'next/navigation';
 import dbConnect from '@/lib/mongodb';
 import Usuario from '@/models/Usuario';
 import Link from 'next/link';
-import { Plus, Edit, Trash2, Eye, Users, Shield, UserCheck, UserX } from 'lucide-react';
-import { requireAdminAuth } from '@/lib/auth-helpers';
+import { Plus, Edit, Eye, Users, Shield, UserCheck, UserX } from 'lucide-react';
+import { requireAdminOnlyAuth } from '@/lib/auth-helpers';
+import DeleteUsuarioButton from '@/components/admin/DeleteUsuarioButton';
 
 export default async function AdminUsuariosPage() {
-  // Verificar autenticación admin
-  await requireAdminAuth();
-  
+  const currentUser = await requireAdminOnlyAuth();
+
   await dbConnect();
-  
+
   const usuarios = await Usuario.find({ activo: true })
     .sort({ fechaCreacion: -1 });
 
@@ -54,7 +54,7 @@ export default async function AdminUsuariosPage() {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-display font-bold text-primary-900 mb-2">
-            Gestión de Usuarios
+            Gestión de usuarios
           </h1>
           <p className="text-primary-600 font-reading">
             Administra los usuarios del sistema
@@ -95,22 +95,26 @@ export default async function AdminUsuariosPage() {
               </div>
               
               <div className="flex space-x-2 ml-4">
-                <Link 
+                <Link
                   href={`/admin/usuarios/${usuario._id}`}
                   className="btn-secondary"
+                  title="Ver usuario"
                 >
                   <Eye className="w-4 h-4" />
                 </Link>
-                <Link 
+                <Link
                   href={`/admin/usuarios/${usuario._id}/editar`}
                   className="btn-secondary"
+                  title="Editar usuario"
                 >
                   <Edit className="w-4 h-4" />
                 </Link>
-                {usuario.rol !== 'admin' && (
-                  <button className="btn-secondary text-red-600 hover:text-red-800">
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                {String(usuario._id) !== currentUser.id && (
+                  <DeleteUsuarioButton
+                    usuarioId={String(usuario._id)}
+                    usuarioNombre={usuario.nombre}
+                    className="btn-secondary text-red-600 hover:text-red-800"
+                  />
                 )}
               </div>
             </div>

@@ -17,6 +17,7 @@
     "test-web": "node scripts/test-web-functionality.js",
     "dev-domain": "bash scripts/dev-with-domain.sh",
     "seed": "node scripts/seed-data.js",
+    "seed-proximas": "node scripts/seed-proximas-obras.js",
     "init-admin": "node scripts/init-admin.js",
     "reset-admin": "node scripts/reset-admin-password.js",
     "clean": "rm -rf .next && rm -rf node_modules/.cache"

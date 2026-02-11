@@ -71,7 +71,7 @@ export default function ContactoPage() {
         <div className="container-elegant">
           <div className="section-elegant text-center">
             <h1 className="display-title text-white mb-4">Contacto</h1>
-            <p className="text-xl text-primary-200 max-w-3xl mx-auto">Contacta con el Panel Internacional de Traducción</p>
+            <p className="text-xl text-primary-200 max-w-3xl mx-auto">Contacte con el Panel Internacional de Traducción</p>
           </div>
         </div>
       </section>
@@ -88,34 +88,11 @@ export default function ContactoPage() {
       </nav>
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Introducción */}
-        <section className="mb-16">
-          <div className="bg-gradient-to-r from-primary-50 to-white dark:from-slate-800 dark:to-midnight-900 rounded-lg p-8 border border-primary-100 dark:border-slate-700">
-            <div className="flex items-center mb-6">
-              <div className="w-12 h-12 bg-accent-500 rounded-lg flex items-center justify-center mr-4">
-                <Mail className="w-6 h-6 text-white" />
-              </div>
-              <h2 className="text-3xl font-display font-bold text-primary-900 dark:text-neutral-100">
-                Nos encantaría escuchar de ti
-              </h2>
-            </div>
-            <p className="text-lg text-primary-700 dark:text-neutral-300 leading-relaxed mb-6">
-              Ya sea que desees colaborar con nosotros, tengas sugerencias para mejorar 
-              la plataforma, o simplemente quieras conocer más sobre nuestro trabajo, 
-              estamos aquí para atenderte.
-            </p>
-            <p className="text-lg text-primary-700 dark:text-neutral-300 leading-relaxed">
-              El Panel Internacional de Traducción valora la participación de profesionales 
-              cualificados y amigos comprometidos con la difusión de la literatura bahá'í.
-            </p>
-          </div>
-        </section>
-
         <div className="grid lg:grid-cols-2 gap-12">
           {/* Formulario de contacto */}
           <section>
             <div className="bg-white dark:bg-slate-800 border border-primary-200 dark:border-slate-700 rounded-lg p-8 shadow-sm">
-              <h2 className="text-2xl font-display font-bold text-primary-900 dark:text-neutral-100 mb-6">Envíanos un mensaje</h2>
+              <h2 className="text-2xl font-display font-bold text-primary-900 dark:text-neutral-100 mb-6">Envíenos un mensaje</h2>
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
@@ -127,7 +104,7 @@ export default function ContactoPage() {
                       id="nombre"
                       name="nombre"
                       required
-                      className="w-full px-4 py-3 border border-primary-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-accent-500 transition-colors bg-white dark:bg-slate-800 text-primary-900 dark:text-neutral-100"
+                      className="w-full px-0 pt-1 pb-1.5 bg-transparent border-0 border-b border-primary-300 dark:border-slate-600 rounded-none focus:ring-0 focus:border-accent-500 focus:outline-none transition-colors text-primary-900 dark:text-neutral-100 placeholder:text-primary-400 dark:placeholder:text-neutral-500"
                       placeholder="Ej.: María García López"
                     />
                   </div>
@@ -140,7 +117,7 @@ export default function ContactoPage() {
                       id="email"
                       name="email"
                       required
-                      className="w-full px-4 py-3 border border-primary-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-accent-500 transition-colors bg-white dark:bg-slate-800 text-primary-900 dark:text-neutral-100"
+                      className="w-full px-0 pt-1 pb-1.5 bg-transparent border-0 border-b border-primary-300 dark:border-slate-600 rounded-none focus:ring-0 focus:border-accent-500 focus:outline-none transition-colors text-primary-900 dark:text-neutral-100 placeholder:text-primary-400 dark:placeholder:text-neutral-500"
                       placeholder="Ej.: nombre@ejemplo.com"
                     />
                   </div>
@@ -155,8 +132,8 @@ export default function ContactoPage() {
                     name="mensaje"
                     rows={5}
                     required
-                    className="w-full px-4 py-3 border border-primary-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-accent-500 transition-colors resize-none bg-white dark:bg-slate-800 text-primary-900 dark:text-neutral-100"
-                    placeholder="Ej.: Me gustaría colaborar en la revisión de traducciones. ¿Podrían indicarme los pasos a seguir?"
+                    className="w-full px-0 pt-1 pb-1.5 bg-transparent border-0 border-b border-primary-300 dark:border-slate-600 rounded-none focus:ring-0 focus:border-accent-500 focus:outline-none transition-colors resize-none text-primary-900 dark:text-neutral-100 placeholder:text-primary-400 dark:placeholder:text-neutral-500"
+                    placeholder="Escriba su mensaje en este espacio"
                   />
                 </div>
 
@@ -177,14 +154,27 @@ export default function ContactoPage() {
                   </label>
                 </div>
 
+                <div className="flex items-start space-x-3">
+                  <input
+                    type="checkbox"
+                    id="suscribirse_novedades"
+                    name="suscribirse_novedades"
+                    value="1"
+                    className="mt-1 w-4 h-4 text-accent-600 border-primary-300 rounded focus:ring-accent-500"
+                  />
+                  <label htmlFor="suscribirse_novedades" className="text-sm text-primary-600 dark:text-neutral-400 leading-relaxed">
+                    Suscríbase para recibir las nuevas traducciones
+                  </label>
+                </div>
+
                 {submitStatus === 'success' && (
                   <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-green-800">
-                    ¡Mensaje enviado correctamente! Te responderemos pronto.
+                    ¡Mensaje enviado correctamente! Le responderemos pronto.
                   </div>
                 )}
                 {submitStatus === 'error' && (
                   <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800">
-                    {errorMessage || 'Error al enviar el mensaje. Por favor, inténtalo de nuevo o envía un correo directamente a bahaipanel@gmail.com'}
+                    {errorMessage || 'Error al enviar el mensaje. Por favor, inténtelo de nuevo o envíe un correo directamente a bahaipanel@gmail.com'}
                   </div>
                 )}
                 <p className="text-xs text-primary-500 dark:text-neutral-500">
@@ -211,7 +201,7 @@ export default function ContactoPage() {
             <div className="space-y-8">
               {/* Información de contacto */}
               <div className="bg-white dark:bg-slate-800 border border-primary-200 dark:border-slate-700 rounded-lg p-8 shadow-sm">
-                <h2 className="text-2xl font-display font-bold text-primary-900 dark:text-neutral-100 mb-6">Información de Contacto</h2>
+                <h2 className="text-2xl font-display font-bold text-primary-900 dark:text-neutral-100 mb-6">Datos de contacto</h2>
                 
                 <div className="space-y-6">
                   <div className="flex items-start">
@@ -220,9 +210,6 @@ export default function ContactoPage() {
                     </div>
                     <div>
                       <h3 className="text-lg font-display font-semibold text-primary-900 dark:text-neutral-100 mb-2">Correo electrónico</h3>
-                      <p className="text-primary-700 dark:text-neutral-300 mb-3">
-                        Para consultas generales y colaboraciones:
-                      </p>
                       <a 
                         href="mailto:bahaipanel@gmail.com" 
                         className="text-accent-600 hover:text-accent-700 font-medium text-lg"
@@ -239,28 +226,22 @@ export default function ContactoPage() {
                     <div>
                       <h3 className="text-lg font-display font-semibold text-primary-900 dark:text-neutral-100 mb-2">Sitios web oficiales</h3>
                       <div className="space-y-2">
-                        <div>
-                          <a 
-                            href="https://bahai.org" 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="text-accent-600 hover:text-accent-700 font-medium"
-                          >
-                            Bahá'í.org
-                          </a>
-                          <span className="text-primary-600 dark:text-neutral-400 ml-2">- Sitio oficial mundial</span>
-                        </div>
-                        <div>
-                          <a 
-                            href="https://bahai.org/library" 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="text-accent-600 hover:text-accent-700 font-medium"
-                          >
-                            Bahá'í Reference Library
-                          </a>
-                          <span className="text-primary-600 ml-2">- Biblioteca de referencia</span>
-                        </div>
+                        <a 
+                          href="https://bahai.org" 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="block text-accent-600 hover:text-accent-700 font-medium"
+                        >
+                          Sitio web de la comunidad mundial bahá'í
+                        </a>
+                        <a 
+                          href="https://www.bahai.org/library/"
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="block text-accent-600 hover:text-accent-700 font-medium"
+                        >
+                          Bahá'í Reference Library
+                        </a>
                       </div>
                     </div>
                   </div>
@@ -268,41 +249,33 @@ export default function ContactoPage() {
                 </div>
               </div>
 
-              {/* Áreas de colaboración */}
+              {/* Ámbitos de colaboración */}
               <div className="bg-white dark:bg-slate-800 border border-primary-200 dark:border-slate-700 rounded-lg p-8 shadow-sm">
-                <h3 className="text-xl font-display font-semibold text-primary-900 dark:text-neutral-100 mb-6">
-                  Áreas de colaboración
-                </h3>
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-3">
-                    <div className="flex items-center">
-                      <div className="w-2 h-2 bg-accent-500 rounded-full mr-3"></div>
-                      <span className="text-primary-700 dark:text-neutral-300">Traducción de textos bahá'ís</span>
-                    </div>
-                    <div className="flex items-center">
-                      <div className="w-2 h-2 bg-accent-500 rounded-full mr-3"></div>
-                      <span className="text-primary-700">Revisión y edición de traducciones</span>
-                    </div>
-                    <div className="flex items-center">
-                      <div className="w-2 h-2 bg-accent-500 rounded-full mr-3"></div>
-                      <span className="text-primary-700">Corrección de estilo y gramática</span>
-                    </div>
-                  </div>
-                  <div className="space-y-3">
-                    <div className="flex items-center">
-                      <div className="w-2 h-2 bg-accent-500 rounded-full mr-3"></div>
-                      <span className="text-primary-700">Desarrollo de herramientas digitales</span>
-                    </div>
-                    <div className="flex items-center">
-                      <div className="w-2 h-2 bg-accent-500 rounded-full mr-3"></div>
-                      <span className="text-primary-700">Investigación terminológica</span>
-                    </div>
-                    <div className="flex items-center">
-                      <div className="w-2 h-2 bg-accent-500 rounded-full mr-3"></div>
-                      <span className="text-primary-700">Consultoría académica</span>
-                    </div>
-                  </div>
-                </div>
+                <h2 className="text-2xl font-display font-bold text-primary-900 dark:text-neutral-100 mb-6">
+                  Ámbitos de colaboración
+                </h2>
+                <ul className="space-y-3">
+                  <li className="flex items-center">
+                    <span className="w-2 h-2 bg-accent-500 rounded-full mr-3 flex-shrink-0"></span>
+                    <span className="text-primary-700 dark:text-neutral-300">Traducción</span>
+                  </li>
+                  <li className="flex items-center">
+                    <span className="w-2 h-2 bg-accent-500 rounded-full mr-3 flex-shrink-0"></span>
+                    <span className="text-primary-700 dark:text-neutral-300">Revisión</span>
+                  </li>
+                  <li className="flex items-center">
+                    <span className="w-2 h-2 bg-accent-500 rounded-full mr-3 flex-shrink-0"></span>
+                    <span className="text-primary-700 dark:text-neutral-300">Corrección de estilo</span>
+                  </li>
+                  <li className="flex items-center">
+                    <span className="w-2 h-2 bg-accent-500 rounded-full mr-3 flex-shrink-0"></span>
+                    <span className="text-primary-700 dark:text-neutral-300">Uso de herramientas de traducción asistida</span>
+                  </li>
+                  <li className="flex items-center">
+                    <span className="w-2 h-2 bg-accent-500 rounded-full mr-3 flex-shrink-0"></span>
+                    <span className="text-primary-700 dark:text-neutral-300">Investigación terminológica</span>
+                  </li>
+                </ul>
               </div>
             </div>
           </section>
