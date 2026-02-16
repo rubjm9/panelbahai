@@ -11,6 +11,12 @@ const nextConfig = {
     }
     return config;
   },
+  async redirects() {
+    return [
+      { source: '/acerca', destination: '/sobre-el-panel', permanent: true },
+      { source: '/acerca/', destination: '/sobre-el-panel', permanent: true },
+    ];
+  },
   // Configuración para desarrollo local
   async rewrites() {
     return [

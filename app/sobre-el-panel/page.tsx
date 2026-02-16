@@ -6,7 +6,7 @@ export const metadata = {
   description: 'Conoce más sobre el Panel Internacional de Traducción de Literatura Bahá\'í al Español'
 }
 
-export default function AcercaPage() {
+export default function SobreElPanelPage() {
   return (
     <div className="min-h-screen bg-white dark:bg-midnight-900 transition-colors duration-200">
       {/* Hero azul unificado */}
@@ -169,7 +169,7 @@ export default function AcercaPage() {
 
         {/* Contacto */}
         <section className="bg-primary-900 dark:bg-midnight-900 text-white rounded-lg p-8 text-center">
-          <h2 className="text-2xl font-display font-bold mb-4">¿Deseas colaborar con el Panel?</h2>
+          <h2 className="text-2xl font-display font-bold mb-4">¿Desea colaborar con el Panel?</h2>
           <p className="text-primary-200 dark:text-neutral-300 mb-6 max-w-2xl mx-auto">
             Si tiene experiencia en traducción y siente el llamado a servir en este campo, 
             nos encantaría conocer su interés en contribuir a este importante trabajo.
@@ -178,7 +178,7 @@ export default function AcercaPage() {
             href="/contacto" 
             className="bg-accent-500 hover:bg-accent-600 text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200 inline-block"
           >
-            Contáctanos
+            Contacto
           </Link>
         </section>
       </main>

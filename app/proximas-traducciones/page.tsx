@@ -87,9 +87,9 @@ export default async function ProximasTraduccionesPage() {
           )}
         </section>
 
-        {/* Colabora con el Panel */}
+        {/* Colabore con el Panel */}
         <section className="mt-16 bg-primary-900 dark:bg-midnight-900 text-white rounded-lg p-10 text-center">
-          <h2 className="text-2xl font-display font-semibold mb-5">Colabora con el Panel</h2>
+          <h2 className="text-2xl font-display font-semibold mb-5">Colabore con el Panel</h2>
           <p className="text-primary-200 dark:text-neutral-300 mb-8 max-w-2xl mx-auto text-lg leading-relaxed">
             Si tiene habilidades para la traducción o la revisión y quiere colaborar con el trabajo del Panel, escríbanos.
           </p>

@@ -61,7 +61,7 @@ export default function SiteHeader() {
             </div>
 
             <Link href="/proximas-traducciones" className="nav-link">Próximas traducciones</Link>
-            <Link href="/acerca" className="nav-link">Sobre el Panel</Link>
+            <Link href="/sobre-el-panel" className="nav-link">Sobre el Panel</Link>
             <Link href="/contacto" className="nav-link">Contacto</Link>
 
             {/* Acceso */}
@@ -108,7 +108,7 @@ export default function SiteHeader() {
                   </ul>
                 </div>
                 <Link href="/proximas-traducciones" className="nav-link" onClick={() => setMobileOpen(false)}>Próximas traducciones</Link>
-                <Link href="/acerca" className="nav-link" onClick={() => setMobileOpen(false)}>Sobre el Panel</Link>
+                <Link href="/sobre-el-panel" className="nav-link" onClick={() => setMobileOpen(false)}>Sobre el Panel</Link>
                 <Link href="/contacto" className="nav-link" onClick={() => setMobileOpen(false)}>Contacto</Link>
                 <Link href="/admin" className="nav-link text-accent-700 dark:text-accent-500" onClick={() => setMobileOpen(false)}>Acceso</Link>
               </nav>
